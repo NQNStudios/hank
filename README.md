@@ -1,2 +1,2 @@
 # hank
-Haxe subset of the Ink narrative scripting language
+Narrative scripting language for HaxeFlixel games based on Inkle's Ink engine
