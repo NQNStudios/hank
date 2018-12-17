@@ -29,6 +29,7 @@ class MenuState extends FlxState
 		var square = new FlxSprite(10, 10);
 		square.makeGraphic(FlxG.width - 20, FlxG.height - 76, 0xff333333);
 		
+		// TODO populate this with text from the Story parser
 		_typeText = new FlxTypeText(15, 10, FlxG.width - 30, "Hello, and welcome to the FlxTypeText demo. You can press the buttons below and see the different ways to control this class. Enjoy! :)", 16, true);
 		
 		_typeText.delay = 0.1;
