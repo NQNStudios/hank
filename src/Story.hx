@@ -1,9 +1,15 @@
 package src;
 
+import hscript.Parser;
+import hscript.Interp;
+
 class Story {
     private var scriptLines: Array<String>;
     private var currentLine: Int = 0;
     private var directory: String = "";
+    private var parser = new Parser();
+    private var interp = new Interp();
+    // TODO use interp.set(name, value) to share things to script scope
 
     public function new(storyFile: String) {
         if (storyFile.lastIndexOf("/") != -1) {
@@ -25,6 +31,7 @@ class Story {
     private function processNextLine(): StoryFrame {
         var frame = processLine(scriptLines[currentLine]);
         currentLine += 1;
+        trace('next line is: ${scriptLines[currentLine]}');
         return frame;
     }
 
@@ -39,15 +46,32 @@ class Story {
             for (i in 0...includedLines.length) {
                 scriptLines.insert(currentLine + i + 1, includedLines[i]);
             }
+            scriptLines.insert(currentLine+includedLines.length+1, "EOF");
 
             // Control flows to the first line of the included file
+            currentLine += 1;
+            return processNextLine();
+        }
+        // When encountering a section declaration, skip to the end of the file.
+        else if (trimmedLine.indexOf("==") == 0) {
+            do {
+                currentLine += 1;
+            } while (scriptLines[currentLine] != "EOF" && currentLine < scriptLines.length);
+
             currentLine += 1;
             return processNextLine();
         }
         else if (trimmedLine.indexOf("->") == 0) {
             var nextSection = trimmedLine.split(" ")[1];
             return gotoSection(nextSection);
+        } else if (trimmedLine.indexOf("~") == 0) {
+            var scriptLine = trimmedLine.substr(trimmedLine.indexOf("~")+1);
+            var program = parser.parseString(scriptLine);
+            interp.execute(program);
+            currentLine += 1;
+            return processNextLine();
         }
+
 
         // If the line is none of these special cases, it is just a text line. Remove the comments and evaluate the hscript.
 
@@ -84,6 +108,7 @@ class Story {
                 currentLine = line;
             }
         }
+        currentLine += 1;
         return processNextLine();
     }
 }

@@ -19,9 +19,9 @@ class StoryTest extends haxe.unit.TestCase {
 
     public function testFullSpec() {
         var story: Story = new Story("examples/main.hank");
-        assertEquals(StoryFrame.HasText("This is a section of a Hank story. It's pretty much like a Knot in Ink."), story.nextFrame());
-        assertEquals(StoryFrame.HasText("Line breaks define the chunks of this section that will eventually get sent to your game to process."), story.nextFrame());
-        assertEquals(StoryFrame.HasText("Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex haxe expressions!"), story.nextFrame());
+        assertEquals("HasText(This is a section of a Hank story. It's pretty much like a Knot in Ink.)", Std.string(story.nextFrame()));
+        assertEquals("HasText(Line breaks define the chunks of this section that will eventually get sent to your game to process.)", Std.string(story.nextFrame()));
+        assertEquals("HasText(Your Hank scripts will contain the static content of your game, but they can also insert dynamic content, even the result of complex haxe expressions!)", Std.string(story.nextFrame()));
     }
 
     public function interactiveTest() { 
