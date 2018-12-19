@@ -3,8 +3,10 @@ package src;
 class Test {
     public static function main() {
         var story: Story = new Story("spec/main.hank");
-        while (story.currentFrame() != Empty) {
-            switch (story.currentFrame()) {
+        var frame = StoryFrame.Empty;
+        do {
+            frame = story.currentFrame();
+            switch (frame) {
                 case HasText(text):
                     trace(text);
                 case HasChoices(choices): 
@@ -12,9 +14,11 @@ class Test {
                         var choice = choices[index-1];
                         trace("${index}. ${choice}");
                     }
+
+                    // TODO accept choice and follow it
                 default:
             }
-        }
+        } while (frame != Empty);
 
         trace("Story is finished.");
     }
