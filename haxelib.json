@@ -1,0 +1,12 @@
+{
+    "name": "hank",
+    "url": "https://github.com/NQNStudios/hank",
+    "license": "MIT",
+    "tags": [],
+    "description": "Narrative scripting language for HaxeFlixel games based on Inkle's Ink engine",
+    "version": "0.0.0",
+    "classPath": "src/",
+    "releasenote": "It isn't safe to use this library yet.",
+    "contributors": ["NQNStudios"],
+    "dependencies": {}
+}
