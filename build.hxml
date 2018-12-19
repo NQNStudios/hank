@@ -1,0 +1,3 @@
+-lib hx3compat
+-main src.StoryTest
+--interp

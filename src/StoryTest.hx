@@ -1,7 +1,16 @@
 package src;
 
-class Test {
+class StoryTest extends haxe.unit.TestCase {
     public static function main() {
+        var r = new haxe.unit.TestRunner();
+        r.add(new StoryTest());
+        // add other TestCases here
+
+        // finally, run the tests
+        r.run();
+    }
+
+    public function testFullSpec() { 
         var story: Story = new Story("spec/main.hank");
         var frame = StoryFrame.Empty;
         do {
@@ -18,6 +27,7 @@ class Test {
                     // TODO accept choice and follow it
                 default:
             }
+
         } while (frame != Empty);
 
         trace("Story is finished.");
