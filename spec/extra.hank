@@ -1,0 +1,18 @@
+// comments in Hank start with a double-slash
+~ var demo_var = "dynamic content"; // Hank scripts can embed Haxe logic by starting a line with '~'
+~ var part1 = "haxe";
+~ var part2 = "expressions";
+~ var flag = false;
+
+== choice_example
+
+You can include choices for the player.
+
+* Door A[] opens and there's nothing behind it.
++ Door B opens but the room on the other side is identical!
+* {flag} Choices can depend on logical conditions being truthy.
+    -> final_choice
+
+- -> choice_example // a hyphen gathers all choices to the same place.
+
+// TODO what about default choices?

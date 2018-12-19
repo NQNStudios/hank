@@ -1,0 +1,26 @@
+INCLUDE extra.hank
+
+-> start // This syntax moves the game flow to a new section.
+
+== start
+
+This is a section of a Hank story. It's pretty much like a Knot in Ink.
+Line breaks define the chunks of this section that will eventually get sent to your game to process.
+Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex {part1 + " " + part2}!
+
+-> choice_example
+
+== final_choice
+
+* I don't think I'll use Hank for my games.
+    Are you sure?
+    ** Yes I'm sure.
+    That's perfectly valid!
+    ** I've changed my mind.
+        -> final_choice
+* Hank sounds awesome, thanks!
+    -> the_end
+
+== the_end
+
+That's the end of this example!
