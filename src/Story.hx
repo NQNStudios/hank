@@ -49,10 +49,36 @@ class Story {
             return gotoSection(nextSection);
         }
 
-        return HasText(line);
+        // If the line is none of these special cases, it is just a text line. Remove the comments and evaluate the hscript.
+
+        // Remove line comments
+        if (line.indexOf("//") != -1) {
+            line = line.substr(0, line.indexOf("//"));
+        }
+
+        // Remove block comments
+        while (true) {
+            var startIdx = line.indexOf("/*");
+            var endIdx = line.indexOf("*/");
+
+            if (startIdx != -1 && endIdx > startIdx) {
+                line = line.substr(0, startIdx) + line.substr(endIdx+2);
+            } else {
+                break;
+            }
+        }
+
+        // Skip empty lines.
+        return if (line.length > 0) {
+            HasText(line);
+        } else {
+            currentLine += 1;
+            processNextLine();
+        }
     }
 
     public function gotoSection(section: String): StoryFrame {
+        // TODO track view counts as variables. This will require preprocessing script lines to set 0-value section variables 
         for (line in 0...scriptLines.length) {
             if (scriptLines[line] == "== " + section) {
                 currentLine = line;
