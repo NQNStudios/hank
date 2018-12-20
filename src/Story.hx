@@ -146,12 +146,24 @@ class Story {
 
             else if (depthOf(scriptLines[l]) == depth) {
                 var choiceFullText = scriptLines[l];
-                var choice = StringTools.ltrim(scriptLines[l]);
-                // TODO check the choice's flag
+                var choiceWithSymbol = StringTools.ltrim(scriptLines[l]);
+                var choiceWithoutSymbol = choiceWithSymbol.substr(depthOf(scriptLines[l]));
+                // check the choice's flag
+                if (Util.startsWithEnclosure(choiceWithoutSymbol, "{","}")) {
+                    var conditionExpression = Util.findEnclosure(choiceWithoutSymbol, "{", "}");
+                    trace(conditionExpression);
+                    var parsed = parser.parseString(conditionExpression);
+                    var conditionValue = interp.expr(parsed);
+
+                    if (!conditionValue) {
+                        l += 1;
+                        continue;
+                    }
+                }
 
 
 
-                choices.push(choice);
+                choices.push(choiceWithoutSymbol);
                 // Store choice's full text so we can uniquely find it in the script and process its divert
                 choicesFullText.push(choiceFullText);
             }
