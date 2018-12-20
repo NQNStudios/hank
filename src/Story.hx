@@ -17,7 +17,6 @@ class Story {
         }
 
         scriptLines = sys.io.File.getContent(storyFile).split('\n');
-        trace('Lines: ${scriptLines.length}');
     }
 
     public function nextFrame(): StoryFrame {
@@ -28,15 +27,29 @@ class Story {
         }
     }
 
+    private function processHaxeStatement(line: String) {
+        // In order to preserve the values of variables declared in embedded Haxe,
+        // we need to predeclare them all as globals in this Story's interpreter.
+        var trimmed = StringTools.ltrim(line);
+        if (trimmed.length > 0) {
+            if (StringTools.startsWith(trimmed, "var")) {
+                var varName = trimmed.split(" ")[1];
+                interp.variables[varName] = null;
+                trimmed = trimmed.substr(4); // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
+            }
+            var program = parser.parseString(trimmed);
+            interp.execute(program);
+        }
+    }
+
     private function processNextLine(): StoryFrame {
         var frame = processLine(scriptLines[currentLine]);
-        currentLine += 1;
-        trace('next line is: ${scriptLines[currentLine]}');
+        //trace('next line is: ${scriptLines[currentLine+1]}');
         return frame;
     }
 
     private function processLine (line: String): StoryFrame {
-        trace('processing: ${line}');
+        //trace('processing: ${line}');
         var trimmedLine = StringTools.ltrim(line);
         if (trimmedLine.indexOf("INCLUDE ") == 0) {
             var includeFile = trimmedLine.split(" ")[1];
@@ -65,9 +78,8 @@ class Story {
             var nextSection = trimmedLine.split(" ")[1];
             return gotoSection(nextSection);
         } else if (trimmedLine.indexOf("~") == 0) {
-            var scriptLine = trimmedLine.substr(trimmedLine.indexOf("~")+1);
-            var program = parser.parseString(scriptLine);
-            interp.execute(program);
+            var scriptLine = trimmedLine.substr(1);
+            processHaxeStatement(scriptLine);
             currentLine += 1;
             return processNextLine();
         }
@@ -92,10 +104,25 @@ class Story {
             }
         }
 
-        // Skip empty lines.
         return if (line.length > 0) {
+            // Parse haxe expressions in the text
+
+            while (true) {
+                var startIdx = line.indexOf("{");
+                var endIdx = line.indexOf("}");
+
+                if (startIdx != -1 && endIdx > startIdx) {
+                    var expression = parser.parseString(line.substr(startIdx+1,endIdx-startIdx-1));
+                    line = line.substr(0, startIdx) + Std.string(interp.expr(expression)) + line.substr(endIdx+1);
+                } else {
+                    break;
+                }
+            }
+
+            currentLine += 1;
             HasText(line);
         } else {
+            // Skip empty lines.
             currentLine += 1;
             processNextLine();
         }
