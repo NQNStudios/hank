@@ -9,7 +9,9 @@ class Story {
     private var directory: String = "";
     private var parser = new Parser();
     private var interp = new Interp();
-    // TODO use interp.set(name, value) to share things to script scope
+    // TODO use interp.set(name, value) to share things (i.e. modules) to script scope
+
+    private var choicesFullText = new Array<String>();
 
     public function new(storyFile: String) {
         if (storyFile.lastIndexOf("/") != -1) {
@@ -101,30 +103,18 @@ class Story {
         }
 
         // Remove block comments
-        while (true) {
-            var startIdx = line.indexOf("/*");
-            var endIdx = line.indexOf("*/");
-
-            if (startIdx != -1 && endIdx > startIdx) {
-                line = line.substr(0, startIdx) + line.substr(endIdx+2);
-            } else {
-                break;
-            }
+        while (Util.containsEnclosure(line, "/*", "*/")) {
+            line = Util.replaceEnclosure(line, "", "/*", "*/");
         }
 
         return if (line.length > 0) {
             // Parse haxe expressions in the text
 
-            while (true) {
-                var startIdx = line.indexOf("{");
-                var endIdx = line.indexOf("}");
-
-                if (startIdx != -1 && endIdx > startIdx) {
-                    var expression = parser.parseString(line.substr(startIdx+1,endIdx-startIdx-1));
-                    line = line.substr(0, startIdx) + Std.string(interp.expr(expression)) + line.substr(endIdx+1);
-                } else {
-                    break;
-                }
+            while (Util.containsEnclosure(line, "{", "}")) {
+                var expression = Util.findEnclosure(line,"{","}");
+                trace(expression);
+                var parsed = parser.parseString(expression);
+                line = Util.replaceEnclosure(line, Std.string(interp.expr(parsed)), "{", "}");
             }
 
             currentLine += 1;
