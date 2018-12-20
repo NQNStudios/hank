@@ -82,7 +82,15 @@ class Story {
             processHaxeStatement(scriptLine);
             currentLine += 1;
             return processNextLine();
+        } else if (trimmedLine.indexOf("*") == 0 || trimmedLine.indexOf("+") == 0) {
+            var depth = depthOf(trimmedLine);
+            var choices = collectChoices(depth);
+
+            return HasChoices(choices);
         }
+        // TODO handle choice declarations. Scan for more choices (skipping lines following them) until hitting a new section declaration or a gather. (n hyphens repeated where n=choice depth.) EOF. Those will be the choices to give. Skip choices with a different number of *, or +. Skip choices whose flag is not truthy. Insert haxe expression results into choice text.
+
+        // When a * or - choice is chosen, remove its line from scriptLines so it doesn't appear again
 
 
         // If the line is none of these special cases, it is just a text line. Remove the comments and evaluate the hscript.
@@ -128,7 +136,48 @@ class Story {
         }
     }
 
+    public function choose(index: Int): String {
+        var choiceDisplayText = choicesFullText[index];
+        // TODO remove the contents of the brackets, interpolate expressions in, etc.
+        // TODO set the current line to the line following this choice. Set the current depth to that depth 
+
+        choicesFullText = new Array<String>();
+
+        return choiceDisplayText;
+    }
+
+    function collectChoices(depth: Int): Array<String> {
+        var l = currentLine;
+        var choices = new Array<String>();
+        while (!StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+            if (depthOf(scriptLines[l]) == -1) {
+                continue;
+            }
+
+            else if (depthOf(scriptLines[l]) == depth) {
+                var choiceFullText = scriptLines[l];
+                var choice = StringTools.ltrim(scriptLines[l]);
+                // TODO check the choice's flag
+
+
+
+                choices.push(choice);
+                // Store choice's full text so we can uniquely find it in the script and process its divert
+                choicesFullText.push(choiceFullText);
+            }
+            l += 1;
+        }
+
+        return choices;
+    }
+
+    function depthOf(choice: String): Int {
+        var trimmed = StringTools.ltrim(choice);
+        return Math.floor(Math.max(trimmed.lastIndexOf("*"), trimmed.lastIndexOf("+")))+1;
+    }
+
     public function gotoSection(section: String): StoryFrame {
+        // TODO this should clear the current choice depth
         // TODO track view counts as variables. This will require preprocessing script lines to set 0-value section variables 
         for (line in 0...scriptLines.length) {
             if (scriptLines[line] == "== " + section) {
