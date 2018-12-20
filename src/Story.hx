@@ -90,10 +90,6 @@ class Story {
 
             return HasChoices(choices);
         }
-        // TODO handle choice declarations. Scan for more choices (skipping lines following them) until hitting a new section declaration or a gather. (n hyphens repeated where n=choice depth.) EOF. Those will be the choices to give. Skip choices with a different number of *, or +. Skip choices whose flag is not truthy. Insert haxe expression results into choice text.
-
-        // When a * or - choice is chosen, remove its line from scriptLines so it doesn't appear again
-
 
         // If the line is none of these special cases, it is just a text line. Remove the comments and evaluate the hscript.
 
@@ -108,14 +104,7 @@ class Story {
         }
 
         return if (line.length > 0) {
-            // Parse haxe expressions in the text
-
-            while (Util.containsEnclosure(line, "{", "}")) {
-                var expression = Util.findEnclosure(line,"{","}");
-                trace(expression);
-                var parsed = parser.parseString(expression);
-                line = Util.replaceEnclosure(line, Std.string(interp.expr(parsed)), "{", "}");
-            }
+            line = fillHExpressions(line);
 
             currentLine += 1;
             HasText(line);
@@ -126,29 +115,53 @@ class Story {
         }
     }
 
+    /**
+    Parse haxe expressions in the text
+    **/
+    function fillHExpressions(text: String) {
+        while (Util.containsEnclosure(text, "{", "}")) {
+            var expression = Util.findEnclosure(text,"{","}");
+            trace(expression);
+            var parsed = parser.parseString(expression);
+            text = Util.replaceEnclosure(text, Std.string(interp.expr(parsed)), "{", "}");
+        }
+        return text;
+    }
+
     public function choose(index: Int): String {
         var choiceDisplayText = choicesFullText[index];
         // TODO remove the contents of the brackets, interpolate expressions in, etc.
         // TODO set the current line to the line following this choice. Set the current depth to that depth 
+        
 
+        // When a * or - choice is chosen, remove its line from scriptLines so it doesn't appear again
+        // Update the current index to reflect the removed line
+
+        // Stop storing the full text of these choices so we don't accidentally trigger them later.
         choicesFullText = new Array<String>();
 
         return choiceDisplayText;
     }
-
+    /**
+    Handle choice declarations starting at the current script line
+    **/
     function collectChoices(depth: Int): Array<String> {
-        var l = currentLine;
         var choices = new Array<String>();
+        var l = currentLine;
+        // Scan for more choices in this set  until hitting a new section declaration or TODO a gather. (n hyphens repeated where n=choice depth.) or TODO EOF.  
         while (!StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+            // Skip text on a line following a choice. That text is the outcome of the choice.
             if (depthOf(scriptLines[l]) == -1) {
                 continue;
             }
 
+            // Skip choices with a different number of *, or +.
             else if (depthOf(scriptLines[l]) == depth) {
                 var choiceFullText = scriptLines[l];
                 var choiceWithSymbol = StringTools.ltrim(scriptLines[l]);
                 var choiceWithoutSymbol = choiceWithSymbol.substr(depthOf(scriptLines[l]));
-                // check the choice's flag
+                choiceWithoutSymbol = StringTools.ltrim(choiceWithoutSymbol);
+                // check the choice's flag. Skip choices whose flag is not truthy.
                 if (Util.startsWithEnclosure(choiceWithoutSymbol, "{","}")) {
                     var conditionExpression = Util.findEnclosure(choiceWithoutSymbol, "{", "}");
                     trace(conditionExpression);
@@ -161,8 +174,14 @@ class Story {
                     }
                 }
 
+                // Keep the contents of brackets but drop what follows
+                if (Util.containsEnclosure(choiceWithoutSymbol, "[", "]")) {
+                    var contents = Util.findEnclosure(choiceWithoutSymbol, "[", "]");
+                    choiceWithoutSymbol = choiceWithoutSymbol.substr(0, choiceWithoutSymbol.indexOf("[")) + contents;
+                }
 
-
+                // Insert haxe expression results into choice text.  
+                choiceWithoutSymbol = fillHExpressions(choiceWithoutSymbol);
                 choices.push(choiceWithoutSymbol);
                 // Store choice's full text so we can uniquely find it in the script and process its divert
                 choicesFullText.push(choiceFullText);

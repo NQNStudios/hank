@@ -24,9 +24,9 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals("HasText(Your Hank scripts will contain the static content of your game, but they can also insert dynamic content, even the result of complex haxe expressions!)", Std.string(story.nextFrame()));
         assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
 
-        assertEquals("HasChoices([Door A, Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door A,Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
         // Until a choice is chosen, the frame should stay the same.
-        assertEquals("HasChoices([Door A, Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door A,Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
 
     }
 

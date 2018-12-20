@@ -2,8 +2,8 @@ package src;
 
 class Util {
     /**
-     * Look for a pair of substrings that signal the opening and closing of a block, i.e. { and }.
-     * Returns the contents of the enclosure
+    Look for a pair of substrings that signal the opening and closing of a block, i.e. { and }.
+    Returns the contents of the enclosure
      **/
     public static function findEnclosure(str: String, opening: String, closing: String): String {
         var start = str.indexOf(opening);
@@ -15,7 +15,6 @@ class Util {
     }
 
     public static function startsWithEnclosure(str: String, opening: String, closing:String): Bool {
-        str = StringTools.ltrim(str);
         return str.indexOf(opening) == 0 && str.indexOf(closing) > 0;
     }
 
