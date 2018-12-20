@@ -14,6 +14,11 @@ class Util {
         return null;
     }
 
+    public static function startsWithEnclosure(str: String, opening: String, closing:String): Bool {
+        str = StringTools.ltrim(str);
+        return str.indexOf(opening) == 0 && str.indexOf(closing) > 0;
+    }
+
     public static function replaceEnclosure(str: String, rep: String, opening: String, closing: String): String {
         var start = str.indexOf(opening);
         var end = str.indexOf(closing);
