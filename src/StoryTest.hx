@@ -25,9 +25,23 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
 
         assertEquals("HasChoices([Door A,Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
-        // Until a choice is chosen, the frame should stay the same.
-        assertEquals("HasChoices([Door A,Door B opens but the room on the other side is identical!])", Std.string(story.nextFrame()));
 
+        assertEquals("Door A opens and there's nothing behind it.", story.choose(0));
+
+        assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door B opens but the room on the other side is identical!,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+
+        assertEquals("Door B opens but the room on the other side is identical!", story.choose(0)); 
+        assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door B opens but the room on the other side is identical!,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertEquals("Door B opens but the room on the other side is identical!", story.choose(0)); 
+        assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door B opens but the room on the other side is identical!,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertEquals("Door B opens but the room on the other side is identical!", story.choose(0)); 
+        assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Door B opens but the room on the other side is identical!,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+
+        assertEquals("Choices can depend on logical conditions being truthy.", Std.string(story.choose(1)));
     }
 
     public function interactiveTest() { 

@@ -3,13 +3,15 @@
 ~ var part1 = "haxe";
 ~ var part2 = "expressions";
 ~ var flag = false;
+~ var word = "identical";
 
 == choice_example
 
 You can include choices for the player.
 
 * Door A[] opens and there's nothing behind it.
-+ Door B opens but the room on the other side is identical!
+    ~ flag = true;
++ Door B opens but the room on the other side is {word}!
 * {flag} Choices can depend on logical conditions being truthy.
     -> final_choice
 

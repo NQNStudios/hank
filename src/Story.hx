@@ -11,6 +11,7 @@ class Story {
     private var interp = new Interp();
     // TODO use interp.set(name, value) to share things (i.e. modules) to script scope
 
+    private var choiceDepth = 0;
     private var choicesFullText = new Array<String>();
 
     public function new(storyFile: String) {
@@ -51,7 +52,7 @@ class Story {
     }
 
     private function processLine (line: String): StoryFrame {
-        //trace('processing: ${line}');
+        trace('processing: ${line}');
         var trimmedLine = StringTools.ltrim(line);
         if (trimmedLine.indexOf("INCLUDE ") == 0) {
             var includeFile = trimmedLine.split(" ")[1];
@@ -86,9 +87,19 @@ class Story {
             return processNextLine();
         } else if (trimmedLine.indexOf("*") == 0 || trimmedLine.indexOf("+") == 0) {
             var depth = depthOf(trimmedLine);
-            var choices = collectChoices(depth);
+            if (depth == choiceDepth + 1) {
+                choiceDepth = depth;
+                var choices = collectChoices(depth);
 
-            return HasChoices(choices);
+                return HasChoices(choices);
+            } else {
+                trace('${trimmedLine} causing skipping to gather');
+                return skipToGather();
+            }
+        } else if (choiceDepth > 1 && trimmedLine.indexOf(StringTools.lpad("", "-", choiceDepth-1)) == 0) {
+            // Don't do anything if this line is the gather from a set of choices we just left
+            currentLine += 1;
+            return processLine(trimmedLine.substr(choiceDepth));
         }
 
         // If the line is none of these special cases, it is just a text line. Remove the comments and evaluate the hscript.
@@ -121,7 +132,7 @@ class Story {
     function fillHExpressions(text: String) {
         while (Util.containsEnclosure(text, "{", "}")) {
             var expression = Util.findEnclosure(text,"{","}");
-            trace(expression);
+            // trace(expression);
             var parsed = parser.parseString(expression);
             text = Util.replaceEnclosure(text, Std.string(interp.expr(parsed)), "{", "}");
         }
@@ -129,29 +140,146 @@ class Story {
     }
 
     public function choose(index: Int): String {
+        if (choicesFullText.length == 0) {
+            trace("Error! Trying to choose when no choices are available!");
+        }
         var choiceDisplayText = choicesFullText[index];
-        // TODO remove the contents of the brackets, interpolate expressions in, etc.
-        // TODO set the current line to the line following this choice. Set the current depth to that depth 
-        
+        trace('Choosing: ${choiceDisplayText}');
+        choiceDisplayText = StringTools.ltrim(StringTools.ltrim(choiceDisplayText).substr(choiceDepth));
 
-        // When a * or - choice is chosen, remove its line from scriptLines so it doesn't appear again
+        // Remove initial condition 
+        if (Util.startsWithEnclosure(choiceDisplayText, "{","}")) {
+            choiceDisplayText = StringTools.ltrim(Util.replaceEnclosure(choiceDisplayText, "", "{", "}"));
+        }
+        // remove the contents of the brackets,
+        if (Util.containsEnclosure(choiceDisplayText, "[", "]")) {
+            choiceDisplayText = Util.replaceEnclosure(choiceDisplayText, "", "[", "]");
+        }
+        // interpolate expressions in, etc.
+        choiceDisplayText = fillHExpressions(choiceDisplayText);
+
+        // set the current line to the line following this choice. Set the current depth to that depth 
+        var nextLine = findNextLineAfterChoice(index);
+        currentLine = nextLine;
+        choiceDepth = depthOf(choicesFullText[index]) + 1;
+
+        // When a * choice is chosen, remove its line from scriptLines so it doesn't appear again
         // Update the current index to reflect the removed line
+        if (StringTools.startsWith(StringTools.ltrim(choicesFullText[index]), "*")) {
+            // trace('Length: ${scriptLines.length}');
+            // trace('indexOf: ${scriptLines.indexOf(choicesFullText[index])}');
+            scriptLines.remove(choicesFullText[index]);
+            // trace('Length: ${scriptLines.length}');
+            if (currentLine > index) currentLine -= 1;
+        }
 
         // Stop storing the full text of these choices so we don't accidentally trigger them later.
         choicesFullText = new Array<String>();
 
         return choiceDisplayText;
     }
+
+    function skipToGather() {
+        trace('depth: ${choiceDepth}');
+        var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth-1);
+        var l = currentLine+1;
+        var foundIt = false;
+        trace(l);
+        trace(scriptLines[l]);
+        while (l < scriptLines.length && scriptLines[l] != "EOF") {
+            var trimmed = StringTools.ltrim(scriptLines[l]);
+            if (trimmed.length == 0) { 
+                l += 1;
+                continue;
+            }
+            if (StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+                break;
+            }
+            if (StringTools.startsWith(trimmed, gatherOfThisDepth)) {
+                // -> diverts can trip false gather positives
+                var possibleGather = trimmed.substr(0, gatherOfThisDepth.length + 1);
+                trace('posgath: ${possibleGather}');
+                if (StringTools.endsWith(possibleGather, ">")) {
+                    l += 1;
+                    continue;
+                }
+                foundIt = true;
+                break;
+            }
+            l += 1;
+        }
+        if (foundIt) {
+            currentLine = l;
+            return processNextLine();
+        } else {
+            return Empty;
+        }
+
+    }
+
+    function findNextLineAfterChoice(choice: Int): Int {
+        // The next line is the first line after the choice with no depth (meaning it's plaintext -- unless a different same-depth choice comes first) or a gather of proper depth
+        var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth);
+        var choiceLine = scriptLines.indexOf(choicesFullText[choice]);
+        trace('Choice line: ${choiceLine}');
+        var l = choiceLine+1;
+
+        var metNextInSet = false;
+        var foundIt = false;
+        while (l < scriptLines.length && scriptLines[l] != "EOF") {
+            var trimmed = StringTools.ltrim(scriptLines[l]);
+            if (trimmed.length == 0) { 
+                l += 1;
+                continue;
+            }
+            if (StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "=="))
+                break;
+            if (StringTools.startsWith(trimmed, gatherOfThisDepth)) {
+                // -> diverts can trip false gather positives
+                var possibleGather = trimmed.substr(0, gatherOfThisDepth.length + 1);
+                if (StringTools.endsWith(possibleGather, ">")) {
+                    l += 1;
+                    continue;
+                }
+                foundIt = true;
+                break;
+            }
+            else if (!metNextInSet && depthOf(trimmed) == 0) {
+                foundIt = true;
+                break;
+            }
+            else if (!metNextInSet && depthOf(trimmed) == choiceDepth+1) {
+                foundIt = true;
+                break;
+            } else if (depthOf(trimmed) == choiceDepth) {
+                trace('${trimmed} is next in set');
+                metNextInSet = true;
+                l += 1;
+                continue;
+            }
+
+        }
+        if (!foundIt) {
+            trace("no next line found!");
+            return -1; // Need to throw up an empty frame
+        } else {
+            trace('Next line is: ${scriptLines[l]}');
+            return l;
+        }
+    }
+
     /**
     Handle choice declarations starting at the current script line
     **/
     function collectChoices(depth: Int): Array<String> {
         var choices = new Array<String>();
         var l = currentLine;
-        // Scan for more choices in this set  until hitting a new section declaration or TODO a gather. (n hyphens repeated where n=choice depth.) or TODO EOF.  
-        while (!StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+        // Scan for more choices in this set  until hitting a new section declaration or TODO a gather. (n hyphens repeated where n=choice depth.) or EOF.  
+        var gatherOfThisDepth = StringTools.lpad("", "-", depth);
+        while (l < scriptLines.length && scriptLines[l] != "EOF" && !StringTools.startsWith(StringTools.ltrim(scriptLines[l]), gatherOfThisDepth) && !StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
             // Skip text on a line following a choice. That text is the outcome of the choice.
-            if (depthOf(scriptLines[l]) == -1) {
+            if (depthOf(scriptLines[l]) == 0) {
+                l += 1;
                 continue;
             }
 
@@ -164,13 +292,16 @@ class Story {
                 // check the choice's flag. Skip choices whose flag is not truthy.
                 if (Util.startsWithEnclosure(choiceWithoutSymbol, "{","}")) {
                     var conditionExpression = Util.findEnclosure(choiceWithoutSymbol, "{", "}");
-                    trace(conditionExpression);
                     var parsed = parser.parseString(conditionExpression);
                     var conditionValue = interp.expr(parsed);
 
                     if (!conditionValue) {
                         l += 1;
                         continue;
+                    }
+                    else {
+                        // Don't print the flag in the choice list
+                        choiceWithoutSymbol = StringTools.ltrim(Util.replaceEnclosure(choiceWithoutSymbol, "", "{", "}"));
                     }
                 }
 
@@ -198,7 +329,8 @@ class Story {
     }
 
     public function gotoSection(section: String): StoryFrame {
-        // TODO this should clear the current choice depth
+        // this should clear the current choice depth
+        choiceDepth = 0;
         // TODO track view counts as variables. This will require preprocessing script lines to set 0-value section variables 
         for (line in 0...scriptLines.length) {
             if (scriptLines[line] == "== " + section) {
