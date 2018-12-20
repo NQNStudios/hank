@@ -1,0 +1,30 @@
+package src;
+
+class Util {
+    /**
+     * Look for a pair of substrings that signal the opening and closing of a block, i.e. { and }.
+     * Returns the contents of the enclosure
+     **/
+    public static function findEnclosure(str: String, opening: String, closing: String): String {
+        var start = str.indexOf(opening);
+        var end = str.indexOf(closing);
+        if (start != -1 && end > start) {
+            return str.substr(start+opening.length, end - start - opening.length);
+        }
+        return null;
+    }
+
+    public static function replaceEnclosure(str: String, rep: String, opening: String, closing: String): String {
+        var start = str.indexOf(opening);
+        var end = str.indexOf(closing);
+
+        return str.substr(0, start) + rep + str.substr(end + closing.length);
+    }
+
+    public static function containsEnclosure(str: String, opening: String, closing: String): Bool {
+        var start = str.indexOf(opening);
+        var end = str.indexOf(closing);
+
+        return (start != -1 && end > start);
+    }
+}
