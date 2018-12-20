@@ -92,11 +92,11 @@ class Story {
                 var choices = collectChoices(depth);
 
                 return HasChoices(choices);
-            } else {
+            } else if (depth == choiceDepth) {
                 trace('${trimmedLine} causing skipping to gather');
                 return skipToGather();
             }
-        } else if (choiceDepth > 1 && trimmedLine.indexOf(StringTools.lpad("", "-", choiceDepth-1)) == 0) {
+        } else if (choiceDepth >= 1 && trimmedLine.indexOf(StringTools.lpad("", "-", choiceDepth)) == 0) {
             // Don't do anything if this line is the gather from a set of choices we just left
             currentLine += 1;
             return processLine(trimmedLine.substr(choiceDepth));
@@ -118,7 +118,7 @@ class Story {
             line = fillHExpressions(line);
 
             currentLine += 1;
-            HasText(line);
+            HasText(StringTools.ltrim(line));
         } else {
             // Skip empty lines.
             currentLine += 1;
@@ -143,6 +143,7 @@ class Story {
         if (choicesFullText.length == 0) {
             trace("Error! Trying to choose when no choices are available!");
         }
+        trace('At the start: ${choicesFullText.toString()}');
         var choiceDisplayText = choicesFullText[index];
         trace('Choosing: ${choiceDisplayText}');
         choiceDisplayText = StringTools.ltrim(StringTools.ltrim(choiceDisplayText).substr(choiceDepth));
@@ -161,7 +162,7 @@ class Story {
         // set the current line to the line following this choice. Set the current depth to that depth 
         var nextLine = findNextLineAfterChoice(index);
         currentLine = nextLine;
-        choiceDepth = depthOf(choicesFullText[index]) + 1;
+        choiceDepth = depthOf(choicesFullText[index]);
 
         // When a * choice is chosen, remove its line from scriptLines so it doesn't appear again
         // Update the current index to reflect the removed line
@@ -175,13 +176,14 @@ class Story {
 
         // Stop storing the full text of these choices so we don't accidentally trigger them later.
         choicesFullText = new Array<String>();
+        trace('After clearing: ${choicesFullText.toString()}');
 
         return choiceDisplayText;
     }
 
     function skipToGather() {
         trace('depth: ${choiceDepth}');
-        var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth-1);
+        var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth);
         var l = currentLine+1;
         var foundIt = false;
         trace(l);
@@ -198,7 +200,6 @@ class Story {
             if (StringTools.startsWith(trimmed, gatherOfThisDepth)) {
                 // -> diverts can trip false gather positives
                 var possibleGather = trimmed.substr(0, gatherOfThisDepth.length + 1);
-                trace('posgath: ${possibleGather}');
                 if (StringTools.endsWith(possibleGather, ">")) {
                     l += 1;
                     continue;
@@ -221,7 +222,7 @@ class Story {
         // The next line is the first line after the choice with no depth (meaning it's plaintext -- unless a different same-depth choice comes first) or a gather of proper depth
         var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth);
         var choiceLine = scriptLines.indexOf(choicesFullText[choice]);
-        trace('Choice line: ${choiceLine}');
+        // trace('Choice line: ${choiceLine}');
         var l = choiceLine+1;
 
         var metNextInSet = false;
@@ -232,8 +233,13 @@ class Story {
                 l += 1;
                 continue;
             }
-            if (StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "=="))
+            if (StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
                 break;
+            }
+            if (!metNextInSet && StringTools.startsWith(trimmed, "->")) {
+                foundIt = true;
+                break;
+            }
             if (StringTools.startsWith(trimmed, gatherOfThisDepth)) {
                 // -> diverts can trip false gather positives
                 var possibleGather = trimmed.substr(0, gatherOfThisDepth.length + 1);
@@ -276,14 +282,33 @@ class Story {
         var l = currentLine;
         // Scan for more choices in this set  until hitting a new section declaration or TODO a gather. (n hyphens repeated where n=choice depth.) or EOF.  
         var gatherOfThisDepth = StringTools.lpad("", "-", depth);
-        while (l < scriptLines.length && scriptLines[l] != "EOF" && !StringTools.startsWith(StringTools.ltrim(scriptLines[l]), gatherOfThisDepth) && !StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+        while (l < scriptLines.length && scriptLines[l] != "EOF" && !StringTools.startsWith(StringTools.ltrim(scriptLines[l]), "==")) {
+            var trimmed = StringTools.ltrim(scriptLines[l]);
             // Skip text on a line following a choice. That text is the outcome of the choice.
             if (depthOf(scriptLines[l]) == 0) {
+                // trace('Skipping ${scriptLines[l]}');
                 l += 1;
                 continue;
             }
+            // Stop when we hit a gather of this depth
+
+            if (StringTools.startsWith(trimmed, gatherOfThisDepth)) {
+                var possibleGather = trimmed.substr(0, gatherOfThisDepth.length + 1);
+                if (StringTools.endsWith(possibleGather, ">")) {
+                    l += 1;
+                    continue;
+                }
+                else {
+                    break;
+                }
+            }
 
             // Skip choices with a different number of *, or +.
+            else if (depthOf(scriptLines[l]) != depth) {
+                // trace('Skipping ${scriptLines[l]}');
+                l += 1;
+                continue;
+            }
             else if (depthOf(scriptLines[l]) == depth) {
                 var choiceFullText = scriptLines[l];
                 var choiceWithSymbol = StringTools.ltrim(scriptLines[l]);
@@ -314,6 +339,7 @@ class Story {
                 // Insert haxe expression results into choice text.  
                 choiceWithoutSymbol = fillHExpressions(choiceWithoutSymbol);
                 choices.push(choiceWithoutSymbol);
+                trace('collecting choice ${choiceFullText}');
                 // Store choice's full text so we can uniquely find it in the script and process its divert
                 choicesFullText.push(choiceFullText);
             }

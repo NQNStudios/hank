@@ -17,7 +17,7 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals(StoryFrame.Empty, story.nextFrame());
     }
 
-    public function testFullSpec() {
+    public function testFullSpec1() {
         var story: Story = new Story("examples/main.hank");
         assertEquals("HasText(This is a section of a Hank story. It's pretty much like a Knot in Ink.)", Std.string(story.nextFrame()));
         assertEquals("HasText(Line breaks define the chunks of this section that will eventually get sent to your game to process.)", Std.string(story.nextFrame()));
@@ -41,7 +41,15 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
         assertEquals("HasChoices([Door B opens but the room on the other side is identical!,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
 
-        assertEquals("Choices can depend on logical conditions being truthy.", Std.string(story.choose(1)));
+        assertEquals("Choices can depend on logical conditions being truthy.", story.choose(1));
+
+        assertEquals("HasChoices([I don't think I'll use Hank for my games.,Hank sounds awesome, thanks!])", Std.string(story.nextFrame()));
+        assertEquals("I don't think I'll use Hank for my games.", story.choose(0));
+        assertEquals("HasText(Are you sure?)", Std.string(story.nextFrame()));
+        assertEquals("HasChoices([Yes I'm sure.,I've changed my mind.])", Std.string(story.nextFrame()));
+        assertEquals("Yes I'm sure.", story.choose(0));
+        assertEquals("HasText(That's perfectly valid!)", Std.string(story.nextFrame()));
+        assertEquals(StoryFrame.Empty, story.nextFrame());
     }
 
     public function interactiveTest() { 
