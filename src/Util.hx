@@ -22,7 +22,12 @@ class Util {
         var start = str.indexOf(opening);
         var end = str.indexOf(closing);
 
-        return str.substr(0, start) + rep + str.substr(end + closing.length);
+        // trace('original: ${str}');
+        var beforeEnc = str.substr(0, start);
+        // trace('beforepart: ${beforeEnc}');
+        var afterEnc = str.substr(end + closing.length);
+        // trace('afterpart: ${afterEnc}');
+        return beforeEnc + rep + afterEnc;
     }
 
     public static function containsEnclosure(str: String, opening: String, closing: String): Bool {

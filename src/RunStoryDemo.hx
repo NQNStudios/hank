@@ -18,8 +18,9 @@ class RunStoryDemo {
             }
         }
 
-        var story: Story = new Story(path);
-        var frame = StoryFrame.Empty;
+        var story: Story = new Story(false);
+        story.loadScript(path);
+        var frame = StoryFrame.Finished;
         do {
             frame = story.nextFrame();
             switch (frame) {
@@ -36,7 +37,7 @@ class RunStoryDemo {
                     trace(story.choose(choiceIndex-1));
                 default:
             }
-        } while (frame != Empty);
+        } while (frame != Finished);
 
         trace("Story is finished.");
 

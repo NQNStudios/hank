@@ -1,26 +1,38 @@
 INCLUDE extra.hank
 
 -> start // This syntax moves the game flow to a new section.
-
+ 
 == start
-
 This is a section of a Hank story. It's pretty much like a Knot in Ink.
-Line breaks define the chunks of this section that will eventually get sent to your game to process.
+Line breaks define the chunks of this section that will eventually get sent to your game to process/*sans the content of any comments*/!
 Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex {part1 + " " + part2}!
 
+~ var multiline_logic = "Logic can happen on any line before a multiline comment.";
+/* Multiline block have to start at the
+beginning of their own line. And can't contain
+any other logic on the same line as the start or end. Sorry! */
+~ multiline_logic_example = "Logic can happen on any line after a multiline comment.";
+
 -> choice_example
-
-== final_choice
-
+    
+== final_choice   
+// should be empty line
+```
+var unused_variable="";
+// This is a comment INSIDE a haxe block
+/*The whole block will be parsed and executed at the same time*/
+```
 * I don't think I'll use Hank for my games.
     Are you sure?
     ** Yes I'm sure.
     That's perfectly valid!
+        -> the_end
     ** I've changed my mind.
         -> final_choice
-* Hank sounds awesome, thanks!
+* Hank sounds awesome, thanks!   
     -> the_end
 
 == the_end
 
-That's the end of this example!
+That's the end of this example!    
+This should say 'mouse': {what_happened}

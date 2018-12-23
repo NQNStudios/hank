@@ -11,6 +11,7 @@ You can include choices for the player.
 
 * Door A [looks promising!] opens and there's nothing behind it.
     ~ flag = true;
+    ~ var what_happened = "mouse";
 + Door B []opens but the room on the other side is {word}!
 * {flag} Choices can depend on logical conditions being truthy.
     -> final_choice
