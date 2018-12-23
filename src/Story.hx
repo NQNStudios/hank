@@ -13,8 +13,16 @@ class Story {
 
     private var choiceDepth = 0;
     private var choicesFullText = new Array<String>();
+    private var debugPrints: Bool;
 
-    public function new(storyFile: String) {
+    private function debugTrace(v: Dynamic, ?infos: haxe.PosInfos) {
+        if (debugPrints) {
+            trace(v, infos);
+        }
+    }
+
+    public function new(storyFile: String, debug: Bool = false) {
+        debugPrints = debug;
         if (storyFile.lastIndexOf("/") != -1) {
             directory = storyFile.substr(0, storyFile.lastIndexOf("/")+1);
         }
@@ -47,12 +55,12 @@ class Story {
 
     private function processNextLine(): StoryFrame {
         var frame = processLine(scriptLines[currentLine]);
-        //trace('next line is: ${scriptLines[currentLine+1]}');
+        //debugTrace('next line is: ${scriptLines[currentLine+1]}');
         return frame;
     }
 
     private function processLine (line: String): StoryFrame {
-        trace('processing: ${line}');
+        debugTrace('processing: ${line}');
         var trimmedLine = StringTools.ltrim(line);
         if (trimmedLine.indexOf("INCLUDE ") == 0) {
             var includeFile = trimmedLine.split(" ")[1];
@@ -93,7 +101,7 @@ class Story {
 
                 return HasChoices(choices);
             } else if (depth == choiceDepth) {
-                trace('${trimmedLine} causing skipping to gather');
+                debugTrace('${trimmedLine} causing skipping to gather');
                 return skipToGather();
             }
         } else if (choiceDepth >= 1 && trimmedLine.indexOf(StringTools.lpad("", "-", choiceDepth)) == 0) {
@@ -132,7 +140,7 @@ class Story {
     function fillHExpressions(text: String) {
         while (Util.containsEnclosure(text, "{", "}")) {
             var expression = Util.findEnclosure(text,"{","}");
-            // trace(expression);
+            // debugTrace(expression);
             var parsed = parser.parseString(expression);
             text = Util.replaceEnclosure(text, Std.string(interp.expr(parsed)), "{", "}");
         }
@@ -143,9 +151,9 @@ class Story {
         if (choicesFullText.length == 0) {
             trace("Error! Trying to choose when no choices are available!");
         }
-        trace('At the start: ${choicesFullText.toString()}');
+        debugTrace('At the start: ${choicesFullText.toString()}');
         var choiceDisplayText = choicesFullText[index];
-        trace('Choosing: ${choiceDisplayText}');
+        debugTrace('Choosing: ${choiceDisplayText}');
         choiceDisplayText = StringTools.ltrim(StringTools.ltrim(choiceDisplayText).substr(choiceDepth));
 
         // Remove initial condition 
@@ -167,27 +175,27 @@ class Story {
         // When a * choice is chosen, remove its line from scriptLines so it doesn't appear again
         // Update the current index to reflect the removed line
         if (StringTools.startsWith(StringTools.ltrim(choicesFullText[index]), "*")) {
-            // trace('Length: ${scriptLines.length}');
-            // trace('indexOf: ${scriptLines.indexOf(choicesFullText[index])}');
+            // debugTrace('Length: ${scriptLines.length}');
+            // debugTrace('indexOf: ${scriptLines.indexOf(choicesFullText[index])}');
             scriptLines.remove(choicesFullText[index]);
-            // trace('Length: ${scriptLines.length}');
+            // debugTrace('Length: ${scriptLines.length}');
             if (currentLine > index) currentLine -= 1;
         }
 
         // Stop storing the full text of these choices so we don't accidentally trigger them later.
         choicesFullText = new Array<String>();
-        trace('After clearing: ${choicesFullText.toString()}');
+        debugTrace('After clearing: ${choicesFullText.toString()}');
 
         return choiceDisplayText;
     }
 
     function skipToGather() {
-        trace('depth: ${choiceDepth}');
+        debugTrace('depth: ${choiceDepth}');
         var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth);
         var l = currentLine+1;
         var foundIt = false;
-        trace(l);
-        trace(scriptLines[l]);
+        debugTrace(l);
+        debugTrace(scriptLines[l]);
         while (l < scriptLines.length && scriptLines[l] != "EOF") {
             var trimmed = StringTools.ltrim(scriptLines[l]);
             if (trimmed.length == 0) { 
@@ -222,7 +230,7 @@ class Story {
         // The next line is the first line after the choice with no depth (meaning it's plaintext -- unless a different same-depth choice comes first) or a gather of proper depth
         var gatherOfThisDepth = StringTools.lpad("", "-", choiceDepth);
         var choiceLine = scriptLines.indexOf(choicesFullText[choice]);
-        // trace('Choice line: ${choiceLine}');
+        // debugTrace('Choice line: ${choiceLine}');
         var l = choiceLine+1;
 
         var metNextInSet = false;
@@ -258,7 +266,7 @@ class Story {
                 foundIt = true;
                 break;
             } else if (depthOf(trimmed) == choiceDepth) {
-                trace('${trimmed} is next in set');
+                debugTrace('${trimmed} is next in set');
                 metNextInSet = true;
                 l += 1;
                 continue;
@@ -266,10 +274,10 @@ class Story {
 
         }
         if (!foundIt) {
-            trace("no next line found!");
+            debugTrace("no next line found!");
             return -1; // Need to throw up an empty frame
         } else {
-            trace('Next line is: ${scriptLines[l]}');
+            debugTrace('Next line is: ${scriptLines[l]}');
             return l;
         }
     }
@@ -286,7 +294,7 @@ class Story {
             var trimmed = StringTools.ltrim(scriptLines[l]);
             // Skip text on a line following a choice. That text is the outcome of the choice.
             if (depthOf(scriptLines[l]) == 0) {
-                // trace('Skipping ${scriptLines[l]}');
+                // debugTrace('Skipping ${scriptLines[l]}');
                 l += 1;
                 continue;
             }
@@ -305,7 +313,7 @@ class Story {
 
             // Skip choices with a different number of *, or +.
             else if (depthOf(scriptLines[l]) != depth) {
-                // trace('Skipping ${scriptLines[l]}');
+                // debugTrace('Skipping ${scriptLines[l]}');
                 l += 1;
                 continue;
             }
@@ -339,7 +347,7 @@ class Story {
                 // Insert haxe expression results into choice text.  
                 choiceWithoutSymbol = fillHExpressions(choiceWithoutSymbol);
                 choices.push(choiceWithoutSymbol);
-                trace('collecting choice ${choiceFullText}');
+                debugTrace('collecting choice ${choiceFullText}');
                 // Store choice's full text so we can uniquely find it in the script and process its divert
                 choicesFullText.push(choiceFullText);
             }

@@ -1,0 +1,4 @@
+-lib hx3compat
+-lib hscript
+-main src.RunStoryDemo
+--interp
