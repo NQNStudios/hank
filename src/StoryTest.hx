@@ -24,6 +24,49 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals(StoryFrame.Finished, story.nextFrame());
     }
 
+    public function validateAgainstTranscript(storyFile: String, transcriptFile: String) {
+        var story: Story = new Story();
+        story.loadScript(storyFile);
+        var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
+
+        var i = 0;
+        while (i < transcriptLines.length) {
+            var line = transcriptLines[i];
+
+            if (StringTools.startsWith(line, "*")) {
+                // Collect the expected set of choices from the transcript.
+                var choices = new Array<String>();
+                do {
+                    choices.push(line.substr(2));
+
+                    line = transcriptLines[++i];
+                } while (StringTools.startsWith(line, "*"));
+
+                // Assert that the storyframe is a corresponding HasChoices enum
+                assertEquals('HasChoices(${Std.string(choices)})', Std.string(story.nextFrame()));
+
+                continue;
+            } else if (StringTools.startsWith(line, ">>>")) {
+                // Make the choice given.
+                var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
+                // Assert that its output equals the next line.
+                assertEquals(transcriptLines[++i], output);
+            } else if (line.length > 0) {
+                // Assert that the story's next frame is HasText(line)
+                assertEquals('HasText(${line})', Std.string(story.nextFrame()));
+            }
+
+            i += 1;
+        }
+    }
+
+    public function testRunFullSpec2() {
+        validateAgainstTranscript("examples/main.hank", "examples/tests/main1.hanktest");
+    }
+
+    /**
+    Keep this clunky thing around to sanity check validateAgainstTranscript()
+    **/
     public function testRunFullSpec1() {
         var story: Story = new Story(true);
         story.loadScript("examples/main.hank");

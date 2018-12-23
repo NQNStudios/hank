@@ -1,0 +1,30 @@
+This is a section of a Hank story. It's pretty much like a Knot in Ink.
+Line breaks define the chunks of this section that will eventually get sent to your game to process!
+Your Hank scripts will contain the static content of your game, but they can also insert dynamic content, even the result of complex haxe expressions!
+You can include choices for the player.
+* Door A looks promising!
+* Door B
+>>> 0
+Door A opens and there's nothing behind it.
+You can include choices for the player.
+* Door B
+* Choices can depend on logical conditions being truthy.
+>>> 0
+Door B opens but the room on the other side is identical!
+You can include choices for the player.
+* Door B
+* Choices can depend on logical conditions being truthy.
+>>> 1
+Choices can depend on logical conditions being truthy.
+* I don't think I'll use Hank for my games.
+* Hank sounds awesome, thanks!
+>>> 0
+I don't think I'll use Hank for my games.
+Are you sure?
+* Yes I'm sure.
+* I've changed my mind.
+>>> 0
+Yes I'm sure.
+That's perfectly valid!
+That's the end of this example!
+This should say 'mouse': mouse
