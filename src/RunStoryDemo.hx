@@ -4,12 +4,18 @@ class RunStoryDemo {
     public static function main() {
         var input = Sys.stdin();
 
-        trace("Enter a path to a hank story file (default is examples/main.hank): ");
+        var debug = false;
+        trace("Enter a path to a hank story file. Prepend with * for debug prints. (default is examples/main.hank): ");
         var path = input.readLine();
         path = if (path.length == 0) {
             "examples/main.hank";
         } else {
-            path;
+            if (path.charAt(0) == '*') {
+                debug = true;
+                path.substr(1);
+            } else {
+                path;
+            }
         }
 
         var story: Story = new Story(path);
