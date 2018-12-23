@@ -4,8 +4,13 @@ class RunStoryDemo {
     public static function main() {
         var input = Sys.stdin();
 
-        trace("Enter a path to a hank story file: ");
+        trace("Enter a path to a hank story file (default is examples/main.hank): ");
         var path = input.readLine();
+        path = if (path.length == 0) {
+            "examples/main.hank";
+        } else {
+            path;
+        }
 
         var story: Story = new Story(path);
         var frame = StoryFrame.Empty;
