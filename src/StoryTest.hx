@@ -68,11 +68,15 @@ class StoryTest extends haxe.unit.TestCase {
         validateAgainstTranscript("examples/main.hank", "examples/tests/main1.hanktest");
     }
 
+    public function testRunFullSpec3() {
+        validateAgainstTranscript("examples/main.hank", "examples/tests/main2.hanktest");
+    }
+
     /**
     Keep this clunky thing around to sanity check validateAgainstTranscript()
     **/
     public function testRunFullSpec1() {
-        var story: Story = new Story(true);
+        var story: Story = new Story(true, "transcript.hanktest");
         story.loadScript("examples/main.hank");
         var frame1 = Std.string(story.nextFrame());
         // This calls the INCLUDE statement. Ensure that all lines
@@ -113,6 +117,9 @@ class StoryTest extends haxe.unit.TestCase {
         assertEquals("HasText(That's the end of this example!)", Std.string(story.nextFrame()));
         assertEquals("HasText(This should say 'mouse': mouse)", Std.string(story.nextFrame()));
         assertEquals(StoryFrame.Finished, story.nextFrame());
+
+        // Validate the transcript that was produced
+        validateAgainstTranscript("examples/main.hank", "transcript.hanktest");
     }
 
     public function testParseLine() {

@@ -18,7 +18,7 @@ class RunStoryDemo {
             }
         }
 
-        var story: Story = new Story(false);
+        var story: Story = new Story(false, "transcript.hanktest");
         story.loadScript(path);
         var frame = StoryFrame.Finished;
         do {

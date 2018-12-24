@@ -1,5 +1,11 @@
 package src;
 
+import haxe.ds.Option;
+import haxe.io.Bytes;
+
+// TODO sys.io.File calls might not work on HTML5 targets
+import sys.io.FileOutput;
+
 import hscript.Parser;
 import hscript.Interp;
 
@@ -40,6 +46,7 @@ class Story {
     private var interp = new Interp();
     // TODO use interp.set(name, value) to share things (i.e. modules) to script scope
     // TODO can objects be shared in/out of HScript?
+    private var transcriptFile: Option<FileOutput> = None;
 
     private var choiceDepth = 0;
     private var debugPrints: Bool;
@@ -52,8 +59,48 @@ class Story {
         }
     }
 
-    public function new(debug: Bool = false) {
+    private function closeTranscript() {
+        switch (transcriptFile) {
+            case Some(file):
+                file.close();
+            default:
+        }
+    }
+
+    private function logFrameToTranscript(frame: StoryFrame) {
+        switch (frame) {
+            case HasText(text):
+                logToTranscript(text);
+            case HasChoices(choices):
+                for (choice in choices) {
+                    logToTranscript('* ${choice}');
+                }
+            case Error(message):
+                logToTranscript('! ${message}');
+                closeTranscript();
+            case Finished:
+                closeTranscript();
+        }
+    }
+
+    private function logToTranscript(line: String) {
+        switch (transcriptFile) {
+            case Some(file):
+                file.write(Bytes.ofString(line + "\n"));
+            default:
+        }
+    }
+
+    /**
+    Create a new Story processor.
+    @param debug Whether to output debug information to stdout
+    @param transcriptPath an optional filepath to output a transcript of the story playthrough
+    **/
+    public function new(debug: Bool = false, transcriptPath="") {
         debugPrints = debug;
+        if (transcriptPath.length > 0) {
+            transcriptFile = Some(sys.io.File.write(transcriptPath));
+        }
     }
 
     /**
@@ -203,10 +250,12 @@ class Story {
     }
 
     public function nextFrame(): StoryFrame {
-        return if (currentLine >= scriptLines.length) {
-            Finished;
+        if (currentLine >= scriptLines.length) {
+            return Finished;
         } else {
-            processNextLine();
+            var frame = processNextLine();
+            logFrameToTranscript(frame);
+            return frame;
         }
     }
 
@@ -383,6 +432,8 @@ class Story {
         // Move to the line following this choice.
         stepLine();
 
+        logToTranscript('>>> ${index}');
+        logToTranscript(choiceTaken.text);
         return choiceTaken.text;
     }
 
