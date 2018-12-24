@@ -51,7 +51,11 @@ class StoryTest extends haxe.unit.TestCase {
                 var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
                 // Assert that its output equals the next line.
                 assertEquals(transcriptLines[++i], output);
-            } else if (line.length > 0) {
+            } else if (StringTools.startsWith(line, "#")) {
+                // Allow comments in a transcript that need not be validated in any way
+                trace(line);
+            }
+            else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
                 assertEquals('HasText(${line})', Std.string(story.nextFrame()));
             }
