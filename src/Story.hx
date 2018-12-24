@@ -272,6 +272,7 @@ class Story {
                     interp.variables[varName] = null;
                     trimmed = trimmed.substr(4); // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
                 }
+                debugTrace('Parsing haxe "${trimmed}"');
                 var program = parser.parseString(trimmed);
                 interp.execute(program);
             }
@@ -279,10 +280,10 @@ class Story {
     }
 
     private function gotoLine(line: Int) {
-        if (line > 0 && line <= scriptLines.length) {
+        if (line >= 0 && line <= scriptLines.length) {
             currentLine = line;
         } else {
-            throw "Tried to go to out of range line";
+            throw 'Tried to go to out of range line ${line}';
         }
 
         if (line == scriptLines.length) {
@@ -326,13 +327,16 @@ class Story {
         for (i in 0...scriptLines.length) {
             if (scriptLines[i].sourceFile == file) {
                 gotoLine(i);
+                break;
             }
         }
     }
 
+    private var includedFilesProcessed = new Array();
+
     /** Execute a parsed script statement **/
     private function processLine (line: HankLine): StoryFrame {
-        // debugTrace('Processing ${Std.string(line)}');
+        debugTrace('Processing ${Std.string(line)}');
 
         var file = line.sourceFile;
         var type = line.type;
@@ -344,7 +348,12 @@ class Story {
 
             // Execute include statements by jumping to the start of that file
             case IncludeFile(path):
-                gotoFile(path);
+                if (includedFilesProcessed.indexOf(path) == -1) {
+                    includedFilesProcessed.push(path);
+                    gotoFile(path);
+                } else {
+                    stepLine();
+                }
                 return processNextLine();
 
             // Execute diverts by following them immediately
