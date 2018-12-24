@@ -39,10 +39,11 @@ class Story {
     private var parser = new Parser();
     private var interp = new Interp();
     // TODO use interp.set(name, value) to share things (i.e. modules) to script scope
+    // TODO can objects be shared in/out of HScript?
 
     private var choiceDepth = 0;
-    private var choicesFullText = new Array<String>();
     private var debugPrints: Bool;
+    // Count how many choices have been parsed so each one can have a unique ID
     private var choicesParsed = 0;
 
     private function debugTrace(v: Dynamic, ?infos: haxe.PosInfos) {
@@ -55,6 +56,9 @@ class Story {
         debugPrints = debug;
     }
 
+    /**
+    Pre-parse a Hank script for execution. Nothing will be evaluated, and INCLUDEd files are not parsed until the script encounters them.
+    **/
     public function loadScript(storyFile: String) {
         if (storyFile.lastIndexOf("/") != -1) {
             directory = storyFile.substr(0, storyFile.lastIndexOf("/")+1);
@@ -206,7 +210,7 @@ class Story {
         }
     }
 
-    // TODO this doesn't allow for multiple declaration and other edge cases that must exist
+    // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
         for (line in lines.split('\n')) {
             // In order to preserve the values of variables declared in embedded Haxe,
@@ -268,22 +272,29 @@ class Story {
 
     private var finished: Bool = false;
 
+    /** Execute a parsed script statement **/
     private function processLine (line: HankLine): StoryFrame {
         // debugTrace('Processing ${Std.string(line)}');
 
         var file = line.sourceFile;
         var type = line.type;
         switch (type) {
+            // Execute text lines by evaluating their {embedded expressions}
             case OutputText(text):
                 stepLine();
                 return HasText(fillHExpressions(text));
+
+            // Execute include statements by parsing and queuing up the included files
             case IncludeFile(path):
                 stepLine();
                 loadScript(directory + path);
                 return processNextLine();
+
+            // Execute diverts by following them immediately
             case Divert(target):
                 return gotoSection(target);
-            // When a section is declared, skip to the end of its file
+
+            // When a new section is declared control flow stops. Skip to the end of the current file
             case DeclareSection(_):
                 var nextLineFile = "";
                 do {
@@ -293,10 +304,14 @@ class Story {
                 } while (nextLineFile == file);
                 // debugTrace('${file} != ${nextLineFile}');
                 return processNextLine();
+
+            // Execute haxe lines with hscript
             case HaxeLine(code):
                 processHaxeBlock(code);
                 stepLine();
                 return processNextLine();
+
+            // Execute choice declarations by collecting the set of choices and presenting valid ones to the player
             case DeclareChoice(choice):
                 if (choice.depth > choiceDepth) {
                     choiceDepth = choice.depth;
@@ -306,6 +321,8 @@ class Story {
                 }
                 
                 return HasChoices([for (choice in collectChoicesToDisplay()) choice.text]);
+
+            // Execute gathers by updating the choice depth and continuing from that point
             case Gather(depth, nextPartType):
                 if (choiceDepth > depth) {
                     choiceDepth = depth;
@@ -317,7 +334,8 @@ class Story {
                 } else {
                     return Error("Encountered a gather for the wrong depth");
                 }
-            // TODO remove the default case after everything is implemented
+
+            // Skip comments and empty lines
             default:
                 stepLine();
                 return processNextLine();
@@ -325,7 +343,7 @@ class Story {
     }
 
     /**
-    Parse haxe expressions in the text
+    Parse and fill haxe expressions in the text based on current variable values
     **/
     function fillHExpressions(text: String) {
         while (Util.containsEnclosure(text, "{", "}")) {
@@ -368,6 +386,9 @@ class Story {
         return choiceTaken.text;
     }
 
+    /**
+    Search for the next gather that applies to the current choice depth, and follow it.
+    **/
     function processFromNextGather(): StoryFrame {
         // debugTrace("called processFromNextGather()");
         var l = currentLine+1;
@@ -388,8 +409,6 @@ class Story {
         }
         return Error("Failed to find a gather or divert before the file ended.");
     }
-
-
 
     /**
     Handle choice declarations starting at the current script line
@@ -433,6 +452,9 @@ class Story {
         return choices;
     }
 
+    /**
+    Check if a choice's display condition is satisfied
+    **/
     private function checkChoiceCondition(choice: Choice): Bool {
         return if (Util.startsWithEnclosure(choice.text, "{", "}")) {
             var conditionExpression = Util.findEnclosure(choice.text, "{", "}");
@@ -442,6 +464,10 @@ class Story {
         } else true;
     }
 
+    /**
+    Process a choice into the desired form to show the player
+    @param chosen Whether to show the choice's "before" or "after" text to the player
+    **/
     private function choiceToDisplay(choice: Choice, chosen: Bool): Choice {
         // Don't display the choice's condition
         if (Util.startsWithEnclosure(choice.text, "{", "}")) {
@@ -481,6 +507,9 @@ class Story {
         return choices;
     }
 
+    /**
+    Skip script execution to the desired section
+    **/
     public function gotoSection(section: String): StoryFrame {
         // this should clear the current choice depth
         choiceDepth = 0;
