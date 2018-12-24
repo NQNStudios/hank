@@ -103,13 +103,18 @@ class Story {
         }
     }
 
+    var rootFile = "";
+
     /**
     Pre-parse a Hank script for execution. Nothing will be evaluated, and INCLUDEd files are not parsed until the script encounters them.
     **/
-    public function loadScript(storyFile: String) {
-        if (storyFile.lastIndexOf("/") != -1) {
-            directory = storyFile.substr(0, storyFile.lastIndexOf("/")+1);
-        }
+    public function loadScript(storyFile: String, includedScript = false) {
+        if (!includedScript) {
+            rootFile = storyFile;
+            if ( storyFile.lastIndexOf("/") != -1) { 
+                directory = storyFile.substr(0, storyFile.lastIndexOf("/")+1);
+            }
+        } 
 
         parseScript(storyFile);
     }
@@ -127,9 +132,11 @@ class Story {
         }
 
         if (trimmedLine.length > 0) {
-            // Parse an INCLUDE statement
+            // INCLUDEd scripts must be parsed immediately because the writer may expect section viewcounts for included sections to be 0 and not null
             if (StringTools.startsWith(trimmedLine, "INCLUDE")) {
-                return IncludeFile(StringTools.trim(trimmedLine.substr(8)));
+                var fullPath = directory + StringTools.trim(trimmedLine.substr(8));
+                loadScript(fullPath, true);
+                return IncludeFile(fullPath);
             }
             // Parse a section declaration
             else if (StringTools.startsWith(trimmedLine, "==")) {
@@ -197,8 +204,6 @@ class Story {
     private function parseScript(file: String) {
         var unparsedLines = sys.io.File.getContent(file).split('\n');
         lineCount += unparsedLines.length;
-        var parsedLines = new Array<HankLine>() 
- ;
 
         // Pre-Parse every line in the given file
         var idx = 0;
@@ -211,14 +216,14 @@ class Story {
             };
             var unparsedLine = unparsedLines[idx];
             parsedLine.type = parseLine(unparsedLine, unparsedLines.slice(idx+1));
-            parsedLines.push(parsedLine);
+            scriptLines.push(parsedLine);
 
             // Normal lines are parsed alone, but Haxe blocks are parsed as a group, so
             // the index needs to update accordingly 
             switch (parsedLine.type) {
                 case HaxeBlock(lines, _):
                     for (i in 0...lines-1) {
-                        parsedLines.push({
+                        scriptLines.push({
                             sourceFile: "",
                             lineNumber: 0,
                             type: LineType.Empty
@@ -227,7 +232,7 @@ class Story {
                     idx += lines;
                 case BlockComment(lines):
                     for (i in 0...lines-1) {
-                        parsedLines.push({
+                        scriptLines.push({
                             sourceFile: "",
                             lineNumber: 0,
                             type: LineType.Empty
@@ -238,18 +243,14 @@ class Story {
                     idx += 1;
             }
         }
-
-        // Add these lines at the front of the execution queue to allow INCLUDEd scripts to run immediately
-        idx = parsedLines.length - 1;
-        while (idx >= 0) {
-            if (parsedLines[idx].type != Empty) {
-                scriptLines.insert(currentLine, parsedLines[idx]);
-            }
-            idx -= 1;
-        }
     }
 
+    private var started = false;
     public function nextFrame(): StoryFrame {
+        if (!started) {
+            gotoFile(rootFile);
+            started = true;
+        }
         if (currentLine >= scriptLines.length) {
             return Finished;
         } else {
@@ -321,6 +322,14 @@ class Story {
 
     private var finished: Bool = false;
 
+    private function gotoFile(file: String) {
+        for (i in 0...scriptLines.length) {
+            if (scriptLines[i].sourceFile == file) {
+                gotoLine(i);
+            }
+        }
+    }
+
     /** Execute a parsed script statement **/
     private function processLine (line: HankLine): StoryFrame {
         // debugTrace('Processing ${Std.string(line)}');
@@ -333,10 +342,9 @@ class Story {
                 stepLine();
                 return HasText(fillHExpressions(text));
 
-            // Execute include statements by parsing and queuing up the included files
+            // Execute include statements by jumping to the start of that file
             case IncludeFile(path):
-                stepLine();
-                loadScript(directory + path);
+                gotoFile(path);
                 return processNextLine();
 
             // Execute diverts by following them immediately

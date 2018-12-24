@@ -122,6 +122,17 @@ class StoryTest extends haxe.unit.TestCase {
         validateAgainstTranscript("examples/main.hank", "transcript.hanktest");
     }
 
+    public function testViewCounts() {
+        var story = new Story();
+        story.loadScript("examples/main.hank");
+
+        assertEquals(0, story.interp.variables['start']);
+        assertEquals(0, story.interp.variables['choice_example']);
+        story.nextFrame();
+        assertEquals(1, story.interp.variables['start']);
+        assertEquals(0, story.interp.variables['choice_example']);
+    }
+
     public function testParseLine() {
         var story = new Story();
         assertEquals("IncludeFile(extra.hank)", Std.string(story.parseLine("INCLUDE extra.hank", [])));
@@ -134,12 +145,13 @@ class StoryTest extends haxe.unit.TestCase {
         // Parse the main.hank script and test that all lines are correctly parsed
         var story = new Story(true);
         story.loadScript("examples/main.hank");
-        assertEquals(38, story.lineCount);
+        assertEquals(38+22, story.lineCount);
 
         // TODO test a few line numbers from the script to make sure the parsed versions match. Especially block line numbers
 
         var idx = 0;
-        assertTrue(Std.string(story.scriptLines[idx++]).indexOf('type: IncludeFile(extra.hank)') != -1);
+        trace(Std.string(story.scriptLines[idx]));
+        assertTrue(Std.string(story.scriptLines[idx++]).indexOf('type: IncludeFile(examples/extra.hank)') != -1);
         assertTrue(Std.string(story.scriptLines[idx++]).indexOf('type: Divert(start)') != -1);
         assertTrue(Std.string(story.scriptLines[idx++]).indexOf('type: DeclareSection(start)') != -1);
         assertTrue(Std.string(story.scriptLines[idx++]).indexOf('type: OutputText(This is a section of a Hank story. It\'s pretty much like a Knot in Ink.)') != -1);
