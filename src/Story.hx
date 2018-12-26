@@ -28,6 +28,7 @@ enum LineType {
     // Choices are parsed with a unique ID so they can be followed even if duplicate text is used for multiple choices
     DeclareChoice(choice: Choice);
     DeclareSection(name: String);
+    DeclareSubsection(name: String);
     Divert(target: String);
     Gather(depth: Int, restOfLine: LineType);
     HaxeLine(code: String);
@@ -138,12 +139,31 @@ class Story {
                 loadScript(fullPath, true);
                 return IncludeFile(fullPath);
             }
-            // Parse a section declaration
-            else if (StringTools.startsWith(trimmedLine, "==")) {
-                var sectionName = StringTools.trim(trimmedLine.substr(2));
+            // Parse a section or subsection declaration
+            else if (StringTools.startsWith(trimmedLine, "=")) {
+                var equals_signs = 1;
+                while (trimmedLine.charAt(equals_signs) == trimmedLine.charAt(equals_signs-1)) {
+                    equals_signs += 1;
+                }
+
+                // Allow missing space i.e. ==section
+                var sectionName = StringTools.trim(trimmedLine.substr(equals_signs));
+
+                // Allow format == section ==
+                sectionName = sectionName.split(" ")[0];
+
                 // Initialize its view count variable to 0
+                // TODO if it's a stitch, prefix the count variable with section name (this will be tough because the . operator is already defined and we want the main section to be an int view count, not a dictionary of its stiches)
                 interp.variables[sectionName] = 0;
-                return DeclareSection(sectionName);
+
+                switch (equals_signs) {
+                    // Stitches declared like = stitch
+                    case 1:
+                        return DeclareSubsection(sectionName);
+                    // Technically, ======= also works
+                    default:
+                        return DeclareSection(sectionName);
+                }
             } else if (StringTools.startsWith(trimmedLine, "->")) {
                 return Divert(StringTools.trim(trimmedLine.substr(2)));
             } else if (StringTools.startsWith(trimmedLine, "*") || StringTools.startsWith(trimmedLine, "+")) {
