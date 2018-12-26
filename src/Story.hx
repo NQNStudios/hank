@@ -194,7 +194,7 @@ class Story {
                 var block = "";
                 var lines = 2;
                 // Loop until the end of the code block, incrementing the line count every time
-                while (!StringTools.startsWith(StringTools.trim(rest[0]), "```")) {
+                while (!StringTools.startsWith(StringTools.trim(rest[0]),"```")) {
                     // debugTrace(rest[0]);
                     block += rest[0] + '\n';
                     rest.remove(rest[0]);
@@ -282,6 +282,8 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
+        debugTrace('ORIGINAL LINES: ${lines}');
+        var preprocessedLines = "";
         for (line in lines.split('\n')) {
             // In order to preserve the values of variables declared in embedded Haxe,
             // we need to predeclare them all as globals in this Story's interpreter.
@@ -290,13 +292,16 @@ class Story {
                 if (StringTools.startsWith(trimmed, "var")) {
                     var varName = trimmed.split(" ")[1];
                     interp.variables[varName] = null;
-                    trimmed = trimmed.substr(4); // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
+                    // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
+                    trimmed = trimmed.substr(4); 
                 }
-                debugTrace('Parsing haxe "${trimmed}"');
-                var program = parser.parseString(trimmed);
-                interp.execute(program);
+                preprocessedLines += trimmed + "\n";
             }
         }
+
+        debugTrace('Parsing haxe "${preprocessedLines}"');
+        var program = parser.parseString(preprocessedLines);
+        interp.execute(program);
     }
 
     private function gotoLine(line: Int) {

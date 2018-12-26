@@ -167,6 +167,6 @@ class StoryTest extends src.StoryTestCase {
     }
 
     public function testRunIntercept1() {
-        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest");
+        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", true);
     }
 }

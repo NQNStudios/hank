@@ -11,8 +11,8 @@ class StoryTestCase extends utest.Test {
         Assert.equals(Std.string(expected), Std.string(actual));
     }
 
-    private function validateAgainstTranscript(storyFile: String, transcriptFile: String) {
-        var story: Story = new Story(true);
+    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, debug: Bool = false) {
+        var story: Story = new Story(debug);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
 
