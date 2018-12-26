@@ -18,7 +18,7 @@ any other logic on the same line as the start or end. Sorry! */
 == final_choice   
 // should be empty line
 ```
-var unused_variable="";
+var variable_declared_in_block="mouse";
 // This is a comment INSIDE a haxe block
 /*The whole block will be parsed and executed at the same time*/
 ```
@@ -35,4 +35,6 @@ var unused_variable="";
 == the_end
 
 That's the end of this example!    
-This should say 'mouse': {what_happened}
+These should all say 'mouse':
+{what_happened}
+{variable_declared_in_block}

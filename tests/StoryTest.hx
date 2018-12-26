@@ -42,7 +42,7 @@ class StoryTest extends src.StoryTestCase {
         var frame1 = story.nextFrame();
         // This calls the INCLUDE statement. Ensure that all lines
         // were included
-        Assert.equals(38+22, story.lineCount);
+        Assert.equals(40+22, story.lineCount);
 
         assertComplexEquals(HasText("This is a section of a Hank story. It's pretty much like a Knot in Ink."), frame1);
         assertComplexEquals(HasText("Line breaks define the chunks of this section that will eventually get sent to your game to process!"), story.nextFrame());
@@ -110,7 +110,7 @@ class StoryTest extends src.StoryTestCase {
         // Parse the main.hank script and test that all lines are correctly parsed
         var story = new Story(true);
         story.loadScript("examples/main.hank");
-        Assert.equals(38+22, story.lineCount);
+        Assert.equals(40+22, story.lineCount);
 
         // TODO test a few line numbers from the script to make sure the parsed versions match. Especially block line numbers
 
