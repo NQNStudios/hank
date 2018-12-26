@@ -322,6 +322,7 @@ class Story {
     }
 
     private function processNextLine(): StoryFrame {
+        // debugTrace('line ${currentLine} of ${scriptLines.length}');
         var scriptLine = scriptLines[currentLine];
         var frame = processLine(scriptLine);
 
@@ -393,6 +394,10 @@ class Story {
 
             // Execute haxe lines with hscript
             case HaxeLine(code):
+                processHaxeBlock(code);
+                stepLine();
+                return processNextLine();
+            case HaxeBlock(_, code):
                 processHaxeBlock(code);
                 stepLine();
                 return processNextLine();
@@ -599,6 +604,7 @@ class Story {
     Skip script execution to the desired section
     **/
     public function gotoSection(section: String): StoryFrame {
+        // debugTrace('going to section ${section}');
         // this should clear the current choice depth
         choiceDepth = 0;
         // Update this section's view count

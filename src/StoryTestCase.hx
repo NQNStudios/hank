@@ -12,7 +12,7 @@ class StoryTestCase extends utest.Test {
     }
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String) {
-        var story: Story = new Story();
+        var story: Story = new Story(true);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
 
