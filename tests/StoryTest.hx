@@ -165,4 +165,8 @@ class StoryTest extends src.StoryTestCase {
             assertLineType(lineTypes[i++], story.scriptLines[idx++]);
         }
     }
+
+    public function testRunIntercept1() {
+        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest");
+    }
 }
