@@ -339,6 +339,7 @@ class Story {
                 } else {
                     // This is a breaking error in production code. Output it to a file
                     trace(fullMessage);
+                    logToTranscript('# ' + fullMessage);
 
                     return Finished;
                 }
