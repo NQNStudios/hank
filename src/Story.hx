@@ -81,6 +81,7 @@ class Story {
                 closeTranscript();
             case Finished:
                 closeTranscript();
+            case Empty:
         }
     }
 
@@ -274,8 +275,13 @@ class Story {
         if (currentLine >= scriptLines.length) {
             return Finished;
         } else {
-            var frame = processNextLine();
-            logFrameToTranscript(frame);
+            var frame: StoryFrame = null;
+
+            do {
+                frame = processNextLine();
+                logFrameToTranscript(frame);
+            } while (frame == Empty);
+
             return frame;
         }
     }
@@ -381,7 +387,7 @@ class Story {
                 } else {
                     stepLine();
                 }
-                return processNextLine();
+                return Empty;
 
             // Execute diverts by following them immediately
             case Divert(target):
@@ -396,17 +402,17 @@ class Story {
                     // debugTrace(nextLineFile);
                 } while (nextLineFile == file);
                 // debugTrace('${file} != ${nextLineFile}');
-                return processNextLine();
+                return Empty;
 
             // Execute haxe lines with hscript
             case HaxeLine(code):
                 processHaxeBlock(code);
                 stepLine();
-                return processNextLine();
+                return Empty;
             case HaxeBlock(_, code):
                 processHaxeBlock(code);
                 stepLine();
-                return processNextLine();
+                return Empty;
 
             // Execute choice declarations by collecting the set of choices and presenting valid ones to the player
             case DeclareChoice(choice):
@@ -414,7 +420,7 @@ class Story {
                     choiceDepth = choice.depth;
                 } else if (choice.depth < choiceDepth) {
                     // The lines following a choice have run out. Now we need to look for the following gather
-                    return processFromNextGather();
+                    return gotoNextGather();
                 }
                 
                 return HasChoices([for (choice in collectChoicesToDisplay()) choice.text]);
@@ -435,7 +441,7 @@ class Story {
             // Skip comments and empty lines
             default:
                 stepLine();
-                return processNextLine();
+                return Empty;
         }
     }
 
@@ -487,9 +493,10 @@ class Story {
 
     /**
     Search for the next gather that applies to the current choice depth, and follow it.
+    @return If a suitable gather is found, Empty. Otherwise, an Error frame.
     **/
-    function processFromNextGather(): StoryFrame {
-        // debugTrace("called processFromNextGather()");
+    function gotoNextGather(): StoryFrame {
+        // debugTrace("called gotoNextGather()");
         var l = currentLine+1;
         var file = scriptLines[currentLine].sourceFile;
         while (l < scriptLines.length && scriptLines[l].sourceFile == file) {
@@ -499,7 +506,7 @@ class Story {
                     return Error("Failed to find a gather or divert before the file ended.");
                 case Gather(depth, type):
                     gotoLine(l);
-                    return processNextLine();
+                    return Empty;
                 default:
                     // These are probably lines following the other choices
             }
@@ -625,6 +632,6 @@ class Story {
         }
         // Step past the section declaration to the first line of the section
         stepLine();
-        return processNextLine();
+        return Empty;
     }
 }
