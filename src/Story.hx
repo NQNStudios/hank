@@ -64,6 +64,7 @@ class Story {
         switch (transcriptFile) {
             case Some(file):
                 file.close();
+                // trace('saving out transcript');
             default:
         }
     }
@@ -90,6 +91,7 @@ class Story {
             case Some(file):
                 file.write(Bytes.ofString(line + "\n"));
             default:
+                debugTrace("No transcript file ");
         }
     }
 
@@ -272,7 +274,8 @@ class Story {
             gotoFile(rootFile);
             started = true;
         }
-        if (currentLine >= scriptLines.length) {
+        if (finished) {
+            logFrameToTranscript(Finished);
             return Finished;
         } else {
             var frame: StoryFrame = null;
@@ -369,7 +372,9 @@ class Story {
 
     /** Execute a parsed script statement **/
     private function processLine (line: HankLine): StoryFrame {
-        debugTrace('Processing ${Std.string(line)}');
+        if (line.type != Empty) {
+            debugTrace('Processing ${Std.string(line)}');
+        }
 
         var file = line.sourceFile;
         var type = line.type;
