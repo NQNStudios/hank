@@ -7,9 +7,14 @@ class Util {
      **/
     public static function findEnclosure(str: String, opening: String, closing: String): String {
         var start = str.indexOf(opening);
-        var end = str.indexOf(closing);
-        if (start != -1 && end > start) {
-            return str.substr(start+opening.length, end - start - opening.length);
+        if (start + opening.length >= str.length) {
+            return null;
+        }
+        var end = str.indexOf(closing, start+opening.length);
+        if (start != -1 && end != -1) {
+            var contentsOfEnclosure = str.substr(start+opening.length, end - start - opening.length);
+            // trace('Contents of enclosure: ${contentsOfEnclosure}');
+            return contentsOfEnclosure;
         }
         return null;
     }
@@ -20,7 +25,10 @@ class Util {
 
     public static function replaceEnclosure(str: String, rep: String, opening: String, closing: String): String {
         var start = str.indexOf(opening);
-        var end = str.indexOf(closing);
+        if (start + opening.length >= str.length) {
+            return str;
+        }
+        var end = str.indexOf(closing, start + opening.length);
 
         // trace('original: ${str}');
         var beforeEnc = str.substr(0, start);
@@ -32,8 +40,11 @@ class Util {
 
     public static function containsEnclosure(str: String, opening: String, closing: String): Bool {
         var start = str.indexOf(opening);
-        var end = str.indexOf(closing);
+        if (start + opening.length >= str.length) {
+            return false;
+        }
+        var end = str.indexOf(closing,start+opening.length);
 
-        return (start != -1 && end > start);
+        return (start != -1 && end != -1);
     }
 }
