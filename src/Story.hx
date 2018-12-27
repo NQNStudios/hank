@@ -105,6 +105,7 @@ class Story {
         if (transcriptPath.length > 0) {
             transcriptFile = Some(sys.io.File.write(transcriptPath));
         }
+        interp.variables['story'] = this;
     }
 
     var rootFile = "";
@@ -291,9 +292,10 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
-        debugTrace('ORIGINAL LINES: ${lines}');
+        // debugTrace('ORIGINAL LINES: ${lines}');
         var preprocessedLines = "";
-        for (line in lines.split('\n')) {
+        var linesArray = lines.split('\n');
+        for (line in linesArray) {
             // In order to preserve the values of variables declared in embedded Haxe,
             // we need to predeclare them all as globals in this Story's interpreter.
             var trimmed = StringTools.ltrim(line);
@@ -303,12 +305,38 @@ class Story {
                     interp.variables[varName] = null;
                     // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
                     trimmed = trimmed.substr(4); 
+                    preprocessedLines += trimmed + "\n";
                 }
-                preprocessedLines += trimmed + "\n";
+                // Hank script can be embedded in Haxe using commas, much like quasiquoting in Lisp.
+                else if (StringTools.startsWith(trimmed, ',') && trimmed.charAt(1) != ',') {
+                    var hankLine = trimmed.substr(1);
+                    // TODO escape any " that might be in hank text
+                    preprocessedLines += 'story.processUnparsedLine("${hankLine}");\n';
+                } else {
+                    preprocessedLines += trimmed+'\n';
+                }
             }
         }
 
-        debugTrace('Parsing haxe "${preprocessedLines}"');
+        // debugTrace('lines after processing single lines: ${preprocessedLines}');
+
+        // Handle blocks of embedded Hank script
+        while (Util.containsEnclosure(preprocessedLines, ',,,', ',,,')) {
+            var hankBlockAsHaxe = '';
+            var hankLines = Util.findEnclosure(preprocessedLines, ',,,', ',,,');
+
+            for (line in hankLines.split('\n')) {
+                // TODO escape any " that might be in hank text of $line
+                hankBlockAsHaxe += 'story.processUnparsedLine("${line}");\n';
+            }
+
+            preprocessedLines = Util.replaceEnclosure(preprocessedLines, hankBlockAsHaxe, ',,,', ',,,');
+            // debugTrace('Found enclosure')
+        }
+
+        if (linesArray.length > 1) {
+            debugTrace('Parsing haxe block "${preprocessedLines}"');
+        }
         var program = parser.parseString(preprocessedLines);
         interp.execute(program);
     }
@@ -370,8 +398,17 @@ class Story {
 
     private var includedFilesProcessed = new Array();
 
+    /** Execute an unparsed script statement (i.e. one embedded in a Haxe block) **/
+    private function processUnparsedLine(line: String) {
+        processLine({
+            sourceFile: '',
+            lineNumber: 0,
+            type: parseLine(line, [])
+        });
+    }
+
     /** Execute a parsed script statement **/
-    private function processLine (line: HankLine): StoryFrame {
+    private function processLine(line: HankLine): StoryFrame {
         if (line.type != Empty) {
             debugTrace('Processing ${Std.string(line)}');
         }
