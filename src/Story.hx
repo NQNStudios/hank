@@ -103,6 +103,7 @@ class Story {
     **/
     public function new(debug: Bool = false, transcriptPath="") {
         debugPrints = debug;
+        interp.variables['DEBUG'] = debug;
         if (transcriptPath.length > 0) {
             transcriptFile = Some(sys.io.File.write(transcriptPath));
         }
@@ -376,7 +377,7 @@ class Story {
     }
 
     private function processNextLine(): StoryFrame {
-        debugTrace('line ${currentLine} of ${scriptLines.length}is ${scriptLines[currentLine]}');
+        // debugTrace('line ${currentLine} of ${scriptLines.length}is ${scriptLines[currentLine]}');
         var scriptLine = scriptLines[currentLine];
         var frame = processLine(scriptLine);
 
@@ -413,7 +414,7 @@ class Story {
 
     /** Execute unparsed script blocks (i.e. ones embedded in a Haxe block) **/
     private function processUnparsedLines(lines: String) {
-        debugTrace(lines.split('\n'));
+        // debugTrace(lines.split('\n'));
         parseScript(lines.split('\n'), 'EMBEDDED BLOCK ${embeddedBlocks}');
         embeddedBlocks++;
     }
@@ -429,14 +430,14 @@ class Story {
             var scriptLinesCopy = scriptLines.slice(0);
             for (line in scriptLinesCopy) {
                 if (line.sourceFile == file) {
-                    debugTrace('removing line ${Std.string(line)}');
+                    // debugTrace('removing line ${Std.string(line)}');
                     scriptLines.remove(line);
                     linesRemoved++;
                 }
             }
 
             currentLine -= linesRemoved;
-            debugTrace('After clearing ${file}, next line is ${scriptLines[currentLine].type}');
+            // debugTrace('After clearing ${file}, next line is ${scriptLines[currentLine].type}');
             lineCount -= linesRemoved;
         }
     }
@@ -660,13 +661,13 @@ class Story {
             }
 
             nextLineFile = scriptLines[l++].sourceFile;
-            debugTrace(nextLineFile);
+            // debugTrace(nextLineFile);
         }
 
         if (l < scriptLines.length) {
-            debugTrace('Stopped collecting choices before ${scriptLines[l].type}');
+            // debugTrace('Stopped collecting choices before ${scriptLines[l].type}');
         } else {
-            debugTrace('Stopped collecting choices at EOF');
+            // debugTrace('Stopped collecting choices at EOF');
         }
 
         return choices;
@@ -722,7 +723,7 @@ class Story {
                     // fill the choice's h expressions after removing the flag expression
                     choices.push(choiceToDisplay(choice, chosen));
                 } else {
-                    debugTrace('can\'t display "${choice.text}" because it has expired.');
+                    // debugTrace('can\'t display "${choice.text}" because it has expired.');
                 }
             }
         }

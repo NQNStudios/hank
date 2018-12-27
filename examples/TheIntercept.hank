@@ -54,8 +54,8 @@ var smashingWindowItem = NONE;
 
 
 // DEBUG mode adds a few shortcuts - remember to set to false in release!
-~ var DEBUG = false;
 ```
+// In Hank, DEBUG is set automatically based on the debug argument of the Story() constructor
 if (DEBUG) {
     // Haxe blocks in Hank can contain also Hank blocks!
     // The syntax for this is 3 commas, like below.
@@ -90,9 +90,6 @@ if (DEBUG) {
 	Start the story!
 
 --------------------------------------------------------------------------------*/
-
-=== debug_start ===
-
 
 === start === 
 
