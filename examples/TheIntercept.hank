@@ -22,58 +22,63 @@
 
 // what kind of clue did we pass to Hooper?
 ```
-// TODO do class, function, enum, struct, typedef declarations work in Hscript?
-enum ClueType {
-    None;
-    Straight;
-    Chess;
-    Crossword;
-}
-var hooperClueType: ClueType = None;
+// Hooper Clue types
+var NONE = 0;
+var STRAIGHT = 1;
+var CHESS = 2;
+var CROSSWORD = 3;
+var hooperClueType = NONE;
 ```
 
 ~ var hooperConfessed = false;
 
 ```
-enum SmashingItem {
-    None;
-    Shoe;
-    Bucket;
-}
-var smashingWindowItem: SmashingItem = None;
+// Items for smashing
+var SHOE = 1;
+var BUCKET = 2;
+var smashingWindowItem = NONE;
 ```
 
-VAR notraitor = false
-VAR revealedhooperasculprit = false
-VAR smashedglass = false
-VAR muddyshoes = false
+~ var notraitor = false;
+~ var revealedhooperasculprit = false;
+~ var smashedglass = false;
+~ var muddyshoes = false;
 
-VAR framedhooper = false
+~ var framedhooper = false;
 
 // What did you do with the component?
-VAR putcomponentintent = false
-VAR throwncomponentaway = false
-VAR piecereturned = false
-VAR longgrasshooperframe = false
+~ var putcomponentintent = false;
+~ var throwncomponentaway = false;
+~ var piecereturned = false;
+~ var longgrasshooperframe = false;
 
 
 // DEBUG mode adds a few shortcuts - remember to set to false in release!
-VAR DEBUG = false
-{DEBUG:
-	IN DEBUG MODE!
-	*	[Beginning...]	-> start
-	*	[Framing Hooper...] -> claim_hooper_took_component
-	*	[In with Hooper...] -> inside_hoopers_hut
-- else:
-	// First diversion: where do we begin?
- -> start
+~ var DEBUG = false;
+```
+if (DEBUG) {
+    // Haxe blocks in Hank can contain also Hank blocks!
+    // The syntax for this is 3 commas, like below.
+    ,,,
+    IN DEBUG MODE!
+    
+    // TODO allow divert on the same line as the choice text
+    * [Beginning...]	-> start
+    * [Framing Hooper...] -> claim_hooper_took_component
+    * [In with Hooper...] -> inside_hoopers_hut
+    ,,,
+    
+} else {
+    // You can embed a single Hank line in a Haxe block with a one-comma prefix. This is a nod to Lisp's quote/quasiquote syntax.
+    , -> start
 }
+```
 
  /*--------------------------------------------------------------------------------
 	Wrap up character movement using functions, in case we want to develop this logic in future
 --------------------------------------------------------------------------------*/
 
-
+// TODO change these to Haxe functions
  === function lower(ref x)
  	~ x = x - 1
 
@@ -85,6 +90,9 @@ VAR DEBUG = false
 	Start the story!
 
 --------------------------------------------------------------------------------*/
+
+=== debug_start ===
+
 
 === start === 
 
