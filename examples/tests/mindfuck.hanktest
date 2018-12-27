@@ -1,0 +1,18 @@
+This test does nutty stuff with the Hank/Haxe embedding paradigm.
+Loop #: 1
+* A series of choices
+* In Hank script embedded in Haxe script embedded in Hank script!
+* What could be more fun?
+>>> 2
+What could be more fun?
+A brief moment of sanity.
+This test does nutty stuff with the Hank/Haxe embedding paradigm.
+Loop #: 2
+* A series of choices
+* In Hank script embedded in Haxe script embedded in Hank script!
+* Gosh this sucks
+>>> 2
+Gosh this sucks
+A brief moment of sanity.
+This test does nutty stuff with the Hank/Haxe embedding paradigm.
+Thank God it's over!

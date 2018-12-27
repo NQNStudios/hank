@@ -11,7 +11,7 @@ class StoryTestCase extends utest.Test {
         Assert.equals(Std.string(expected), Std.string(actual));
     }
 
-    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, debug: Bool = false) {
+    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
         var story: Story = new Story(debug);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
@@ -27,7 +27,7 @@ class StoryTestCase extends utest.Test {
                     choices.push(line.substr(2));
 
                     line = transcriptLines[++i];
-                } while (StringTools.startsWith(line, "*"));
+                } while (line != null && StringTools.startsWith(line, "*"));
 
                 // Assert that the storyframe is a corresponding HasChoices enum
                 Assert.equals('HasChoices(${Std.string(choices)})', Std.string(story.nextFrame()));
@@ -36,8 +36,10 @@ class StoryTestCase extends utest.Test {
             } else if (StringTools.startsWith(line, ">>>")) {
                 // Make the choice given.
                 var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
-                // Assert that its output equals the next line.
-                Assert.equals(transcriptLines[++i], output);
+                if (fullTranscript || transcriptLines.length > i+1) {
+                    // Assert that its output equals the transcript's expected choice output.
+                    Assert.equals(transcriptLines[++i], output);
+                }
             } else if (StringTools.startsWith(line, "#")) {
                 // Allow comments in a transcript that need not be validated in any way
                 trace(line);
@@ -50,7 +52,9 @@ class StoryTestCase extends utest.Test {
             i += 1;
         }
 
-        // After all transcript lines are validated, there should be nothing left in the story flow!
-        Assert.equals(StoryFrame.Finished, story.nextFrame());
+        if (fullTranscript) {
+            // After all transcript lines are validated, there should be nothing left in the story flow!
+            Assert.equals(StoryFrame.Finished, story.nextFrame());
+        }
     }
 }

@@ -34,6 +34,7 @@ enum LineType {
     HaxeLine(code: String);
     HaxeBlock(lines: Int, code: String);
     BlockComment(lines: Int);
+    EOF(file: String);
     Empty;
 }
 
@@ -91,7 +92,7 @@ class Story {
             case Some(file):
                 file.write(Bytes.ofString(line + "\n"));
             default:
-                debugTrace("No transcript file ");
+                // debugTrace("No transcript file ");
         }
     }
 
@@ -121,7 +122,7 @@ class Story {
             }
         } 
 
-        parseScript(storyFile);
+        parseScriptFile(storyFile);
     }
 
     private function parseLine(line: String, rest: Array<String>): LineType {
@@ -225,8 +226,12 @@ class Story {
         }
     }
 
-    private function parseScript(file: String) {
+    private function parseScriptFile(file: String) {
         var unparsedLines = sys.io.File.getContent(file).split('\n');
+        parseScript(unparsedLines, file);
+    }
+
+    private function parseScript(unparsedLines: Array<String>, file: String) {
         lineCount += unparsedLines.length;
 
         // Pre-Parse every line in the given file
@@ -240,6 +245,9 @@ class Story {
             };
             var unparsedLine = unparsedLines[idx];
             parsedLine.type = parseLine(unparsedLine, unparsedLines.slice(idx+1));
+            if (file.indexOf('EMBEDDED') == 0) {
+                // debugTrace('adding embedded line ${Std.string(parsedLine)}');
+            }
             scriptLines.push(parsedLine);
 
             // Normal lines are parsed alone, but Haxe blocks are parsed as a group, so
@@ -267,6 +275,12 @@ class Story {
                     idx += 1;
             }
         }
+
+        scriptLines.push({
+            sourceFile: file,
+            lineNumber: idx,
+            type: EOF(file)
+        });
     }
 
     private var started = false;
@@ -309,9 +323,9 @@ class Story {
                 }
                 // Hank script can be embedded in Haxe using commas, much like quasiquoting in Lisp.
                 else if (StringTools.startsWith(trimmed, ',') && trimmed.charAt(1) != ',') {
-                    var hankLine = trimmed.substr(1);
+                    var hankLine = StringTools.trim(trimmed.substr(1));
                     // TODO escape any " that might be in hank text
-                    preprocessedLines += 'story.processUnparsedLine("${hankLine}");\n';
+                    preprocessedLines += 'story.processUnparsedLines("${hankLine}");\n';
                 } else {
                     preprocessedLines += trimmed+'\n';
                 }
@@ -323,19 +337,17 @@ class Story {
         // Handle blocks of embedded Hank script
         while (Util.containsEnclosure(preprocessedLines, ',,,', ',,,')) {
             var hankBlockAsHaxe = '';
-            var hankLines = Util.findEnclosure(preprocessedLines, ',,,', ',,,');
+            var hankLines = StringTools.trim(Util.findEnclosure(preprocessedLines, ',,,', ',,,'));
 
-            for (line in hankLines.split('\n')) {
-                // TODO escape any " that might be in hank text of $line
-                hankBlockAsHaxe += 'story.processUnparsedLine("${line}");\n';
-            }
+            // TODO escape any " that might be in hank text of $line
+            hankBlockAsHaxe += 'story.processUnparsedLines("${hankLines}");\n';
 
             preprocessedLines = Util.replaceEnclosure(preprocessedLines, hankBlockAsHaxe, ',,,', ',,,');
             // debugTrace('Found enclosure')
         }
 
         if (linesArray.length > 1) {
-            debugTrace('Parsing haxe block "${preprocessedLines}"');
+            // debugTrace('Parsing haxe block "${preprocessedLines}"');
         }
         var program = parser.parseString(preprocessedLines);
         interp.execute(program);
@@ -364,7 +376,7 @@ class Story {
     }
 
     private function processNextLine(): StoryFrame {
-        // debugTrace('line ${currentLine} of ${scriptLines.length}');
+        debugTrace('line ${currentLine} of ${scriptLines.length}is ${scriptLines[currentLine]}');
         var scriptLine = scriptLines[currentLine];
         var frame = processLine(scriptLine);
 
@@ -397,21 +409,45 @@ class Story {
     }
 
     private var includedFilesProcessed = new Array();
+    private var embeddedBlocks = 0;
 
-    /** Execute an unparsed script statement (i.e. one embedded in a Haxe block) **/
-    private function processUnparsedLine(line: String) {
-        processLine({
-            sourceFile: '',
-            lineNumber: 0,
-            type: parseLine(line, [])
-        });
+    /** Execute unparsed script blocks (i.e. ones embedded in a Haxe block) **/
+    private function processUnparsedLines(lines: String) {
+        debugTrace(lines.split('\n'));
+        parseScript(lines.split('\n'), 'EMBEDDED BLOCK ${embeddedBlocks}');
+        embeddedBlocks++;
+    }
+
+    private function removeEmbeddedBlock() {
+        var embedded = (scriptLines[currentLine].sourceFile.indexOf('EMBEDDED BLOCK') == 0);
+        var file = scriptLines[currentLine].sourceFile;
+        if (embedded) {
+            // Diverting out of an embedded Hank block means we want to wipe the embedded parsed lines out of the buffer!
+            var linesRemoved = 0;
+            // Make a copy to iterate through during removal,
+            // or else removal will get very messed up
+            var scriptLinesCopy = scriptLines.slice(0);
+            for (line in scriptLinesCopy) {
+                if (line.sourceFile == file) {
+                    debugTrace('removing line ${Std.string(line)}');
+                    scriptLines.remove(line);
+                    linesRemoved++;
+                }
+            }
+
+            currentLine -= linesRemoved;
+            debugTrace('After clearing ${file}, next line is ${scriptLines[currentLine].type}');
+            lineCount -= linesRemoved;
+        }
     }
 
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
         if (line.type != Empty) {
-            debugTrace('Processing ${Std.string(line)}');
+            // debugTrace('Processing ${Std.string(line)}');
         }
+
+        var embedded = (scriptLines[currentLine].sourceFile.indexOf('EMBEDDED BLOCK') == 0);
 
         var file = line.sourceFile;
         var type = line.type;
@@ -423,6 +459,9 @@ class Story {
 
             // Execute include statements by jumping to the start of that file
             case IncludeFile(path):
+                if (embedded) {
+                    return Error("Trust me, you'd rather not use a double-nested INCLUDE statement.");
+                }
                 if (includedFilesProcessed.indexOf(path) == -1) {
                     includedFilesProcessed.push(path);
                     gotoFile(path);
@@ -433,10 +472,26 @@ class Story {
 
             // Execute diverts by following them immediately
             case Divert(target):
+                // If the divert is inside an embedded block, we can clear that block!
+                removeEmbeddedBlock();
+
                 return gotoSection(target);
+
+            // TODO add a linetype for EOF and also clear embedded lines when reaching one of those
+            case EOF(file):
+                if (embedded) {
+                    removeEmbeddedBlock();
+                    stepLine();
+                    return Empty;
+                } else {
+                    return Finished;
+                }
 
             // When a new section is declared control flow stops. Skip to the end of the current file
             case DeclareSection(_):
+                if (embedded) {
+                    return Error("Trust me, you'd rather not use a double-nested section declaration.");
+                }
                 var nextLineFile = "";
                 do {
                     stepLine();
@@ -448,10 +503,16 @@ class Story {
 
             // Execute haxe lines with hscript
             case HaxeLine(code):
+                if (embedded) {
+                    return Error("Trust me, you'd rather not use a triple-nested Haxe line");
+                }
                 processHaxeBlock(code);
                 stepLine();
                 return Empty;
             case HaxeBlock(_, code):
+                if (embedded) {
+                    return Error("Trust me, you'd rather not use a triple-nested Haxe block");
+                }
                 processHaxeBlock(code);
                 stepLine();
                 return Empty;
@@ -469,15 +530,16 @@ class Story {
 
             // Execute gathers by updating the choice depth and continuing from that point
             case Gather(depth, nextPartType):
-                if (choiceDepth > depth) {
-                    choiceDepth = depth;
+                // +1 is applied because it's legal to place gather unnecessary gathers of choiceDepth+1 (i.e. gather on the first line in a series of choice/gather segments.)
+                if (choiceDepth + 1 >= depth) {
+                    choiceDepth = Math.floor(Math.min(choiceDepth, depth));
                     return processLine({
                         lineNumber: currentLine,
                         sourceFile: scriptLines[currentLine].sourceFile,
                         type: nextPartType
                     });
                 } else {
-                    return Error("Encountered a gather for the wrong depth");
+                    return Error('Encountered a gather for depth ${depth} when the current depth was ${choiceDepth}');
                 }
 
             // Skip comments and empty lines
@@ -511,6 +573,7 @@ class Story {
         choiceDepth = choiceTaken.depth + 1;
         // Remove * choices from scriptLines
         if (choiceTaken.expires) {
+            // debugTrace('Chose "${choiceTaken.text}". Choice is now expiring ');
             choicesEliminated.push(choiceTaken.id);
         }
         // Find the line where the choice taken occurs
@@ -567,7 +630,7 @@ class Story {
         var file = scriptLines[currentLine].sourceFile;
         var nextLineFile = file;
         var l = currentLine;
-        while (l < scriptLines.length && scriptLines[l].sourceFile == file) { // check for EOF
+        while (l < scriptLines.length) {
 
             var type = scriptLines[l].type;
             switch (type) {
@@ -590,11 +653,20 @@ class Story {
                 // Or when we hit a section declaration
                 case DeclareSection(_):
                     break;
+                // Or when we hit EOF
+                case EOF(_):
+                    break;
                 default:
             }
 
             nextLineFile = scriptLines[l++].sourceFile;
-            // debugTrace(nextLineFile);
+            debugTrace(nextLineFile);
+        }
+
+        if (l < scriptLines.length) {
+            debugTrace('Stopped collecting choices before ${scriptLines[l].type}');
+        } else {
+            debugTrace('Stopped collecting choices at EOF');
         }
 
         return choices;
@@ -649,6 +721,8 @@ class Story {
                 if (choicesEliminated.indexOf(choice.id) == -1) {
                     // fill the choice's h expressions after removing the flag expression
                     choices.push(choiceToDisplay(choice, chosen));
+                } else {
+                    debugTrace('can\'t display "${choice.text}" because it has expired.');
                 }
             }
         }
@@ -664,7 +738,7 @@ class Story {
         choiceDepth = 0;
         // Update this section's view count
         if (!interp.variables.exists(section)) {
-            throw 'Tried to divert to undeclared section ${section}.';
+            return Error('Tried to divert to undeclared section ${section}.');
         }
         interp.variables[section] += 1;
         for (line in 0...scriptLines.length) {
