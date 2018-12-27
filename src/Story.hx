@@ -456,7 +456,13 @@ class Story {
             // Execute text lines by evaluating their {embedded expressions}
             case OutputText(text):
                 stepLine();
-                return HasText(fillHExpressions(text));
+                var textToOutput = fillHExpressions(text);
+                return if (textToOutput.length > 0) {
+                    HasText(fillHExpressions(text));
+                } else {
+                    // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
+                    Empty;
+                }
 
             // Execute include statements by jumping to the start of that file
             case IncludeFile(path):
@@ -558,8 +564,23 @@ class Story {
             var expression = Util.findEnclosure(text,"{","}");
             // debugTrace(expression);
             var parsed = parser.parseString(expression);
-            text = Util.replaceEnclosure(text, Std.string(interp.expr(parsed)), "{", "}");
+            var value = interp.expr(parsed);
+
+            // If an expression evaluates null, don't add any text.
+            var stringValue = if (value != null) {
+                Std.string(value);
+            } else {
+                "";
+            }
+
+            text = Util.replaceEnclosure(text, stringValue, "{", "}");
         }
+
+        // Also trim out all duplicate whitespace
+        while (text.indexOf('  ') != -1) {
+            text = StringTools.replace(text, '  ', ' ');
+        }
+
         return text;
     }
 

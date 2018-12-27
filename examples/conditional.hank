@@ -1,0 +1,2 @@
+{if (DEBUG) "Debug mode!"}
+{if (!DEBUG) "Not debug mode" else "debug mode"}

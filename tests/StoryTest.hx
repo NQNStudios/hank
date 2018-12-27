@@ -166,21 +166,26 @@ class StoryTest extends src.StoryTestCase {
         }
     }
 
-     public function testRunIntercept1() {
-         validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", true);
-         validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false);
-     }
+    public function testRunIntercept1() {
+        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", true);
+        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false);
+    }
  
-     public function testRunInterceptDebug1() {
-         validateAgainstTranscript(
-             "examples/TheIntercept.hank",
-             "examples/tests/interceptDebug1.hanktest",
-             false, // Don't validate all of the Intercept until the port is done
-             true); // Use debugTrace statements and set DEBUG to true
-     }
+    public function testRunInterceptDebug1() {
+        validateAgainstTranscript(
+            "examples/TheIntercept.hank",
+            "examples/tests/interceptDebug1.hanktest",
+            false, // Don't validate all of the Intercept until the port is done
+            true); // Use debugTrace statements and set DEBUG to true
+    }
 
     public function testEmbeddedHankMindfuck() {
-         // Test the situation where embedded Hank lines are triggered, and later the story loops to the same Haxe block with different conditions
-         validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true);
-     }
+        // Test the situation where embedded Hank lines are triggered, and later the story loops to the same Haxe block with different conditions
+        validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true);
+    }
+
+    public function testConditionalBlocks() {
+        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false);
+        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true);
+    }
 }
