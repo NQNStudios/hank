@@ -188,4 +188,13 @@ class StoryTest extends src.StoryTestCase {
         validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false);
         validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true);
     }
+
+    /** Test one of Nat's private WIP Hank stories **/
+    public function testPrivateStories() {
+        if (sys.FileSystem.exists('examples/shave')) {
+            validateAgainstTranscript('examples/shave/shave-draft2.hank', 'examples/shave/tests/1.hanktest');
+        } else {
+            assertTrue(true);
+        }
+    }
 }
