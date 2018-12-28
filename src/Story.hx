@@ -16,6 +16,7 @@ typedef HankLine = {
 }
 
 typedef Choice = {
+    var label: Option<String>;
     var expires: Bool;
     var text: String;
     var depth: Int;
@@ -30,7 +31,7 @@ enum LineType {
     DeclareSection(name: String);
     DeclareSubsection(name: String);
     Divert(target: String);
-    Gather(depth: Int, restOfLine: LineType);
+    Gather(label: Option<String>, depth: Int, restOfLine: LineType);
     HaxeLine(code: String);
     HaxeBlock(lines: Int, code: String);
     BlockComment(lines: Int);
@@ -145,6 +146,7 @@ class Story {
                 loadScript(fullPath, true);
                 return IncludeFile(fullPath);
             }
+
             // Parse a section or subsection declaration
             else if (StringTools.startsWith(trimmedLine, "=")) {
                 var equals_signs = 1;
@@ -170,33 +172,57 @@ class Story {
                     default:
                         return DeclareSection(sectionName);
                 }
-            } else if (StringTools.startsWith(trimmedLine, "->")) {
+            }
+            
+            else if (StringTools.startsWith(trimmedLine, "->")) {
                 return Divert(StringTools.trim(trimmedLine.substr(2)));
-            } else if (StringTools.startsWith(trimmedLine, "*") || StringTools.startsWith(trimmedLine, "+")) {
+            }
+            
+            else if (StringTools.startsWith(trimmedLine, "*") || StringTools.startsWith(trimmedLine, "+")) {
                 var expires = StringTools.startsWith(trimmedLine, "*");
                 var depth = 1;
                 while (trimmedLine.charAt(depth) == trimmedLine.charAt(depth-1)) {
                     depth += 1;
                 }
 
-                var choiceText = StringTools.trim(trimmedLine.substr(depth));
+                // Check for a label in parens
+                var remainder = StringTools.trim(trimmedLine.substr(depth));
+                var label = None;
+                var labelText = Util.findEnclosureIfStartsWith(trimmedLine, '(', ')');
+                if (labelText.length > 0) {
+                    label = Some(labelText);
+                }
+
+                var choiceText = StringTools.trim(StringTools.replace(trimmedLine.substr(depth), '(${labelText})', ""));
                 return DeclareChoice({
+                    label: label,
                     expires: expires,
                     text: choiceText,
                     depth: depth,
                     id: choicesParsed++
                     });
-            } else if (StringTools.startsWith(trimmedLine,"-")) {
+            }
+            
+            else if (StringTools.startsWith(trimmedLine,"-")) {
                 var gatherDepth = 1;
                 while (trimmedLine.charAt(gatherDepth) == trimmedLine.charAt(gatherDepth-1)) {
                     gatherDepth += 1;
                 }
 
+                var remainder = StringTools.trim(trimmedLine.substr(gatherDepth));
+
+                var label = None;
+                var labelText = Util.findEnclosureIfStartsWith()
+
                 // Gathers store the parsed version of the next line.
                 return Gather(gatherDepth, parseLine(trimmedLine.substr(gatherDepth), rest));
-            } else if (StringTools.startsWith(trimmedLine, "~")) {
+            }
+            
+            else if (StringTools.startsWith(trimmedLine, "~")) {
                 return HaxeLine(StringTools.trim(trimmedLine.substr(1)));
-            } else if (StringTools.startsWith(trimmedLine, "```")) {
+            }
+            
+            else if (StringTools.startsWith(trimmedLine, "```")) {
                 var block = "";
                 var lines = 2;
                 // Loop until the end of the code block, incrementing the line count every time
@@ -209,6 +235,7 @@ class Story {
 
                 return HaxeBlock(lines, block);
             }
+
             else if(StringTools.startsWith(trimmedLine, "/*")) {
                 var lines = 2;
                 // Loop until the end of the multiline block comment
@@ -219,10 +246,13 @@ class Story {
 
                 return BlockComment(lines);
             }
+
             else {
                 return OutputText(trimmedLine);
             }
-        } else {
+        }
+        
+        else {
             return Empty;
         }
     }
@@ -752,9 +782,11 @@ class Story {
     }
 
     /**
-    Skip script execution to the desired section
+    Skip script execution to the desired target
     **/
-    public function gotoSection(section: String): StoryFrame {
+    public function divert(target: String): StoryFrame {
+        // TODO check the current section for a subsection by the name of target, or else parse . notation for subsections
+        // TODO if going to a labeled gather, set the choice depth to that gather's depth - 1
         // debugTrace('going to section ${section}');
         // this should clear the current choice depth
         choiceDepth = 0;
