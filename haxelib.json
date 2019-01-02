@@ -10,6 +10,7 @@
     "contributors": ["NQNStudios"],
     "dependencies": {
         "hx3compat": "",
-        "hscript": ""
+        "hscript": "",
+        "utest": ""
     }
 }

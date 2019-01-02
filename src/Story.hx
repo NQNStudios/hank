@@ -36,7 +36,7 @@ enum LineType {
     Empty;
 }
 
-@:allow(src.StoryTest)
+@:allow(tests.StoryTest)
 class Story {
     private var lineCount: Int = 0;
     private var scriptLines: Array<HankLine> = new Array();

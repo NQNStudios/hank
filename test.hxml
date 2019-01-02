@@ -1,4 +1,5 @@
--lib hx3compat
 -lib hscript
--main src.StoryTest
+-lib utest
+-cp src
+-main tests.StoryTest
 --interp
