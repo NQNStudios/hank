@@ -6,7 +6,7 @@ import src.Story.LineType;
 import src.StoryFrame;
 import utest.Assert;
 
-class StoryTest extends utest.Test {
+class StoryTest extends src.StoryTestCase {
     public static function main() {
         utest.UTest.run([new StoryTest()]);
     }
@@ -20,49 +20,9 @@ class StoryTest extends utest.Test {
     public function testHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello.hank");
-        Assert.equals('HasText(Hello, world!)', Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("Hello, world!"), story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
-    }
-
-    public function validateAgainstTranscript(storyFile: String, transcriptFile: String) {
-        var story: Story = new Story();
-        story.loadScript(storyFile);
-        var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
-
-        var i = 0;
-        while (i < transcriptLines.length) {
-            var line = transcriptLines[i];
-
-            if (StringTools.startsWith(line, "*")) {
-                // Collect the expected set of choices from the transcript.
-                var choices = new Array<String>();
-                do {
-                    choices.push(line.substr(2));
-
-                    line = transcriptLines[++i];
-                } while (StringTools.startsWith(line, "*"));
-
-                // Assert that the storyframe is a corresponding HasChoices enum
-                Assert.equals('HasChoices(${Std.string(choices)})', Std.string(story.nextFrame()));
-
-                continue;
-            } else if (StringTools.startsWith(line, ">>>")) {
-                // Make the choice given.
-                var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
-                // Assert that its output equals the next line.
-                Assert.equals(transcriptLines[++i], output);
-            } else if (StringTools.startsWith(line, "#")) {
-                // Allow comments in a transcript that need not be validated in any way
-                trace(line);
-            }
-            else if (line.length > 0) {
-                // Assert that the story's next frame is HasText(line)
-                Assert.equals('HasText(${line})', Std.string(story.nextFrame()));
-            }
-
-            i += 1;
-        }
     }
 
     public function testRunFullSpec2() {
@@ -79,44 +39,44 @@ class StoryTest extends utest.Test {
     public function testRunFullSpec1() {
         var story: Story = new Story(true, "transcript.hanktest");
         story.loadScript("examples/main.hank");
-        var frame1 = Std.string(story.nextFrame());
+        var frame1 = story.nextFrame();
         // This calls the INCLUDE statement. Ensure that all lines
         // were included
         Assert.equals(38+22, story.lineCount);
 
-        Assert.equals("HasText(This is a section of a Hank story. It's pretty much like a Knot in Ink.)", frame1);
-        Assert.equals("HasText(Line breaks define the chunks of this section that will eventually get sent to your game to process!)", Std.string(story.nextFrame()));
-        Assert.equals("HasText(Your Hank scripts will contain the static content of your game, but they can also insert dynamic content, even the result of complex haxe expressions!)", Std.string(story.nextFrame()));
-        Assert.equals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("This is a section of a Hank story. It's pretty much like a Knot in Ink."), frame1);
+        assertComplexEquals(HasText("Line breaks define the chunks of this section that will eventually get sent to your game to process!"), story.nextFrame());
+        assertComplexEquals(HasText("Your Hank scripts will contain the static content of your game, but they can also insert dynamic content, even the result of complex haxe expressions!"), story.nextFrame());
+        assertComplexEquals(HasText("You can include choices for the player."), story.nextFrame());
 
-        Assert.equals("HasChoices([Door A looks promising!,Door B])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasChoices(["Door A looks promising!", "Door B"]), story.nextFrame());
 
         Assert.equals("Door A opens and there's nothing behind it.", story.choose(0));
 
-        Assert.equals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
-        Assert.equals("HasChoices([Door B,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("You can include choices for the player."), story.nextFrame());
+        assertComplexEquals(HasChoices(["Door B,Choices can depend on logical conditions being truthy."]), story.nextFrame());
 
         // Picking the same + choice should loop
         Assert.equals("Door B opens but the room on the other side is identical!", story.choose(0)); 
-        Assert.equals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
-        Assert.equals("HasChoices([Door B,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("You can include choices for the player."), story.nextFrame());
+        assertComplexEquals(HasChoices(["Door B","Choices can depend on logical conditions being truthy."]), story.nextFrame());
         Assert.equals("Door B opens but the room on the other side is identical!", story.choose(0)); 
-        Assert.equals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
-        Assert.equals("HasChoices([Door B,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("You can include choices for the player."), story.nextFrame());
+        assertComplexEquals(HasChoices(["Door B","Choices can depend on logical conditions being truthy."]), story.nextFrame());
         Assert.equals("Door B opens but the room on the other side is identical!", story.choose(0)); 
-        Assert.equals("HasText(You can include choices for the player.)", Std.string(story.nextFrame()));
-        Assert.equals("HasChoices([Door B,Choices can depend on logical conditions being truthy.])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("You can include choices for the player."), story.nextFrame());
+        assertComplexEquals(HasChoices(["Door B","Choices can depend on logical conditions being truthy."]), story.nextFrame());
 
         Assert.equals("Choices can depend on logical conditions being truthy.", story.choose(1));
 
-        Assert.equals("HasChoices([I don't think I'll use Hank for my games.,Hank sounds awesome, thanks!])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasChoices(["I don't think I'll use Hank for my games.","Hank sounds awesome, thanks!"]), story.nextFrame());
         Assert.equals("I don't think I'll use Hank for my games.", story.choose(0));
-        Assert.equals("HasText(Are you sure?)", Std.string(story.nextFrame()));
-        Assert.equals("HasChoices([Yes I'm sure.,I've changed my mind.])", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("Are you sure?"), story.nextFrame());
+        assertComplexEquals(HasChoices(["Yes I'm sure.","I've changed my mind."]), story.nextFrame());
         Assert.equals("Yes I'm sure.", story.choose(0));
-        Assert.equals("HasText(That's perfectly valid!)", Std.string(story.nextFrame()));
-        Assert.equals("HasText(That's the end of this example!)", Std.string(story.nextFrame()));
-        Assert.equals("HasText(This should say 'mouse': mouse)", Std.string(story.nextFrame()));
+        assertComplexEquals(HasText("That's perfectly valid!"), story.nextFrame());
+        assertComplexEquals(HasText("That's the end of this example!"), story.nextFrame());
+        assertComplexEquals(HasText("This should say 'mouse': mouse"), story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
 
         // Validate the transcript that was produced
@@ -136,7 +96,7 @@ class StoryTest extends utest.Test {
 
     public function testParseLine() {
         var story = new Story();
-        Assert.equals("IncludeFile(examples/extra.hank)",Std.string(story.parseLine("INCLUDE examples/extra.hank", [])));
+        assertComplexEquals(IncludeFile("examples/extra.hank"),story.parseLine("INCLUDE examples/extra.hank", []));
 
         // TODO test edge cases of all line types (maybe with more separate functions too)
     }
