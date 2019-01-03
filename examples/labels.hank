@@ -1,0 +1,13 @@
+- (start)
+Loop #: {start}
+A: {choice_a}
+B: {choice_b}
+C: {choice_c}
+* (choice_a) Choice A
+* (choice_b) Choice B
+* (choice_c) {choice_b + choice_a == 2} Choice C
+    -> end
+- -> start
+
+- (end)
+It's over!

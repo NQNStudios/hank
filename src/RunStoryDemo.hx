@@ -32,10 +32,19 @@ class RunStoryDemo {
                         trace('${index+1}. ${choice}');
                     }
 
-                    var choiceIndex = Std.parseInt(input.readLine());
-                    trace(choiceIndex);
+                    var choiceIndex = -1;
+                    while (true) {
+                        choiceIndex = Std.parseInt(input.readLine());
+                        if (choiceIndex < 1 || choiceIndex > choices.length) {
+                            trace('${choiceIndex} is out of range. Try again');
+                        } else {
+                            break;
+                        }
+                    } 
+
                     trace(story.choose(choiceIndex-1));
                 default:
+                    trace(Std.string(frame));
             }
         } while (frame != Finished);
 

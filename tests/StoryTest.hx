@@ -14,7 +14,7 @@ class StoryTest extends src.StoryTestCase {
     public function testParseHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello.hank");
-        assertLineType('OutputText(Hello, world!)', story.scriptLines[0]);
+        assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
     }
 
     public function testHelloWorld() {
@@ -103,11 +103,6 @@ class StoryTest extends src.StoryTestCase {
         // TODO test edge cases of all line types (maybe with more separate functions too)
     }
 
-    private function assertLineType(type: String, line: HankLine) {
-        var actual = Std.string(line.type);
-        Assert.equals(type, actual);
-    }
-
     public function testParseFullSpec() {
         // Parse the main.hank script and test that all lines are correctly parsed
         var story = new Story(true);
@@ -121,53 +116,53 @@ class StoryTest extends src.StoryTestCase {
 
         var lineTypes = [
             // TODO the 22 lines of the extra.hank file
-            'IncludeFile(examples/extra.hank)',
-            'Empty',
-            'Divert(start)',
-            'Empty',
-            'DeclareSection(start)',
-            'OutputText(This is a section of a Hank story. It\'s pretty much like a Knot in Ink.)',
-            'OutputText(Line breaks define the chunks of this section that will eventually get sent to your game to process!)',
-            'OutputText(Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex {part1 + " " + part2}!)',
-            'Empty',
-            'HaxeLine(var multiline_logic = "Logic can happen on any line before a multiline comment.";)',
-            'BlockComment(3)',
-            'Empty',
-            'Empty',
-            'HaxeLine(multiline_logic_example = "Logic can happen on any line after a multiline comment.";)',
-            'Empty',
-            'Divert(choice_example)',
-            'Empty',
-            'DeclareSection(final_choice)',
-            'Empty',
-            'HaxeBlock(5,var variable_declared_in_block="mouse";\n// This is a comment INSIDE a haxe block\n/*The whole block will be parsed and executed at the same time*/\n)',
-            'Empty',
-            'Empty',
-            'Empty',
-            'Empty',
-            'DeclareChoice({text: I don\'t think I\'ll use Hank for my games., id: 3, depth: 1, expires: true})',
-            'OutputText(Are you sure?)',
-            'DeclareChoice({text: Yes I\'m sure., id: 4, depth: 2, expires: true})',
-            'OutputText(That\'s perfectly valid!)',
-            'Divert(the_end)',
-            'DeclareChoice({text: I\'ve changed my mind., id: 5, depth: 2, expires: true})',
-            'Divert(final_choice)',
-            'DeclareChoice({text: Hank sounds awesome, thanks!, id: 6, depth: 1, expires: true})',
-            'Divert(the_end)',
-            'Empty',
-            'DeclareSection(the_end)',
-            'Empty',
-            'OutputText(That\'s the end of this example!)',
-            'OutputText(These should all say \'mouse\':)',
-            'OutputText({what_happened})',
-            'OutputText({variable_declared_in_block})',
-            'EOF(examples/main.hank)'
+            IncludeFile('examples/extra.hank'),
+            NoOp,
+            Divert('start'),
+            NoOp,
+            DeclareSection('start'),
+            OutputText("This is a section of a Hank story. It's pretty much like a Knot in Ink."),
+            OutputText("Line breaks define the chunks of this section that will eventually get sent to your game to process!"),
+            OutputText('Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex {part1 + " " + part2}!'),
+            NoOp,
+            HaxeLine('var multiline_logic = "Logic can happen on any line before a multiline comment.";'),
+            BlockComment(3),
+            NoOp,
+            NoOp,
+            HaxeLine('multiline_logic_example = "Logic can happen on any line after a multiline comment.";'),
+            NoOp,
+            Divert('choice_example'),
+            NoOp,
+            DeclareSection('final_choice'),
+            NoOp,
+            HaxeBlock(5,'var variable_declared_in_block="mouse";\n// This is a comment INSIDE a haxe block\n/*The whole block will be parsed and executed at the same time*/\n'),
+            NoOp,
+            NoOp,
+            NoOp,
+            NoOp,
+            DeclareChoice({label: None, text: "I don't think I'll use Hank for my games.", id: 3, depth: 1, expires: true}),
+            OutputText('Are you sure?'),
+            DeclareChoice({label: None, text: "Yes I'm sure.", id: 4, depth: 2, expires: true}),
+            OutputText("That's perfectly valid!"),
+            Divert('the_end'),
+            DeclareChoice({label: None, text: "I've changed my mind.", id: 5, depth: 2, expires: true}),
+            Divert("final_choice"),
+            DeclareChoice({label: None, text: "Hank sounds awesome, thanks!", id: 6, depth: 1, expires: true}),
+            Divert("the_end"),
+            NoOp,
+            DeclareSection("the_end"),
+            NoOp,
+            OutputText("That's the end of this example!"),
+            OutputText("These should all say 'mouse':"),
+            OutputText("{what_happened}"),
+            OutputText("{variable_declared_in_block}"),
+            EOF('examples/main.hank')
         ];
 
         var idx = 23;
         var i = 0;
         while (idx < story.scriptLines.length) {
-            assertLineType(lineTypes[i++], story.scriptLines[idx++]);
+            assertComplexEquals(lineTypes[i++], story.scriptLines[idx++].type);
         }
     }
 
@@ -191,6 +186,11 @@ class StoryTest extends src.StoryTestCase {
     public function testConditionalBlocks() {
         validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false);
         validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true);
+    }
+
+    public function testLabels() {
+        validateAgainstTranscript("examples/labels.hank", "examples/tests/labels1.hanktest");
+        validateAgainstTranscript("examples/labels.hank", "examples/tests/labels2.hanktest");
     }
 
     /** Test one of Nat's private WIP Hank stories **/

@@ -36,7 +36,7 @@ enum LineType {
     HaxeBlock(lines: Int, code: String);
     BlockComment(lines: Int);
     EOF(file: String);
-    Empty;
+    NoOp;
 }
 
 @:allow(tests.StoryTest)
@@ -188,12 +188,14 @@ class Story {
                 // Check for a label in parens
                 var remainder = StringTools.trim(trimmedLine.substr(depth));
                 var label = None;
-                var labelText = Util.findEnclosureIfStartsWith(trimmedLine, '(', ')');
+                var labelText = Util.findEnclosureIfStartsWith(remainder, '(', ')');
                 if (labelText.length > 0) {
                     label = Some(labelText);
+                    // Set the choice's label variable to 0
+                    interp.variables[labelText] = 0;
                 }
 
-                var choiceText = StringTools.trim(StringTools.replace(trimmedLine.substr(depth), '(${labelText})', ""));
+                var choiceText = StringTools.trim(StringTools.replace(remainder, '(${labelText})', ""));
                 return DeclareChoice({
                     label: label,
                     expires: expires,
@@ -212,10 +214,18 @@ class Story {
                 var remainder = StringTools.trim(trimmedLine.substr(gatherDepth));
 
                 var label = None;
-                var labelText = Util.findEnclosureIfStartsWith()
+                var labelText = Util.findEnclosureIfStartsWith(remainder, '(', ')');
+                if (labelText.length > 0) {
+                    label = Some(labelText);
+                    // Initialize the labeled gather's view count variable to 0
+                    interp.variables[labelText] = 0;
+
+                    // Don't add the label to the text
+                    remainder = remainder.substr(labelText.length+2);
+                }
 
                 // Gathers store the parsed version of the next line.
-                return Gather(gatherDepth, parseLine(trimmedLine.substr(gatherDepth), rest));
+                return Gather(label, gatherDepth, parseLine(remainder, rest));
             }
             
             else if (StringTools.startsWith(trimmedLine, "~")) {
@@ -253,7 +263,7 @@ class Story {
         }
         
         else {
-            return Empty;
+            return NoOp;
         }
     }
 
@@ -272,7 +282,7 @@ class Story {
             var parsedLine = {
                 sourceFile: file,
                 lineNumber: idx+1,
-                type: LineType.Empty
+                type: NoOp
             };
             var unparsedLine = unparsedLines[idx];
             parsedLine.type = parseLine(unparsedLine, unparsedLines.slice(idx+1));
@@ -289,7 +299,7 @@ class Story {
                         scriptLines.push({
                             sourceFile: "",
                             lineNumber: 0,
-                            type: LineType.Empty
+                            type: NoOp
                         });
                     }
                     idx += lines;
@@ -298,7 +308,7 @@ class Story {
                         scriptLines.push({
                             sourceFile: "",
                             lineNumber: 0,
-                            type: LineType.Empty
+                            type: NoOp
                         });
                     }
                     idx += lines;
@@ -474,7 +484,7 @@ class Story {
 
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
-        if (line.type != Empty) {
+        if (line.type != NoOp) {
             // debugTrace('Processing ${Std.string(line)}');
         }
 
@@ -512,7 +522,7 @@ class Story {
                 // If the divert is inside an embedded block, we can clear that block!
                 removeEmbeddedBlock();
 
-                return gotoSection(target);
+                return divert(target);
 
             // TODO add a linetype for EOF and also clear embedded lines when reaching one of those
             case EOF(file):
@@ -563,10 +573,11 @@ class Story {
                     return gotoNextGather();
                 }
                 
-                return HasChoices([for (choice in collectChoicesToDisplay()) choice.text]);
+                var availableChoices = [for (choice in collectChoicesToDisplay()) choice.text];
+                return if (availableChoices.length > 0) HasChoices(availableChoices) else Error("Ran out of available choices.");
 
             // Execute gathers by updating the choice depth and continuing from that point
-            case Gather(depth, nextPartType):
+            case Gather(label, depth, nextPartType):
                 // +1 is applied because it's legal to place gather unnecessary gathers of choiceDepth+1 (i.e. gather on the first line in a series of choice/gather segments.)
                 if (choiceDepth + 1 >= depth) {
                     choiceDepth = Math.floor(Math.min(choiceDepth, depth));
@@ -622,6 +633,14 @@ class Story {
     public function choose(index: Int): String {
         var validChoices = collectChoicesToDisplay(true);
         var choiceTaken = validChoices[index];
+
+        // When the user chooses a labeled choice, its flag should be incremented
+        switch (choiceTaken.label) {
+            case Some(labelText):
+                interp.variables[labelText] += 1;
+            default:
+        }
+
         choiceDepth = choiceTaken.depth + 1;
         // Remove * choices from scriptLines
         if (choiceTaken.expires) {
@@ -661,7 +680,13 @@ class Story {
             switch (scriptLines[l].type) {
                 case DeclareSection(_):
                     return Error("Failed to find a gather or divert before the file ended.");
-                case Gather(depth, type):
+                case Gather(label, depth, type):
+                    // TODO does this need to check depth?
+                    switch (label) {
+                        case None:
+                        case Some(labelText):
+                            interp.variables[labelText] += 1;
+                    }
                     gotoLine(l);
                     return Empty;
                 default:
@@ -689,16 +714,18 @@ class Story {
                 // Collect choices of the current depth
                 case DeclareChoice(choice):
                     // trace(Std.string(choice));
+                    // Make a copy of the choice -- although I don't remember why
                     if (choice.depth == choiceDepth) {
                         choices.push({
                             expires: choice.expires,
+                            label: choice.label,
                             id: choice.id,
                             depth: choice.depth,
                             text: choice.text
                             });
                     }
                 // Stop searching when we hit a gather of the current depth
-                case Gather(depth,_):
+                case Gather(_, depth,_):
                     if (depth == choiceDepth){
                         break;
                     }
@@ -788,16 +815,29 @@ class Story {
         // TODO check the current section for a subsection by the name of target, or else parse . notation for subsections
         // TODO if going to a labeled gather, set the choice depth to that gather's depth - 1
         // debugTrace('going to section ${section}');
-        // this should clear the current choice depth
-        choiceDepth = 0;
         // Update this section's view count
-        if (!interp.variables.exists(section)) {
-            return Error('Tried to divert to undeclared section ${section}.');
+        if (!interp.variables.exists(target)) {
+            return Error('Tried to divert to undeclared section/label ${target}.');
         }
-        interp.variables[section] += 1;
+        interp.variables[target] += 1;
         for (line in 0...scriptLines.length) {
-            if (scriptLines[line].type.equals(DeclareSection(section))) {
+            var type = scriptLines[line].type;
+            if (type.equals(DeclareSection(target))) {
+                // Diverting to a section should clear the current choice depth
+                choiceDepth = 0;
                 gotoLine(line);
+            }
+            else {
+                switch (type) {
+                    case Gather(Some(t), depth, _):
+                        if (t == target) {
+                            // Diverting to a gather should adopt its choice depth
+                            choiceDepth = depth;
+                            gotoLine(line);
+                        }
+                    default:
+                }
+
             }
         }
         // Step past the section declaration to the first line of the section

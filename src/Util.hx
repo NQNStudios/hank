@@ -23,6 +23,14 @@ class Util {
         return str.indexOf(opening) == 0 && str.indexOf(closing) > 0;
     }
 
+    public static function findEnclosureIfStartsWith(str: String, opening: String, closing: String): String {
+        return if (startsWithEnclosure(str, opening, closing)) {
+            findEnclosure(str, opening, closing);
+        } else {
+            '';
+        }
+    }
+
     public static function replaceEnclosure(str: String, rep: String, opening: String, closing: String): String {
         var start = str.indexOf(opening);
         if (start + opening.length >= str.length) {
