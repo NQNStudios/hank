@@ -53,9 +53,9 @@ var smashingWindowItem = NONE;
 ~ var longgrasshooperframe = false;
 
 
-// DEBUG mode adds a few shortcuts - remember to set to false in release!
-```
+// DEBUG mode adds a few shortcuts
 // In Hank, DEBUG is set automatically based on the debug argument of the Story() constructor
+```
 if (DEBUG) {
     // Haxe blocks in Hank can contain also Hank blocks!
     // The syntax for this is 3 commas, like below.
@@ -98,15 +98,20 @@ if (DEBUG) {
 		*	Hut 14[]. The door was locked after I sat down. 
 		I don't even have a pen to do any work. There's a copy of the morning's intercept in my pocket, but staring at the jumbled letters will only drive me mad. 
 		I am not a machine, whatever they say about me.
+		```
+		var idx = 0;
+		var sequence = ["", "I rattle my fingers on the field table.", ""];
+		```
 
 	- (opts)
-		{|I rattle my fingers on the field table.|}
+		// {|I rattle my fingers on the field table.|} // TODO implement alternative sequences
+		{sequence[idx++]}
  		* 	(think) [Think] 
  			They suspect me to be a traitor. They think I stole the component from the calculating machine. They will be searching my bunk and cases. 
-			When they don't find it, {plan:then} they'll come back and demand I talk. 
+			When they don't find it, {if (plan) "then"} they'll come back and demand I talk. 
 			-> opts
  		*	(plan) [Plan]
- 			{not think:What I am is|I am} a problem—solver. Good with figures, quick with crosswords, excellent at chess. 
+ 			{if (!think) "What I am is" else "I am"} a problem—solver. Good with figures, quick with crosswords, excellent at chess. 
  			But in this scenario — in this trap — what is the winning play?
  			* * 	(cooperate) [Co—operate] 
 	 				I must co—operate. My credibility is my main asset. To contradict myself, or another source, would be fatal. 

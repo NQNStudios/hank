@@ -14,15 +14,30 @@ if (start <= 2) {
     - -> sanity
     ,,,
 } else {
-    , -> the_end
+    , -> one_more_thing
 }
 ```
+
+This line is a red herring. It should never appear!
 
 == sanity
 
 A brief moment of sanity.
 -> start
 
-== the_end
+== one_more_thing
 
-Thank God it's over!
+One more thing. We need all of the lines
+
++ after a choice[] to be executed
+    BEFORE the gather is processed.
+    ```
+    if (one_more_thing >= 2) {
+        , -> the_end
+    }
+    ```
+- What up
+-> one_more_thing
+
+== the_end
+Now it's really over!

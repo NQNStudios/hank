@@ -179,11 +179,19 @@ class Story {
             }
             
             else if (StringTools.startsWith(trimmedLine, "*") || StringTools.startsWith(trimmedLine, "+")) {
-                var expires = StringTools.startsWith(trimmedLine, "*");
-                var depth = 1;
-                while (trimmedLine.charAt(depth) == trimmedLine.charAt(depth-1)) {
-                    depth += 1;
-                }
+                var startingSymbol = trimmedLine.charAt(0);
+                var expires = startingSymbol == '*';
+                // For deep choices, spaces between choice symbols are acceptable, i.e. * * as seen in The Intercept source
+                var depth = 0;
+                var index = 0;
+                var c = ' ';
+                do {
+                    c = trimmedLine.charAt(index);
+                    if (c == startingSymbol) {
+                        depth++;
+                    }
+                    index++;
+                } while (c == startingSymbol || c == ' ');
 
                 // Check for a label in parens
                 var remainder = StringTools.trim(trimmedLine.substr(depth));

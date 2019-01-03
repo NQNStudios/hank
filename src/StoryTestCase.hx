@@ -1,6 +1,7 @@
 package src;
 
 import utest.Assert;
+import src.StoryFrame;
 
 class StoryTestCase extends utest.Test {
     /**
@@ -12,13 +13,16 @@ class StoryTestCase extends utest.Test {
     }
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
-        var story: Story = new Story(debug);
+        var story: Story = new Story(debug,'validating.hanktest');
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
 
         var i = 0;
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
+            var frame = story.nextFrame();
+
+            trace('Frame ${i}: ${Std.string(frame)}');
 
             if (StringTools.startsWith(line, "*")) {
                 // Collect the expected set of choices from the transcript.
@@ -28,14 +32,16 @@ class StoryTestCase extends utest.Test {
 
                     line = transcriptLines[++i];
                 } while (line != null && StringTools.startsWith(line, "*"));
+                trace(choices);
 
                 // Assert that the storyframe is a corresponding HasChoices enum
-                Assert.equals('HasChoices(${Std.string(choices)})', Std.string(story.nextFrame()));
+                assertComplexEquals(HasChoices(choices), frame);
 
                 continue;
             } else if (StringTools.startsWith(line, ">>>")) {
                 // Make the choice given.
                 var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
+                trace(output);
                 if (fullTranscript || transcriptLines.length > i+1) {
                     // Assert that its output equals the transcript's expected choice output.
                     Assert.equals(transcriptLines[++i], output);
@@ -46,7 +52,7 @@ class StoryTestCase extends utest.Test {
             }
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
-                Assert.equals('HasText(${line})', Std.string(story.nextFrame()));
+                assertComplexEquals(HasText(line), frame);
             }
 
             i += 1;
