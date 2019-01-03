@@ -49,5 +49,8 @@ class StoryTestCase extends utest.Test {
 
             i += 1;
         }
+
+        // After all transcript lines are validated, there should be nothing left in the story flow!
+        Assert.equals(StoryFrame.Finished, story.nextFrame());
     }
 }
