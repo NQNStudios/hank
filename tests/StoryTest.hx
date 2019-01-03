@@ -76,7 +76,9 @@ class StoryTest extends src.StoryTestCase {
         Assert.equals("Yes I'm sure.", story.choose(0));
         assertComplexEquals(HasText("That's perfectly valid!"), story.nextFrame());
         assertComplexEquals(HasText("That's the end of this example!"), story.nextFrame());
-        assertComplexEquals(HasText("This should say 'mouse': mouse"), story.nextFrame());
+        assertComplexEquals(HasText("These should all say 'mouse':"), story.nextFrame());
+        assertComplexEquals(HasText("mouse"), story.nextFrame());
+        assertComplexEquals(HasText("mouse"), story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
 
         // Validate the transcript that was produced
@@ -138,7 +140,7 @@ class StoryTest extends src.StoryTestCase {
             'Empty',
             'DeclareSection(final_choice)',
             'Empty',
-            'HaxeBlock(5,var unused_variable="";\n// This is a comment INSIDE a haxe block\n/*The whole block will be parsed and executed at the same time*/\n)',
+            'HaxeBlock(5,var variable_declared_in_block="mouse";\n// This is a comment INSIDE a haxe block\n/*The whole block will be parsed and executed at the same time*/\n)',
             'Empty',
             'Empty',
             'Empty',
@@ -156,10 +158,13 @@ class StoryTest extends src.StoryTestCase {
             'DeclareSection(the_end)',
             'Empty',
             'OutputText(That\'s the end of this example!)',
-            'OutputText(This should say \'mouse\': {what_happened})'
+            'OutputText(These should all say \'mouse\':)',
+            'OutputText({what_happened})',
+            'OutputText({variable_declared_in_block})',
+            'EOF(examples/main.hank)'
         ];
 
-        var idx = 22;
+        var idx = 23;
         var i = 0;
         while (idx < story.scriptLines.length) {
             assertLineType(lineTypes[i++], story.scriptLines[idx++]);
@@ -167,7 +172,6 @@ class StoryTest extends src.StoryTestCase {
     }
 
     public function testRunIntercept1() {
-        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", true);
         validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false);
     }
  
@@ -194,7 +198,7 @@ class StoryTest extends src.StoryTestCase {
         if (sys.FileSystem.exists('examples/shave')) {
             validateAgainstTranscript('examples/shave/shave-draft2.hank', 'examples/shave/tests/1.hanktest');
         } else {
-            assertTrue(true);
+            Assert.isTrue(true);
         }
     }
 }
