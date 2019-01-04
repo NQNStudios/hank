@@ -1,2 +1,18 @@
 {if (DEBUG) "Debug mode!"}
 {if (!DEBUG) "Not debug mode" else "debug mode"}
+
+// Make sure flow can fall through embedded blocks
+```
+if (DEBUG) {
+    , -> debug_only_section
+}
+else {
+    , This will fall through!
+}
+```
+
+This is the production ending!
+
+== debug_only_section
+
+This is the secret debug ending!

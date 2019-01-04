@@ -12,17 +12,22 @@ class StoryTestCase extends utest.Test {
         Assert.equals(Std.string(expected), Std.string(actual));
     }
 
-    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
-        var story: Story = new Story(debug,'validating.hanktest');
+    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false, debugPrints: Bool = false) {
+        var story: Story = new Story(debug,'validating.hanktest', debugPrints);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
 
         var i = 0;
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
+            trace(line);
             var frame = story.nextFrame();
 
-            trace('Frame ${i}: ${Std.string(frame)}');
+            if (debugPrints) {
+                if (debugPrints) {
+                    trace('Frame ${i}: ${Std.string(frame)}');
+                }
+            }
 
             if (StringTools.startsWith(line, "*")) {
                 // Collect the expected set of choices from the transcript.
@@ -32,7 +37,9 @@ class StoryTestCase extends utest.Test {
 
                     line = transcriptLines[++i];
                 } while (line != null && StringTools.startsWith(line, "*"));
-                trace(choices);
+                if (debugPrints) { 
+                    trace(choices);
+                }
 
                 // Assert that the storyframe is a corresponding HasChoices enum
                 assertComplexEquals(HasChoices(choices), frame);
@@ -41,14 +48,18 @@ class StoryTestCase extends utest.Test {
             } else if (StringTools.startsWith(line, ">>>")) {
                 // Make the choice given.
                 var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
-                trace(output);
+                if (debugPrints) {
+                    trace(output);
+                }
                 if (fullTranscript || transcriptLines.length > i+1) {
                     // Assert that its output equals the transcript's expected choice output.
                     Assert.equals(transcriptLines[++i], output);
                 }
             } else if (StringTools.startsWith(line, "#")) {
                 // Allow comments in a transcript that need not be validated in any way
-                trace(line);
+                if (debugPrints) {
+                    trace(line);
+                }
             }
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
@@ -62,5 +73,6 @@ class StoryTestCase extends utest.Test {
             // After all transcript lines are validated, there should be nothing left in the story flow!
             Assert.equals(StoryFrame.Finished, story.nextFrame());
         }
+        trace('done ');
     }
 }

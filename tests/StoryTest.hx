@@ -11,13 +11,11 @@ class StoryTest extends src.StoryTestCase {
         utest.UTest.run([new StoryTest()]);
     }
 
-    @Ignored
     public function testParseHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello.hank"); assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
     }
 
-    @Ignored
     public function testHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello.hank");
@@ -26,12 +24,10 @@ class StoryTest extends src.StoryTestCase {
         Assert.equals(StoryFrame.Finished, story.nextFrame());
     }
 
-    @Ignored
     public function testRunFullSpec2() {
         validateAgainstTranscript("examples/main.hank", "examples/tests/main1.hanktest");
     }
 
-    @Ignored
     public function testRunFullSpec3() {
         validateAgainstTranscript("examples/main.hank", "examples/tests/main2.hanktest");
     }
@@ -39,7 +35,6 @@ class StoryTest extends src.StoryTestCase {
     /**
     Keep this clunky thing around to sanity check validateAgainstTranscript()
     **/
-    @Ignored
     public function testRunFullSpec1() {
         var story: Story = new Story(true, "transcript.hanktest");
         story.loadScript("examples/main.hank");
@@ -89,7 +84,6 @@ class StoryTest extends src.StoryTestCase {
         validateAgainstTranscript("examples/main.hank", "transcript.hanktest");
     }
 
-    @Ignored
     public function testViewCounts() {
         var story = new Story(true);
         story.loadScript("examples/main.hank");
@@ -101,7 +95,6 @@ class StoryTest extends src.StoryTestCase {
         Assert.equals(0, story.interp.variables['choice_example']);
     }
 
-    @Ignored
     public function testParseLine() {
         var story = new Story();
         assertComplexEquals(IncludeFile("examples/extra.hank"),story.parseLine("INCLUDE examples/extra.hank", []));
@@ -109,7 +102,6 @@ class StoryTest extends src.StoryTestCase {
         // TODO test edge cases of all line types (maybe with more separate functions too)
     }
 
-    @Ignored
     public function testParseFullSpec() {
         // Parse the main.hank script and test that all lines are correctly parsed
         var story = new Story(true);
@@ -173,8 +165,11 @@ class StoryTest extends src.StoryTestCase {
         }
     }
 
+    @Ignored
     public function testRunIntercept1() {
-        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false);
+        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false,
+        false,
+        true);
     }
  
     @Ignored
@@ -183,7 +178,8 @@ class StoryTest extends src.StoryTestCase {
             "examples/TheIntercept.hank",
             "examples/tests/interceptDebug1.hanktest",
             false, // Don't validate all of the Intercept until the port is done
-            true); // Use debugTrace statements and set DEBUG to true
+            true, // Set DEBUG to true
+            true); // Use debugTrace statements 
     }
 
     public function testEmbeddedHankMindfuck() {
@@ -191,20 +187,19 @@ class StoryTest extends src.StoryTestCase {
         validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true);
     }
 
-    @Ignored 
     public function testConditionalBlocks() {
-        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false);
-        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true);
+        trace('Testing conditional example in production mode');
+        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false, true);
+        trace('testing conditional example in debug mode');
+        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true, true);
     }
 
-    @Ignored
     public function testLabels() {
         validateAgainstTranscript("examples/labels.hank", "examples/tests/labels1.hanktest");
         validateAgainstTranscript("examples/labels.hank", "examples/tests/labels2.hanktest");
     }
 
     /** Test one of Nat's private WIP Hank stories **/
-    @Ignored
     public function testPrivateStories() {
         if (sys.FileSystem.exists('examples/shave')) {
             validateAgainstTranscript('examples/shave/shave-draft2.hank', 'examples/shave/tests/1.hanktest');
