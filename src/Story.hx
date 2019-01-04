@@ -133,6 +133,10 @@ class Story {
         parseScriptFile(storyFile);
     }
 
+    private function currentlyEmbedded(): Bool {
+        return StringTools.startsWith(scriptLines[currentLine].sourceFile, "EMBEDDED");
+    }
+
     private function parseLine(line: String, rest: Array<String>): LineType {
         var trimmedLine = StringTools.trim(line);
 
@@ -361,6 +365,10 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
+        var startingId = {
+            sourceFile: scriptLines[currentLine].sourceFile,
+            lineNumber: scriptLines[currentLine].lineNumber
+        };
         // debugTrace('ORIGINAL LINES: ${lines}');
         var preprocessedLines = "";
         var linesArray = lines.split('\n');
@@ -385,6 +393,7 @@ class Story {
                 else if (StringTools.startsWith(trimmed, ',') && trimmed.charAt(1) != ',') {
                     var hankLine = StringTools.trim(trimmed.substr(1));
                     // TODO escape any " that might be in hank text
+                    parseEmbeddedLines(startingId, childNumber, hankLine);
                     preprocessedLines += 'story.processEmbeddedLines(${id}, ${childNumber}, "${hankLine}");\n';
                     childNumber++;
                 } else {
@@ -401,6 +410,7 @@ class Story {
             var hankLines = StringTools.trim(Util.findEnclosure(preprocessedLines, ',,,', ',,,'));
 
             // TODO escape any " that might be in hank text of $line
+            parseEmbeddedLines(startingId, childNumber, hankLines);
             hankBlockAsHaxe += 'story.processEmbeddedLines(${id}, ${childNumber}, "${hankLines}");\n';
             childNumber++;
 
@@ -409,10 +419,19 @@ class Story {
         }
 
         if (linesArray.length > 1) {
-            debugTrace('Parsing haxe block "${preprocessedLines}"');
+            // debugTrace('Parsing haxe block "${preprocessedLines}"');
         }
         var program = parser.parseString(preprocessedLines);
         interp.execute(program);
+
+        var currentLineId = {
+            sourceFile: scriptLines[currentLine].sourceFile,
+            lineNumber: scriptLines[currentLine].lineNumber
+        };
+
+        trace(startingId);
+        trace(currentLineId);
+        if (startingId.lineNumber == currentLineId.lineNumber && startingId.sourceFile == currentLineId.sourceFile) {stepLine();}
     }
 
     private function gotoLine(line: Int) {
@@ -473,6 +492,16 @@ class Story {
 
     private var finished: Bool = false;
 
+    private function gotoEOF() {
+        var currentFile = scriptLines[currentLine].sourceFile;
+        for (i in 0...scriptLines.length) {
+            if (scriptLines[i].type.equals(EOF(currentFile))) {
+                gotoLine(i);
+                break;
+            }
+        }
+    }
+
     private function gotoFile(file: String) {
         for (i in 0...scriptLines.length) {
             if (scriptLines[i].sourceFile == file) {
@@ -486,23 +515,32 @@ class Story {
     private var includedFilesProcessed = new Array();
     private var embeddedEntryPoint: LineID = null;
 
-    /** Execute script blocks embedded within Haxe blocks **/
-    private function processEmbeddedLines(parent: LineID, childNumber: Int, lines: String) {
-        var dummyFile = 'EMBEDDED BLOCK ${childNumber}/${Std.string(parent)}';
-
+    private function parseEmbeddedLines(parent: LineID, childNumber: Int, lines: String) {
         if (!embeddedHankBlocks.exists(parent)) {
             embeddedHankBlocks[parent] = new Array();
         }
+        var dummyFile = 'EMBEDDED BLOCK ${childNumber}/${Std.string(parent)}';
 
-        if (embeddedHankBlocks[parent].length <= childNumber) {
-            parseScript(lines.split('\n'), dummyFile);
-            embeddedHankBlocks[parent].push(true);
+        parseScript(lines.split('\n'), dummyFile);
+        embeddedHankBlocks[parent].push(true);
+    }
+
+    private var embeddedBlocksQueued: Array<String> = new Array();
+
+    private function queueEmbeddedBlock(dummyFile: String) {
+        if (embeddedBlocksQueued.length == 0) {
+            trace('${dummyFile} got here first');
+            gotoFile(dummyFile);
         }
+        embeddedBlocksQueued.push(dummyFile);
+    }
 
-        // If the block is already parsed, go to those lines
+    /** Execute script blocks embedded within Haxe blocks **/
+    private function processEmbeddedLines(parent: LineID, childNumber: Int, lines: String) {
         embeddedEntryPoint = parent;
+        var dummyFile = 'EMBEDDED BLOCK ${childNumber}/${Std.string(parent)}';
         debugTrace('processing ${dummyFile}');
-        gotoFile(dummyFile);
+        queueEmbeddedBlock(dummyFile);
     }
 
     /** Execute a parsed script statement **/
@@ -510,8 +548,6 @@ class Story {
         if (line.type != NoOp) {
             debugTrace('Processing ${Std.string(line)}');
         }
-
-        var embedded = (scriptLines[currentLine].sourceFile.indexOf('EMBEDDED BLOCK') == 0);
 
         var file = line.sourceFile;
         var type = line.type;
@@ -529,7 +565,7 @@ class Story {
 
             // Execute include statements by jumping to the start of that file
             case IncludeFile(path):
-                if (embedded) {
+                if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested INCLUDE statement.");
                 }
                 if (includedFilesProcessed.indexOf(path) == -1) {
@@ -544,39 +580,56 @@ class Story {
             case Divert(target):
                 // If the divert is inside an embedded block, we can forget how we got there
                 embeddedEntryPoint = null;
+                embeddedBlocksQueued = new Array();
 
                 return divert(target);
 
             case EOF(file):
-                if (embedded) {
-                    gotoLineByID(embeddedEntryPoint);
+                if (currentlyEmbedded()) {
+                    embeddedBlocksQueued.remove(embeddedBlocksQueued[0]);
+                    if (embeddedBlocksQueued.length == 0) {
+                        gotoLineByID(embeddedEntryPoint);
+                        stepLine();
+                        embeddedEntryPoint = null;
+                    } else {
+                        trace('another block was queued');
+                        var nextBlock = embeddedBlocksQueued[0];
+                        gotoFile(nextBlock);
+                    }
+                    return Empty;
+                } else if (file != rootFile) {
                     stepLine();
-                    embeddedEntryPoint = null;
                     return Empty;
                 } else {
                     return Finished;
                 }
 
-            // When a new section is declared control flow stops. 
+            // When a new section is declared control flow in the current file stops. If this is the root file, we're finished.
             case DeclareSection(_):
-                if (embedded) {
+                if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested section declaration.");
                 }
-                return Finished;
+                if (scriptLines[currentLine].sourceFile == rootFile) {
+                    return Finished;
+                }
+                else {
+                    gotoEOF();
+                    return Empty;
+                }
 
             // Execute haxe lines with hscript
             case HaxeLine(code):
-                if (embedded) {
+                if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a triple-nested Haxe line");
                 }
                 processHaxeBlock(code);
-                stepLine();
                 return Empty;
             case HaxeBlock(_, code):
-                if (embedded) {
+                if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a triple-nested Haxe block");
                 }
                 processHaxeBlock(code);
+                trace('done that');
                 return Empty;
 
             // Execute choice declarations by collecting the set of choices and presenting valid ones to the player
@@ -842,7 +895,6 @@ class Story {
                 // Diverting to a section should clear the current choice depth
                 choiceDepth = 0;
                 gotoLine(line);
-                stepLine();
             }
             else {
                 switch (type) {

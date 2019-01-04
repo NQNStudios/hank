@@ -36,7 +36,8 @@ class StoryTest extends src.StoryTestCase {
     Keep this clunky thing around to sanity check validateAgainstTranscript()
     **/
     public function testRunFullSpec1() {
-        var story: Story = new Story(true, "transcript.hanktest");
+        trace('testing the main hank example manually');
+        var story: Story = new Story(true, "transcript.hanktest", true);
         story.loadScript("examples/main.hank");
         var frame1 = story.nextFrame();
         // This calls the INCLUDE statement. Ensure that all lines
@@ -184,7 +185,7 @@ class StoryTest extends src.StoryTestCase {
 
     public function testEmbeddedHankMindfuck() {
         // Test the situation where embedded Hank lines are triggered, and later the story loops to the same Haxe block with different conditions
-        validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true);
+        validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true, true);
     }
 
     public function testConditionalBlocks() {

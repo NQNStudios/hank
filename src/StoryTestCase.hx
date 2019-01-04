@@ -13,6 +13,9 @@ class StoryTestCase extends utest.Test {
     }
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false, debugPrints: Bool = false) {
+
+        trace('validating ${storyFile}');
+
         var story: Story = new Story(debug,'validating.hanktest', debugPrints);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
@@ -73,6 +76,6 @@ class StoryTestCase extends utest.Test {
             // After all transcript lines are validated, there should be nothing left in the story flow!
             Assert.equals(StoryFrame.Finished, story.nextFrame());
         }
-        trace('done ');
+        trace('done with ${storyFile}');
     }
 }

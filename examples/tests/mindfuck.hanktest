@@ -15,4 +15,15 @@ Loop #: 2
 Gosh this sucks
 A brief moment of sanity.
 This test does nutty stuff with the Hank/Haxe embedding paradigm.
-Thank God it's over!
+One more thing. We need all of the lines
+* after a choice
+>>> 0
+after a choice to be executed
+BEFORE the gather is processed.
+What up
+One more thing. We need all of the lines
+* after a choice
+>>> 0
+after a choice to be executed
+BEFORE the gather is processed.
+Now it's really over!
