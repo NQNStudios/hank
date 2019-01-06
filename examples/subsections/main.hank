@@ -1,0 +1,35 @@
+INCLUDE extra.hank
+-> start__one
+
+== start
+
+/* This example demonstrates that the janky code regulating subsection diverts all works.
+If this test ever breaks, God help you.*/
+Fourth output.
+
+-> other_section
+
+= one
+
+First output.
+
+-> two
+
+= two
+
+Second output.
+
+-> three
+
+= end
+Last output.
+
+== three
+
+-> three
+
+= three
+
+Third output.
+
+-> start

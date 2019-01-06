@@ -1,0 +1,10 @@
+== other_section
+
+= one
+
+// The first subsection should be the default divert target
+Fifth output.
+
+-> start__end
+
+// TODO test labeled gathers within sections (although that is covered by The Intercept as well)

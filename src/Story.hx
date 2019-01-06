@@ -36,7 +36,7 @@ enum LineType {
     OutputText(text: String);
     DeclareChoice(choice: Choice);
     DeclareSection(name: String);
-    DeclareSubsection(name: String);
+    DeclareSubsection(parent: String, name: String);
     Divert(target: String);
     Gather(label: Option<String>, depth: Int, restOfLine: LineType);
     HaxeLine(code: String);
@@ -139,6 +139,7 @@ class Story {
         return StringTools.startsWith(scriptLines[currentLine].sourceFile, "EMBEDDED");
     }
 
+    private var sectionParsing = '';
     private function parseLine(line: String, rest: Array<String>): LineType {
         var trimmedLine = StringTools.trim(line);
 
@@ -172,16 +173,20 @@ class Story {
                 // Allow format == section ==
                 sectionName = sectionName.split(" ")[0];
 
-                // Initialize its view count variable to 0
-                // TODO if it's a stitch, prefix the count variable with section name (this will be tough because the . operator is already defined and we want the main section to be an int view count, not a dictionary of its stiches)
-                interp.variables[sectionName] = 0;
+
 
                 switch (equals_signs) {
                     // Stitches declared like = stitch
                     case 1:
-                        return DeclareSubsection(sectionName);
+                        // if it's a stitch, prefix the count variable with section name (this will be tough because the . operator is already defined and we want the main section to be an int view count, not a dictionary of its stiches)
+                        interp.variables['${sectionParsing}__${sectionName}'] = 0;
+                        trace('${sectionParsing}__${sectionName}');
+                        return DeclareSubsection(sectionParsing, sectionName);
                     // Technically, ======= also works for declaring a section
                     default:
+                        sectionParsing = sectionName;
+                        // Initialize its view count variable to 0
+                        interp.variables[sectionName] = 0;
                         return DeclareSection(sectionName);
                 }
             }
@@ -446,7 +451,26 @@ class Story {
         if (startingId.lineNumber == currentLineId.lineNumber && startingId.sourceFile == currentLineId.sourceFile) {stepLine();}
     }
 
+    private var diverting = false;
+
     private function gotoLine(line: Int) {
+        if (diverting) {
+            // If the line is a section or subsection declaration, increment that variable
+            var lineType = scriptLines[line].type;
+            switch (lineType) {
+                case Gather(Some(label), _, _):
+                    // TODO qualify label variables that occur inside a section. (This will require adding a parent property to the gather linetype)
+                    interp.variables[label]++;
+                case DeclareSection(name):
+                    interp.variables[name]++; 
+                case DeclareSubsection(parent, name):
+                    interp.variables[parent]++;
+                    interp.variables['${parent}__${name}']++;
+                default:
+            }
+            diverting = false;
+        }
+
         if (line >= 0 && line <= scriptLines.length) {
             currentLine = line;
         } else {
@@ -569,19 +593,18 @@ class Story {
                 stepLine();
                 var textToOutput = fillHExpressions(text);
                 return if (textToOutput.length > 0) {
-                    HasText(fillHExpressions(textToOutput));
+                    HasText(textToOutput);
                 } else {
                     // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
                     Empty;
                 }
 
-            // Execute include statements by jumping to the start of that file
+            // Include statements do nothing, because included files' content is only displayed if diverted to.
             case IncludeFile(path):
                 if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested INCLUDE statement.");
                 }
                 if (includedFilesProcessed.indexOf(path) == -1) {
-                    includedFilesProcessed.push(path);
                     gotoFile(path);
                 } else {
                     stepLine();
@@ -609,7 +632,8 @@ class Story {
                         gotoFile(nextBlock);
                     }
                     return Empty;
-                } else if (file != rootFile) {
+                } else if (file != rootFile && includedFilesProcessed.indexOf(file) == -1) {
+                    includedFilesProcessed.push(file);
                     stepLine();
                     return Empty;
                 } else {
@@ -619,6 +643,18 @@ class Story {
             // When a new section is declared control flow in the current file stops. If this is the root file, we're finished.
             case DeclareSection(_):
                 if (currentlyEmbedded()) {
+                    return Error("Trust me, you'd rather not use a double-nested section declaration.");
+                }
+                if (scriptLines[currentLine].sourceFile == rootFile) {
+                    return Finished;
+                }
+                else {
+                    gotoEOF();
+                    return Empty;
+                }
+
+            case DeclareSubsection(_):
+                 if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested section declaration.");
                 }
                 if (scriptLines[currentLine].sourceFile == rootFile) {
@@ -684,8 +720,8 @@ class Story {
         while (Util.containsEnclosure(text, "{", "}")) {
             var expression = Util.findEnclosure(text,"{","}");
             // debugTrace(expression);
-            var parsed = parser.parseString(expression);
-            var value = interp.expr(parsed);
+
+            var value = evaluateHaxeExpression(expression);
 
             // If an expression evaluates null, don't add any text.
             var stringValue = if (value != null) {
@@ -693,8 +729,10 @@ class Story {
             } else {
                 "";
             }
+            trace (stringValue);
 
             text = Util.replaceEnclosure(text, stringValue, "{", "}");
+            trace ( text);
         }
 
         // Also trim out all duplicate whitespace
@@ -851,13 +889,14 @@ class Story {
         } else true;
     }
 
-    private function evaluateHaxeExpression(expression: String) {
+    private function evaluateHaxeExpression(expression: String): Dynamic {
         // It's common to want to && or || section/label names, but they're integers, not bools. Allow this.
         var expandedExpression = expression;
 
         var parsed = parser.parseString(expandedExpression);
         try {
             var value = interp.expr(parsed);
+            trace('evaluated ${expression} as ${value}');
             return value;
         } catch (e: Dynamic) {
             throw 'Error evaluating expression ${expression}: ${Std.string(e)}';
@@ -944,6 +983,8 @@ class Story {
                             break;
                         case EOF(_):
                             break;
+                        case NoOp:
+                            // Don't add noOp lines to list, for purposes of finding if a subsection is the first thing in the section
                         default:
                             lines.push(line);
                     }
@@ -955,24 +996,38 @@ class Story {
         return lines;
     }
 
+    private function subsectionsAndLabeledGathers(section: String): Map<String, HankLine> {
+        var sectionLines = linesInSection(section);
+        var subsections = new Map();
+        for (line in sectionLines) {
+            switch (line.type) {
+                case DeclareSubsection(_, subName):
+                    subsections[subName] = line;
+                case Gather(Some(gatherName), _, _):
+                    subsections[gatherName] = line;
+                default:
+            }
+        }
+        return subsections;
+    }
+
     private function currentSubsectionsAndLabeledGathers(): Map<String, HankLine> {
         switch (currentSection()) {
             case None:
                 return new Map();
             case Some(name):
-                var sectionLines = linesInSection(name);
-                var subsections = new Map();
-                for (line in sectionLines) {
-                    switch (line.type) {
-                        case DeclareSubsection(subName):
-                            subsections[subName] = line;
-                        case Gather(Some(gatherName), _, _):
-                            subsections[gatherName] = line;
-                        default:
-                    }
-                }
-                return subsections;
+                return subsectionsAndLabeledGathers(name);
         }
+    }
+
+    private function stepLineInDivert() {
+        switch (scriptLines[currentLine].type) {
+            case DeclareSection(_):
+            case DeclareSubsection(_, _):
+            case NoOp:
+            default: return;
+        }
+        stepLine();
     }
 
     /**
@@ -980,59 +1035,92 @@ class Story {
     **/
     public function divert(target: String): StoryFrame {
         // trace('diverting to ${target}');
+        // This is for tracking view counts
+        diverting = true;
 
         // First check the current section for a subsection by the name of target
-        var viewCountVar = target;
         if (currentSection() != None) {
             var currentTargets = currentSubsectionsAndLabeledGathers();
 
             if (currentTargets.exists(target)) {
                 var lineToGo = currentTargets[target];
+                trace('HERE ${lineToGo}');
                 var lineID = { lineNumber: lineToGo.lineNumber, sourceFile: lineToGo.sourceFile };
                 switch (lineToGo.type) {
-                    case DeclareSection(_):
-                        // Diverting to a section should clear the current choice depth
-                        choiceDepth = 0;
                     case Gather(Some(t), depth, _):
                         // Diverting to a gather should adopt its choice depth
                         choiceDepth = depth;
+                    // Sections and subsections
                     default:
-                        throw "Never";
+                        // Diverting to a section should clear the current choice depth
+                        choiceDepth = 0;
                 }
                 gotoLineByID(lineID);
-                stepLine();
+                stepLineInDivert();
+
                 return Empty;
             }
         }
         // debugTrace('going to section ${section}');
         // Update this section's view count
         // TODO or else parse __ notation for subsections
-        if (!interp.variables.exists(viewCountVar)) {
+        if (!interp.variables.exists(target)) {
             return Error('Tried to divert to undeclared section/label ${target}.');
         }
-        interp.variables[target] += 1;
-        for (line in 0...scriptLines.length) {
-            var type = scriptLines[line].type;
-            if (type.equals(DeclareSection(target))) {
-                // Diverting to a section should clear the current choice depth
-                choiceDepth = 0;
-                gotoLine(line);
-            }
-            else {
-                switch (type) {
-                    case Gather(Some(t), depth, _):
-                        if (t == target) {
-                            // Diverting to a gather should adopt its choice depth
-                            choiceDepth = depth;
-                            gotoLine(line);
-                        }
-                    default:
-                }
 
+        // Subsections can be diverted to globally by using 2 underscores (__) instead of Ink's dot (.) notation
+        var parts = target.split('__');
+
+        if (parts.length == 1) {
+            for (line in 0...scriptLines.length) {
+                var type = scriptLines[line].type;
+                if (type.equals(DeclareSection(target))) {
+                    // Diverting to a section should clear the current choice depth
+                    choiceDepth = 0;
+
+                    // If a section has no top-level content but starts with a subsection, divert there
+                    var sectionLines = linesInSection(target);
+                    if (sectionLines.length == 0) {
+                        throw 'Do not have an empty section, ${target}!';
+                    }
+                    switch (sectionLines[0].type) {
+                        case DeclareSubsection(_):
+                            gotoLineByID({lineNumber: sectionLines[0].lineNumber, sourceFile: sectionLines[0].sourceFile});
+
+                        // Go to the start of the section if it has top-level content
+                        default:
+                            gotoLine(line);
+                    }
+
+                }
+                else {
+                    switch (type) {
+                        case Gather(Some(t), depth, _):
+                            if (t == target) {
+                                // Diverting to a gather should adopt its choice depth
+                                choiceDepth = depth;
+                                gotoLine(line);
+                            }
+                        default:
+                    }
+
+                }
             }
+            // Step past the section declaration to the first line of the section
+            stepLineInDivert();
         }
-        // Step past the section declaration to the first line of the section
-        stepLine();
+        else if (parts.length == 2) {
+            var subTargets = subsectionsAndLabeledGathers(parts[0]);
+            var lineToGo = subTargets[parts[1]];
+            var lineID = { lineNumber: lineToGo.lineNumber, sourceFile: lineToGo.sourceFile };
+            gotoLineByID(lineID);
+            stepLineInDivert();
+        }
+        else {
+            throw "Can't have stitches within stitches";
+        }
         return Empty;
     }
 }
+
+// TODO inject functions to the embedded scope that let you boolcheck if a flag has been seen (accounting for current section scope)
