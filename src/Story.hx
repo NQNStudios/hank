@@ -25,13 +25,15 @@ typedef Choice = {
     var expires: Bool;
     var text: String;
     var depth: Int;
+    // Choices are parsed with a unique ID so they can be followed even if duplicate text is used for multiple choices
     var id: Int;
+    // Choices can be declared with a divert target on the same line. That target will be stored in this optional field.
+    var divertTarget: Option<String>;
 }
 
 enum LineType {
     IncludeFile(path: String);
     OutputText(text: String);
-    // Choices are parsed with a unique ID so they can be followed even if duplicate text is used for multiple choices
     DeclareChoice(choice: Choice);
     DeclareSection(name: String);
     DeclareSubsection(name: String);
@@ -214,12 +216,22 @@ class Story {
                 }
 
                 var choiceText = StringTools.trim(StringTools.replace(remainder, '(${labelText})', ""));
+
+                // Parse divert targets on the same line as the choice declaration
+                var divertTarget: Option<String> = None;
+                var divertIndex = choiceText.indexOf('->');
+                if (divertIndex != -1) {
+                    divertTarget = Some(StringTools.trim(choiceText.substr(divertIndex+2)));
+                    choiceText = StringTools.trim(choiceText.substr(0, divertIndex));
+                }
+
                 return DeclareChoice({
                     label: label,
                     expires: expires,
                     text: choiceText,
                     depth: depth,
-                    id: choicesParsed++
+                    id: choicesParsed++,
+                    divertTarget: divertTarget
                     });
             }
             
@@ -710,26 +722,34 @@ class Story {
         }
 
         choiceDepth = choiceTaken.depth + 1;
-        // Remove * choices from scriptLines
+        // Mark * choices as expired once chosen
         if (choiceTaken.expires) {
             // debugTrace('Chose "${choiceTaken.text}". Choice is now expiring ');
             choicesEliminated.push(choiceTaken.id);
         }
-        // Find the line where the choice taken occurs
-        for (i in currentLine...scriptLines.length) {
-            switch (scriptLines[i].type) {
-                case DeclareChoice(choice):
-                    if (choice.id == choiceTaken.id) {
-                        gotoLine(i);
-                        break;
+
+        switch (choiceTaken.divertTarget) {
+            // If the choice declares a divert on the same line, follow that
+            case Some(target):
+                divert(target);
+            case None:
+                // Otherwise, find the line where the choice taken occurs
+                for (i in currentLine...scriptLines.length) {
+                    switch (scriptLines[i].type) {
+                        case DeclareChoice(choice):
+                            if (choice.id == choiceTaken.id) {
+                                gotoLine(i);
+                                break;
+                            }
+                        default:
                     }
-                default:
-            }
+                }
+
+                // Move to the line following this choice.
+                stepLine();
         }
-
-        // Move to the line following this choice.
-        stepLine();
-
+        
+        // Log the choice's index to the transcript
         logToTranscript('>>> ${index}');
         logToTranscript(choiceTaken.text);
         return choiceTaken.text;
@@ -789,7 +809,8 @@ class Story {
                             label: choice.label,
                             id: choice.id,
                             depth: choice.depth,
-                            text: choice.text
+                            text: choice.text,
+                            divertTarget: choice.divertTarget
                             });
                     }
                 // Stop searching when we hit a gather of the current depth

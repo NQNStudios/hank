@@ -62,7 +62,6 @@ if (DEBUG) {
     ,,,
     IN DEBUG MODE!
     
-    // TODO allow divert on the same line as the choice text
     * [Beginning...]	-> start
     * [Framing Hooper...] -> claim_hooper_took_component
     * [In with Hooper...] -> inside_hoopers_hut
