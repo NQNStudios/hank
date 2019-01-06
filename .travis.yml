@@ -1,0 +1,6 @@
+language: haxe
+haxe:
+  - "4.0.0-preview.5"
+hxml:
+  - build.hxml
+  - test.hxml
