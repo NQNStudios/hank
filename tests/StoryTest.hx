@@ -110,7 +110,7 @@ class StoryTest extends src.StoryTestCase {
 
     public function testParseLine() {
         var story = new Story();
-        assertComplexEquals(IncludeFile("examples/extra.hank"),story.parseLine("INCLUDE examples/extra.hank", []));
+        assertComplexEquals(IncludeFile("examples/main/extra.hank"),story.parseLine("INCLUDE examples/main/extra.hank", []));
 
         // TODO test edge cases of all line types (maybe with more separate functions too)
     }

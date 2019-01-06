@@ -180,7 +180,7 @@ class Story {
                     // Stitches declared like = stitch
                     case 1:
                         return DeclareSubsection(sectionName);
-                    // Technically, ======= also works
+                    // Technically, ======= also works for declaring a section
                     default:
                         return DeclareSection(sectionName);
                 }
@@ -517,7 +517,7 @@ class Story {
     private function gotoFile(file: String) {
         for (i in 0...scriptLines.length) {
             if (scriptLines[i].sourceFile == file) {
-                debugTrace('Found line for ${file}: ${scriptLines[i]}');
+                // debugTrace('Found line for ${file}: ${scriptLines[i]}');
                 gotoLine(i);
                 break;
             }
@@ -569,7 +569,7 @@ class Story {
                 stepLine();
                 var textToOutput = fillHExpressions(text);
                 return if (textToOutput.length > 0) {
-                    HasText(fillHExpressions(text));
+                    HasText(fillHExpressions(textToOutput));
                 } else {
                     // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
                     Empty;
@@ -918,15 +918,96 @@ class Story {
         return choices;
     }
 
+    private function currentSection(): Option<String> {
+        for (line in scriptLines) {
+            switch (line.type) {
+                case DeclareSection(name):
+                    if (linesInSection(name).indexOf(scriptLines[currentLine]) != -1) {
+                        return Some(name);
+                    }
+                default:
+            }
+        }
+
+        return None;
+    }
+
+    private function linesInSection(section: String): Array<HankLine> {
+        var lines = new Array();
+        for (i in 0...scriptLines.length) {
+            // trace('${scriptLines[i].type} vs ${DeclareSection(section)}');
+            if (scriptLines[i].type.equals(DeclareSection(section))) {
+                for (j in i+1...scriptLines.length) {
+                    var line = scriptLines[j];
+                    switch (line.type) {
+                        case DeclareSection(_):
+                            break;
+                        case EOF(_):
+                            break;
+                        default:
+                            lines.push(line);
+                    }
+                }
+                break;
+            }
+        }
+
+        return lines;
+    }
+
+    private function currentSubsectionsAndLabeledGathers(): Map<String, HankLine> {
+        switch (currentSection()) {
+            case None:
+                return new Map();
+            case Some(name):
+                var sectionLines = linesInSection(name);
+                var subsections = new Map();
+                for (line in sectionLines) {
+                    switch (line.type) {
+                        case DeclareSubsection(subName):
+                            subsections[subName] = line;
+                        case Gather(Some(gatherName), _, _):
+                            subsections[gatherName] = line;
+                        default:
+                    }
+                }
+                return subsections;
+        }
+    }
+
     /**
     Skip script execution to the desired target
     **/
     public function divert(target: String): StoryFrame {
-        // debugTrace('diverting to ${target}');
-        // TODO check the current section for a subsection by the name of target, or else parse . notation for subsections
+        // trace('diverting to ${target}');
+
+        // First check the current section for a subsection by the name of target
+        var viewCountVar = target;
+        if (currentSection() != None) {
+            var currentTargets = currentSubsectionsAndLabeledGathers();
+
+            if (currentTargets.exists(target)) {
+                var lineToGo = currentTargets[target];
+                var lineID = { lineNumber: lineToGo.lineNumber, sourceFile: lineToGo.sourceFile };
+                switch (lineToGo.type) {
+                    case DeclareSection(_):
+                        // Diverting to a section should clear the current choice depth
+                        choiceDepth = 0;
+                    case Gather(Some(t), depth, _):
+                        // Diverting to a gather should adopt its choice depth
+                        choiceDepth = depth;
+                    default:
+                        throw "Never";
+                }
+                gotoLineByID(lineID);
+                stepLine();
+                return Empty;
+            }
+        }
         // debugTrace('going to section ${section}');
         // Update this section's view count
-        if (!interp.variables.exists(target)) {
+        // TODO or else parse __ notation for subsections
+        if (!interp.variables.exists(viewCountVar)) {
             return Error('Tried to divert to undeclared section/label ${target}.');
         }
         interp.variables[target] += 1;
