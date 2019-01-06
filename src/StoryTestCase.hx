@@ -14,22 +14,19 @@ class StoryTestCase extends utest.Test {
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false, debugPrints: Bool = false) {
 
-        trace('validating ${storyFile}');
+        if (debugPrints) trace('validating ${storyFile}');
 
-        var story: Story = new Story(debug,'validating.hanktest', debugPrints);
+        var story: Story = new Story(debug,'validating.hlog', debugPrints);
         story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
 
         var i = 0;
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
-            trace(line);
             var frame = story.nextFrame();
 
             if (debugPrints) {
-                if (debugPrints) {
-                    trace('Frame ${i}: ${Std.string(frame)}');
-                }
+                trace('Frame ${i}: ${Std.string(frame)}');
             }
 
             if (StringTools.startsWith(line, "*")) {
@@ -76,6 +73,6 @@ class StoryTestCase extends utest.Test {
             // After all transcript lines are validated, there should be nothing left in the story flow!
             Assert.equals(StoryFrame.Finished, story.nextFrame());
         }
-        trace('done with ${storyFile}');
+        if (debugPrints) trace('done with ${storyFile}');
     }
 }

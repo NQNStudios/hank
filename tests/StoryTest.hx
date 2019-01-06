@@ -13,23 +13,35 @@ class StoryTest extends src.StoryTestCase {
 
     public function testParseHelloWorld() {
         var story: Story = new Story();
-        story.loadScript("examples/hello.hank"); assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
+        story.loadScript("examples/hello/main.hank"); assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
     }
 
     public function testHelloWorld() {
         var story: Story = new Story();
-        story.loadScript("examples/hello.hank");
+        story.loadScript("examples/hello/main.hank");
         assertComplexEquals(HasText("Hello, world!"), story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
         Assert.equals(StoryFrame.Finished, story.nextFrame());
     }
 
-    public function testRunFullSpec2() {
-        validateAgainstTranscript("examples/main.hank", "examples/tests/main1.hanktest");
-    }
+    public function testAllExamples() {
+        var exampleFolders = sys.FileSystem.readDirectory('examples');
 
-    public function testRunFullSpec3() {
-        validateAgainstTranscript("examples/main.hank", "examples/tests/main2.hanktest");
+        // Iterate through every example in the examples folder
+        for (folder in exampleFolders) {
+            trace('Running tests for example "${folder}"');
+            var files = sys.FileSystem.readDirectory('examples/${folder}');
+
+            for (file in files) {
+                if (StringTools.endsWith(file, '.hlog')) {
+                    trace('    Running ${file}');
+
+                    var debug = file.indexOf("debug") != -1;
+                    var partial = file.indexOf("partial") != -1;
+                    validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial, debug, false);
+                }
+            }
+        }
     }
 
     /**
@@ -37,8 +49,8 @@ class StoryTest extends src.StoryTestCase {
     **/
     public function testRunFullSpec1() {
         trace('testing the main hank example manually');
-        var story: Story = new Story(true, "transcript.hanktest", true);
-        story.loadScript("examples/main.hank");
+        var story: Story = new Story(true, "transcript.hlog", true);
+        story.loadScript("examples/main/main.hank");
         var frame1 = story.nextFrame();
         // This calls the INCLUDE statement. Ensure that all lines
         // were included
@@ -82,12 +94,12 @@ class StoryTest extends src.StoryTestCase {
         Assert.equals(StoryFrame.Finished, story.nextFrame());
 
         // Validate the transcript that was produced
-        validateAgainstTranscript("examples/main.hank", "transcript.hanktest");
+        validateAgainstTranscript("examples/main/main.hank", "transcript.hlog");
     }
 
     public function testViewCounts() {
         var story = new Story(true);
-        story.loadScript("examples/main.hank");
+        story.loadScript("examples/main/main.hank");
 
         Assert.equals(0, story.interp.variables['start']);
         Assert.equals(0, story.interp.variables['choice_example']);
@@ -106,7 +118,7 @@ class StoryTest extends src.StoryTestCase {
     public function testParseFullSpec() {
         // Parse the main.hank script and test that all lines are correctly parsed
         var story = new Story(true);
-        story.loadScript("examples/main.hank");
+        story.loadScript("examples/main/main.hank");
         Assert.equals(40+22, story.lineCount);
 
         // TODO test a few line numbers from the script to make sure the parsed versions match. Especially block line numbers
@@ -116,7 +128,7 @@ class StoryTest extends src.StoryTestCase {
 
         var lineTypes = [
             // TODO the 22 lines of the extra.hank file
-            IncludeFile('examples/extra.hank'),
+            IncludeFile('examples/main/extra.hank'),
             NoOp,
             Divert('start'),
             NoOp,
@@ -156,56 +168,13 @@ class StoryTest extends src.StoryTestCase {
             OutputText("These should all say 'mouse':"),
             OutputText("{what_happened}"),
             OutputText("{variable_declared_in_block}"),
-            EOF('examples/main.hank')
+            EOF('examples/main/main.hank')
         ];
 
         var idx = 23;
         var i = 0;
         while (idx < story.scriptLines.length) {
             assertComplexEquals(lineTypes[i++], story.scriptLines[idx++].type);
-        }
-    }
-
-    @Ignored
-    public function testRunIntercept1() {
-        validateAgainstTranscript("examples/TheIntercept.hank", "examples/tests/intercept1.hanktest", false,
-        false,
-        true);
-    }
- 
-    @Ignored
-    public function testRunInterceptDebug1() {
-        validateAgainstTranscript(
-            "examples/TheIntercept.hank",
-            "examples/tests/interceptDebug1.hanktest",
-            false, // Don't validate all of the Intercept until the port is done
-            true, // Set DEBUG to true
-            true); // Use debugTrace statements 
-    }
-
-    public function testEmbeddedHankMindfuck() {
-        // Test the situation where embedded Hank lines are triggered, and later the story loops to the same Haxe block with different conditions
-        validateAgainstTranscript("examples/mindfuck.hank", "examples/tests/mindfuck.hanktest", true, true, true);
-    }
-
-    public function testConditionalBlocks() {
-        trace('Testing conditional example in production mode');
-        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditional1.hanktest", true, false, true);
-        trace('testing conditional example in debug mode');
-        validateAgainstTranscript("examples/conditional.hank", "examples/tests/conditionalDebug1.hanktest", true, true, true);
-    }
-
-    public function testLabels() {
-        validateAgainstTranscript("examples/labels.hank", "examples/tests/labels1.hanktest");
-        validateAgainstTranscript("examples/labels.hank", "examples/tests/labels2.hanktest");
-    }
-
-    /** Test one of Nat's private WIP Hank stories **/
-    public function testPrivateStories() {
-        if (sys.FileSystem.exists('examples/shave')) {
-            validateAgainstTranscript('examples/shave/shave-draft2.hank', 'examples/shave/tests/1.hanktest');
-        } else {
-            Assert.isTrue(true);
         }
     }
 }

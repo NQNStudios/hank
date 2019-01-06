@@ -433,16 +433,16 @@ class Story {
         if (linesArray.length > 1) {
             // debugTrace('Parsing haxe block "${preprocessedLines}"');
         }
-        var program = parser.parseString(preprocessedLines);
-        interp.execute(program);
+
+        executeHaxeBlock(preprocessedLines);
 
         var currentLineId = {
             sourceFile: scriptLines[currentLine].sourceFile,
             lineNumber: scriptLines[currentLine].lineNumber
         };
 
-        trace(startingId);
-        trace(currentLineId);
+        // trace(startingId);
+        // trace(currentLineId);
         if (startingId.lineNumber == currentLineId.lineNumber && startingId.sourceFile == currentLineId.sourceFile) {stepLine();}
     }
 
@@ -465,13 +465,13 @@ class Story {
             var line = scriptLines[idx++];
             if (line.sourceFile == id.sourceFile && line.lineNumber == id.lineNumber) {
                 gotoLine(idx);
-                debugTrace('Found the right line');
+                // debugTrace('Found the right line');
             }
         }
     }
 
     private function stepLine() {
-        debugTrace('stepLine called');
+        // debugTrace('stepLine called');
         if (!finished) {
             // debugTrace('Stepping to line ${Std.string(scriptLines[currentLine+1])}');
             gotoLine(currentLine+1);
@@ -541,7 +541,7 @@ class Story {
 
     private function queueEmbeddedBlock(dummyFile: String) {
         if (embeddedBlocksQueued.length == 0) {
-            trace('${dummyFile} got here first');
+            // trace('${dummyFile} got here first');
             gotoFile(dummyFile);
         }
         embeddedBlocksQueued.push(dummyFile);
@@ -551,14 +551,14 @@ class Story {
     private function processEmbeddedLines(parent: LineID, childNumber: Int, lines: String) {
         embeddedEntryPoint = parent;
         var dummyFile = 'EMBEDDED BLOCK ${childNumber}/${Std.string(parent)}';
-        debugTrace('processing ${dummyFile}');
+        // debugTrace('processing ${dummyFile}');
         queueEmbeddedBlock(dummyFile);
     }
 
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
         if (line.type != NoOp) {
-            debugTrace('Processing ${Std.string(line)}');
+            // debugTrace('Processing ${Std.string(line)}');
         }
 
         var file = line.sourceFile;
@@ -604,7 +604,7 @@ class Story {
                         stepLine();
                         embeddedEntryPoint = null;
                     } else {
-                        trace('another block was queued');
+                        // trace('another block was queued');
                         var nextBlock = embeddedBlocksQueued[0];
                         gotoFile(nextBlock);
                     }
@@ -641,7 +641,7 @@ class Story {
                     return Error("Trust me, you'd rather not use a triple-nested Haxe block");
                 }
                 processHaxeBlock(code);
-                trace('done that');
+                // trace('done that');
                 return Empty;
 
             // Execute choice declarations by collecting the set of choices and presenting valid ones to the player
@@ -846,10 +846,31 @@ class Story {
     private function checkChoiceCondition(choice: Choice): Bool {
         return if (Util.startsWithEnclosure(choice.text, "{", "}")) {
             var conditionExpression = Util.findEnclosure(choice.text, "{", "}");
-            var parsed = parser.parseString(conditionExpression);
-            var conditionValue = interp.expr(parsed);
+            var conditionValue = evaluateHaxeExpression(conditionExpression);
             conditionValue;
         } else true;
+    }
+
+    private function evaluateHaxeExpression(expression: String) {
+        // It's common to want to && or || section/label names, but they're integers, not bools. Allow this.
+        var expandedExpression = expression;
+
+        var parsed = parser.parseString(expandedExpression);
+        try {
+            var value = interp.expr(parsed);
+            return value;
+        } catch (e: Dynamic) {
+            throw 'Error evaluating expression ${expression}: ${Std.string(e)}';
+        }
+    }
+
+    private function executeHaxeBlock(block: String) {
+        try {
+            var program = parser.parseString(block);
+            interp.execute(program);
+        } catch (e: Dynamic) {
+            throw 'Error evaluating haxe block: ${Std.string(e)}\n${block}';
+        }
     }
 
     /**
@@ -901,9 +922,8 @@ class Story {
     Skip script execution to the desired target
     **/
     public function divert(target: String): StoryFrame {
-        debugTrace('diverting to ${target}');
+        // debugTrace('diverting to ${target}');
         // TODO check the current section for a subsection by the name of target, or else parse . notation for subsections
-        // TODO if going to a labeled gather, set the choice depth to that gather's depth - 1
         // debugTrace('going to section ${section}');
         // Update this section's view count
         if (!interp.variables.exists(target)) {

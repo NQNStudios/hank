@@ -1,2 +1,3 @@
-*.hanktest
 examples/shave/
+transcript.hlog
+validating.hlog
