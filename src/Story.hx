@@ -15,8 +15,7 @@ typedef LineID = {
 }
 
 typedef HankLine = {
-    var sourceFile: String;
-    var lineNumber: Int;
+    var id: LineID;
     var type: LineType;
 }
 
@@ -50,7 +49,7 @@ enum LineType {
 class Story {
     private var lineCount: Int = 0;
     private var scriptLines: Array<HankLine> = new Array();
-    private var currentLine: Int = 0;
+    private var currentLineIdx: Int = 0;
     private var directory: String = "";
     private var parser = new Parser();
     private var interp = new Interp();
@@ -63,6 +62,27 @@ class Story {
     private var debugPrints: Bool;
     // Count how many choices have been parsed so each one can have a unique ID
     private var choicesParsed = 0;
+
+    private function dummyLine(): HankLine {
+        return {
+            id: {
+                sourceFile: "",
+                lineNumber: 0,
+            },
+            type: NoOp
+        };
+    }
+
+    private function currentLine() {
+        return scriptLines[currentLineIdx];
+    }
+
+    private function currentLineID() {
+        return currentLine().id;
+    }
+    private function currentFile() {
+        return currentLine().id.sourceFile;
+    }
 
     private function debugTrace(v: Dynamic, ?infos: haxe.PosInfos) {
         if (debugPrints) {
@@ -135,8 +155,11 @@ class Story {
         parseScriptFile(storyFile);
     }
 
+    private function isEmbedded(line: HankLine) {
+        return StringTools.startsWith(line.id.sourceFile, "EMBEDDED");
+    }
     private function currentlyEmbedded(): Bool {
-        return StringTools.startsWith(scriptLines[currentLine].sourceFile, "EMBEDDED");
+        return isEmbedded(currentLine());
     }
 
     private var sectionParsing = '';
@@ -315,8 +338,10 @@ class Story {
         while (idx < unparsedLines.length) { 
  
             var parsedLine = {
-                sourceFile: file,
-                lineNumber: idx+1,
+                id: {
+                    sourceFile: file,
+                    lineNumber: idx+1,
+                },
                 type: NoOp
             };
             var unparsedLine = unparsedLines[idx];
@@ -331,20 +356,12 @@ class Story {
             switch (parsedLine.type) {
                 case HaxeBlock(lines, _):
                     for (i in 0...lines-1) {
-                        scriptLines.push({
-                            sourceFile: "",
-                            lineNumber: 0,
-                            type: NoOp
-                        });
+                        scriptLines.push(dummyLine());
                     }
                     idx += lines;
                 case BlockComment(lines):
                     for (i in 0...lines-1) {
-                        scriptLines.push({
-                            sourceFile: "",
-                            lineNumber: 0,
-                            type: NoOp
-                        });
+                        scriptLines.push(dummyLine());
                     }
                     idx += lines;
                 default:
@@ -353,8 +370,10 @@ class Story {
         }
 
         scriptLines.push({
-            sourceFile: file,
-            lineNumber: idx,
+            id: {
+                sourceFile: file,
+                lineNumber: idx,
+            },
             type: EOF(file)
         });
     }
@@ -382,16 +401,13 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
-        var startingId = {
-            sourceFile: scriptLines[currentLine].sourceFile,
-            lineNumber: scriptLines[currentLine].lineNumber
-        };
+        var startingId = currentLineID();
+        var startingIdStr = '{ sourceFile: "${startingId.sourceFile}", lineNumber: ${startingId.lineNumber}}';
         // debugTrace('ORIGINAL LINES: ${lines}');
         var preprocessedLines = "";
         var linesArray = lines.split('\n');
 
         // Associate this haxe block's embedded Hank blocks with the Haxe block
-        var id = '{ sourceFile: "${scriptLines[currentLine].sourceFile}", lineNumber: ${scriptLines[currentLine].lineNumber} }';
         var childNumber = 0;
 
         for (line in linesArray) {
@@ -411,7 +427,7 @@ class Story {
                     var hankLine = StringTools.trim(trimmed.substr(1));
                     // TODO escape any " that might be in hank text
                     parseEmbeddedLines(startingId, childNumber, hankLine);
-                    preprocessedLines += 'story.processEmbeddedLines(${id}, ${childNumber}, "${hankLine}");\n';
+                    preprocessedLines += 'story.processEmbeddedLines(${startingIdStr}, ${childNumber}, "${hankLine}");\n';
                     childNumber++;
                 } else {
                     preprocessedLines += trimmed+'\n';
@@ -428,7 +444,7 @@ class Story {
 
             // TODO escape any " that might be in hank text of $line
             parseEmbeddedLines(startingId, childNumber, hankLines);
-            hankBlockAsHaxe += 'story.processEmbeddedLines(${id}, ${childNumber}, "${hankLines}");\n';
+            hankBlockAsHaxe += 'story.processEmbeddedLines({${startingIdStr}}, ${childNumber}, "${hankLines}");\n';
             childNumber++;
 
             preprocessedLines = Util.replaceEnclosure(preprocessedLines, hankBlockAsHaxe, ',,,', ',,,');
@@ -441,14 +457,9 @@ class Story {
 
         executeHaxeBlock(preprocessedLines);
 
-        var currentLineId = {
-            sourceFile: scriptLines[currentLine].sourceFile,
-            lineNumber: scriptLines[currentLine].lineNumber
-        };
-
         // trace(startingId);
         // trace(currentLineId);
-        if (startingId.lineNumber == currentLineId.lineNumber && startingId.sourceFile == currentLineId.sourceFile) {stepLine();}
+        if (startingId == currentLineID()) {stepLine();}
     }
 
     private var diverting = false;
@@ -472,7 +483,7 @@ class Story {
         }
 
         if (line >= 0 && line <= scriptLines.length) {
-            currentLine = line;
+            currentLineIdx = line;
         } else {
             throw 'Tried to go to out of range line ${line}';
         }
@@ -480,6 +491,7 @@ class Story {
         if (line == scriptLines.length) {
             // Reached the end of the script
             finished = true;
+            trace('end of script ${rootFile}');
         }
     }
 
@@ -487,7 +499,7 @@ class Story {
         var idx = 0;
         while (idx < scriptLines.length) {
             var line = scriptLines[idx++];
-            if (line.sourceFile == id.sourceFile && line.lineNumber == id.lineNumber) {
+            if (line.id == id) {
                 gotoLine(idx);
                 // debugTrace('Found the right line');
             }
@@ -497,21 +509,21 @@ class Story {
     private function stepLine() {
         // debugTrace('stepLine called');
         if (!finished) {
-            // debugTrace('Stepping to line ${Std.string(scriptLines[currentLine+1])}');
-            gotoLine(currentLine+1);
+            // debugTrace('Stepping to line ${Std.string(scriptLines[currentLineIdx+1])}');
+            gotoLine(currentLineIdx+1);
         } else {
             throw "Tried to step past the end of a script";
         }
     }
 
     private function processNextLine(): StoryFrame {
-        // debugTrace('line ${currentLine} of ${scriptLines.length}is ${scriptLines[currentLine]}');
-        var scriptLine = scriptLines[currentLine];
+        // debugTrace('line ${currentLineIdx} of ${scriptLines.length}is ${scriptLines[currentLineIdx]}');
+        var scriptLine = currentLine();
         var frame = processLine(scriptLine);
 
         switch (frame) {
             case Error(message):
-                var fullMessage = 'Error at line ${scriptLine.lineNumber} in ${scriptLine.sourceFile}: ${message}';
+                var fullMessage = 'Error at line ${scriptLine.id}: ${message}';
                 if (debugPrints) {
                     throw fullMessage;
                 } else {
@@ -529,7 +541,7 @@ class Story {
     private var finished: Bool = false;
 
     private function gotoEOF() {
-        var currentFile = scriptLines[currentLine].sourceFile;
+        var currentFile = currentLineID().sourceFile;
         for (i in 0...scriptLines.length) {
             if (scriptLines[i].type.equals(EOF(currentFile))) {
                 gotoLine(i);
@@ -540,7 +552,7 @@ class Story {
 
     private function gotoFile(file: String) {
         for (i in 0...scriptLines.length) {
-            if (scriptLines[i].sourceFile == file) {
+            if (scriptLines[i].id.sourceFile == file) {
                 // debugTrace('Found line for ${file}: ${scriptLines[i]}');
                 gotoLine(i);
                 break;
@@ -585,13 +597,13 @@ class Story {
             // debugTrace('Processing ${Std.string(line)}');
         }
 
-        var file = line.sourceFile;
+        var file = line.id.sourceFile;
         var type = line.type;
         switch (type) {
             // Execute text lines by evaluating their {embedded expressions}
             case OutputText(text):
                 stepLine();
-                var textToOutput = fillHExpressions(text);
+                var textToOutput = fillBraceExpressions(text);
                 return if (textToOutput.length > 0) {
                     HasText(textToOutput);
                 } else {
@@ -645,7 +657,7 @@ class Story {
                 if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested section declaration.");
                 }
-                if (scriptLines[currentLine].sourceFile == rootFile) {
+                if (currentFile() == rootFile) {
                     return Finished;
                 }
                 else {
@@ -657,7 +669,7 @@ class Story {
                  if (currentlyEmbedded()) {
                     return Error("Trust me, you'd rather not use a double-nested section declaration.");
                 }
-                if (scriptLines[currentLine].sourceFile == rootFile) {
+                if (currentFile() == rootFile) {
                     return Finished;
                 }
                 else {
@@ -698,8 +710,7 @@ class Story {
                 if (choiceDepth + 1 >= depth) {
                     choiceDepth = Math.floor(Math.min(choiceDepth, depth));
                     return processLine({
-                        lineNumber: currentLine,
-                        sourceFile: scriptLines[currentLine].sourceFile,
+                        id: currentLineID(),
                         type: nextPartType
                     });
                 } else {
@@ -715,7 +726,7 @@ class Story {
 
     function evaluateAlternativeExpression(content: String): String {
         // TODO there needs to be some form of ID tracking for alternative objects
-        // Maybe a good way to do that is by scriptLines[currentLine] ID object combined with content equality check. So, the only confusion will be if an author uses two identical sequence expressions on the same  line
+        // Maybe a good way to do that is by scriptLines[currentLineIdx] ID object combined with content equality check. So, the only confusion will be if an author uses two identical sequence expressions on the same  line
         return content;
     }
 
@@ -790,7 +801,7 @@ class Story {
                 divert(target);
             case None:
                 // Otherwise, find the line where the choice taken occurs
-                for (i in currentLine...scriptLines.length) {
+                for (i in currentLineIdx...scriptLines.length) {
                     switch (scriptLines[i].type) {
                         case DeclareChoice(choice):
                             if (choice.id == choiceTaken.id) {
@@ -817,9 +828,9 @@ class Story {
     **/
     function gotoNextGather(): StoryFrame {
         // debugTrace("called gotoNextGather()");
-        var l = currentLine+1;
-        var file = scriptLines[currentLine].sourceFile;
-        while (l < scriptLines.length && scriptLines[l].sourceFile == file) {
+        var l = currentLineIdx+1;
+        var file = currentFile();
+        while (l < scriptLines.length && scriptLines[l].id.sourceFile == file) {
             // debugTrace('checking ${Std.string(scriptLines[l])} for gather');
             switch (scriptLines[l].type) {
                 case DeclareSection(_):
@@ -848,9 +859,9 @@ class Story {
     function collectRawChoices(): Array<Choice> {
         var choices = new Array();
         // Scan for more choices in this set until hitting a new section declaration, a gather of the right depth, or the end of this file
-        var file = scriptLines[currentLine].sourceFile;
+        var file = currentFile();
         var nextLineFile = file;
-        var l = currentLine;
+        var l = currentLineIdx;
         while (l < scriptLines.length) {
 
             var type = scriptLines[l].type;
@@ -883,7 +894,7 @@ class Story {
                 default:
             }
 
-            nextLineFile = scriptLines[l++].sourceFile;
+            nextLineFile = scriptLines[l++].id.sourceFile;
             // debugTrace(nextLineFile);
         }
 
@@ -951,7 +962,7 @@ class Story {
             }
         }
 
-        choice.text = fillHExpressions(choice.text);
+        choice.text = fillBraceExpressions(choice.text);
         choice.text = StringTools.trim(choice.text);
         return choice;
     }
@@ -979,7 +990,7 @@ class Story {
         for (line in scriptLines) {
             switch (line.type) {
                 case DeclareSection(name):
-                    if (linesInSection(name).indexOf(scriptLines[currentLine]) != -1) {
+                    if (linesInSection(name).indexOf(scriptLines[currentLineIdx]) != -1) {
                         return Some(name);
                     }
                 default:
@@ -1039,7 +1050,7 @@ class Story {
     }
 
     private function stepLineInDivert() {
-        switch (scriptLines[currentLine].type) {
+        switch (scriptLines[currentLineIdx].type) {
             case DeclareSection(_):
             case DeclareSubsection(_, _):
             case NoOp:
@@ -1063,7 +1074,7 @@ class Story {
             if (currentTargets.exists(target)) {
                 var lineToGo = currentTargets[target];
                 trace('HERE ${lineToGo}');
-                var lineID = { lineNumber: lineToGo.lineNumber, sourceFile: lineToGo.sourceFile };
+                var lineID = lineToGo.id;
                 switch (lineToGo.type) {
                     case Gather(Some(t), depth, _):
                         // Diverting to a gather should adopt its choice depth
@@ -1103,7 +1114,7 @@ class Story {
                     }
                     switch (sectionLines[0].type) {
                         case DeclareSubsection(_):
-                            gotoLineByID({lineNumber: sectionLines[0].lineNumber, sourceFile: sectionLines[0].sourceFile});
+                            gotoLineByID(sectionLines[0].id);
 
                         // Go to the start of the section if it has top-level content
                         default:
@@ -1130,8 +1141,7 @@ class Story {
         else if (parts.length == 2) {
             var subTargets = subsectionsAndLabeledGathers(parts[0]);
             var lineToGo = subTargets[parts[1]];
-            var lineID = { lineNumber: lineToGo.lineNumber, sourceFile: lineToGo.sourceFile };
-            gotoLineByID(lineID);
+            gotoLineByID(lineToGo.id);
             stepLineInDivert();
         }
         else {

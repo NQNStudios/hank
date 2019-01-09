@@ -36,9 +36,12 @@ class StoryTest extends src.StoryTestCase {
                 if (StringTools.endsWith(file, '.hlog')) {
                     trace('    Running ${file}');
 
+                    var disabled = file.indexOf("disabled") != -1;
                     var debug = file.indexOf("debug") != -1;
                     var partial = file.indexOf("partial") != -1;
-                    validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial, debug, false);
+                    if (!disabled) {
+                        validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial, debug, false);
+                    }
                 }
             }
         }
