@@ -713,6 +713,10 @@ class Story {
         }
     }
 
+    function evaluateBraceExpression(content: String) {
+
+    }
+
     /**
     Parse and fill haxe expressions in the text based on current variable values
     **/
