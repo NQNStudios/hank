@@ -713,19 +713,33 @@ class Story {
         }
     }
 
-    function evaluateBraceExpression(content: String) {
+    function evaluateAlternativeExpression(content: String): String {
+        // TODO there needs to be some form of ID tracking for alternative objects
+        // Maybe a good way to do that is by scriptLines[currentLine] ID object combined with content equality check. So, the only confusion will be if an author uses two identical sequence expressions on the same  line
+        return content;
+    }
 
+    function isAlternativeExpression(content: String): Bool {
+        var altSymbols = '!&~';
+        return altSymbols.indexOf(content.charAt(0)) != -1 || content.indexOf('|') != -1;
     }
 
     /**
-    Parse and fill haxe expressions in the text based on current variable values
+    Parse and evaluate brace expressions in the text. (Ink-style alternatives AND normal haxe expressions)
     **/
-    function fillHExpressions(text: String) {
+    function fillBraceExpressions(text: String) {
         while (Util.containsEnclosure(text, "{", "}")) {
             var expression = Util.findEnclosure(text,"{","}");
             // debugTrace(expression);
 
-            var value = evaluateHaxeExpression(expression);
+            var value = '';
+
+            if (isAlternativeExpression(expression)) {
+                // TODO if it's a divert, clip off the rest of the text and start processing text from that divert
+                value = evaluateAlternativeExpression(expression);
+            } else {
+                value = evaluateHaxeExpression(expression);
+            }
 
             // If an expression evaluates null, don't add any text.
             var stringValue = if (value != null) {
