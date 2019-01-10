@@ -8,10 +8,6 @@ import src.StoryFrame;
 import utest.Assert;
 
 class StoryTest extends src.StoryTestCase {
-    public static function main() {
-        utest.UTest.run([new StoryTest()]);
-    }
-
     public function testIdEquality() {
         var lineID = new LineID('examples/TheIntercept/main.hank', 105);
         var lineID2 = new LineID('examples/TheIntercept/main.hank', 105);
