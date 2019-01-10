@@ -74,6 +74,7 @@ class Story {
     }
 
     private function currentLine() {
+        // trace('getting line ${currentLineIdx} of ${scriptLines.length}');
         return scriptLines[currentLineIdx];
     }
 
@@ -97,6 +98,11 @@ class Story {
                 // trace('saving out transcript');
             default:
         }
+    }
+
+    private function pushScriptLine(line: HankLine) {
+        // trace('pushing ${line}');
+        scriptLines.push(line);
     }
 
     private function logFrameToTranscript(frame: StoryFrame) {
@@ -203,7 +209,7 @@ class Story {
                     case 1:
                         // if it's a stitch, prefix the count variable with section name (this will be tough because the . operator is already defined and we want the main section to be an int view count, not a dictionary of its stiches)
                         interp.variables['${sectionParsing}__${sectionName}'] = 0;
-                        trace('${sectionParsing}__${sectionName}');
+                        // trace('${sectionParsing}__${sectionName}');
                         return DeclareSubsection(sectionParsing, sectionName);
                     // Technically, ======= also works for declaring a section
                     default:
@@ -349,19 +355,19 @@ class Story {
             if (file.indexOf('EMBEDDED') == 0) {
                 // debugTrace('adding embedded line ${Std.string(parsedLine)}');
             }
-            scriptLines.push(parsedLine);
+            pushScriptLine(parsedLine);
 
             // Normal lines are parsed alone, but Haxe blocks are parsed as a group, so
             // the index needs to update accordingly 
             switch (parsedLine.type) {
                 case HaxeBlock(lines, _):
                     for (i in 0...lines-1) {
-                        scriptLines.push(dummyLine());
+                        pushScriptLine(dummyLine());
                     }
                     idx += lines;
                 case BlockComment(lines):
                     for (i in 0...lines-1) {
-                        scriptLines.push(dummyLine());
+                        pushScriptLine(dummyLine());
                     }
                     idx += lines;
                 default:
@@ -369,7 +375,7 @@ class Story {
             }
         }
 
-        scriptLines.push({
+        pushScriptLine({
             id: {
                 sourceFile: file,
                 lineNumber: idx,
@@ -384,19 +390,18 @@ class Story {
             gotoFile(rootFile);
             started = true;
         }
-        if (finished) {
-            logFrameToTranscript(Finished);
-            return Finished;
-        } else {
-            var frame: StoryFrame = null;
+        var frame: StoryFrame = null;
 
-            do {
-                frame = processNextLine();
-                logFrameToTranscript(frame);
-            } while (frame == Empty);
+        do {
+            if (finished) {
+                logFrameToTranscript(Finished);
+                return Finished;
+            }
+            frame = processNextLine();
+            logFrameToTranscript(frame);
+        } while (frame == Empty);
 
-            return frame;
-        }
+        return frame;
     }
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
@@ -498,12 +503,14 @@ class Story {
     private function gotoLineByID(id: LineID) {
         var idx = 0;
         while (idx < scriptLines.length) {
-            var line = scriptLines[idx++];
+            var line = scriptLines[idx];
             if (line.id == id) {
                 gotoLine(idx);
-                // debugTrace('Found the right line');
+                trace('Found the right line for id ${id}');
             }
+            idx++;
         }
+        throw 'Error! Didn\'t find the right line for id ${id}';
     }
 
     private function stepLine() {
@@ -517,7 +524,7 @@ class Story {
     }
 
     private function processNextLine(): StoryFrame {
-        // debugTrace('line ${currentLineIdx} of ${scriptLines.length}is ${scriptLines[currentLineIdx]}');
+        // trace('line ${currentLineIdx} of ${scriptLines.length} is ${scriptLines[currentLineIdx]}');
         var scriptLine = currentLine();
         var frame = processLine(scriptLine);
 
@@ -635,11 +642,13 @@ class Story {
                 if (currentlyEmbedded()) {
                     embeddedBlocksQueued.remove(embeddedBlocksQueued[0]);
                     if (embeddedBlocksQueued.length == 0) {
+                        trace("reached end of embedded blocks");
                         gotoLineByID(embeddedEntryPoint);
                         stepLine();
+                        trace('now at line ${currentLineIdx} of ${scriptLines.length}');
                         embeddedEntryPoint = null;
                     } else {
-                        // trace('another block was queued');
+                        trace('another block was queued');
                         var nextBlock = embeddedBlocksQueued[0];
                         gotoFile(nextBlock);
                     }
@@ -758,10 +767,10 @@ class Story {
             } else {
                 "";
             }
-            trace (stringValue);
+            // trace (stringValue);
 
             text = Util.replaceEnclosure(text, stringValue, "{", "}");
-            trace ( text);
+            // trace ( text);
         }
 
         // Also trim out all duplicate whitespace
@@ -925,7 +934,7 @@ class Story {
         var parsed = parser.parseString(expandedExpression);
         try {
             var value = interp.expr(parsed);
-            trace('evaluated ${expression} as ${value}');
+            // trace('evaluated ${expression} as ${value}');
             return value;
         } catch (e: Dynamic) {
             throw 'Error evaluating expression ${expression}: ${Std.string(e)}';
@@ -1073,7 +1082,7 @@ class Story {
 
             if (currentTargets.exists(target)) {
                 var lineToGo = currentTargets[target];
-                trace('HERE ${lineToGo}');
+                // trace('HERE ${lineToGo}');
                 var lineID = lineToGo.id;
                 switch (lineToGo.type) {
                     case Gather(Some(t), depth, _):

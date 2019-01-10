@@ -11,6 +11,13 @@ class StoryTest extends src.StoryTestCase {
         utest.UTest.run([new StoryTest()]);
     }
 
+    public function testIdEquality() {
+        var lineID = {lineNumber: 105, sourceFile: 'examples/TheIntercept/main.hank'};
+        var lineID2 = {lineNumber: 105, sourceFile: 'examples/TheIntercept/main.hank'};
+
+        Assert.isTrue(lineID == lineID2);
+    }
+
     public function testParseHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello/main.hank"); assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
