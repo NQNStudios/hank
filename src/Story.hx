@@ -9,41 +9,9 @@ import sys.io.FileOutput;
 import hscript.Parser;
 import hscript.Interp;
 
-typedef LineID = {
-    sourceFile: String,
-    lineNumber: Int
-}
-
-typedef HankLine = {
-    var id: LineID;
-    var type: LineType;
-}
-
-typedef Choice = {
-    var label: Option<String>;
-    var expires: Bool;
-    var text: String;
-    var depth: Int;
-    // Choices are parsed with a unique ID so they can be followed even if duplicate text is used for multiple choices
-    var id: Int;
-    // Choices can be declared with a divert target on the same line. That target will be stored in this optional field.
-    var divertTarget: Option<String>;
-}
-
-enum LineType {
-    IncludeFile(path: String);
-    OutputText(text: String);
-    DeclareChoice(choice: Choice);
-    DeclareSection(name: String);
-    DeclareSubsection(parent: String, name: String);
-    Divert(target: String);
-    Gather(label: Option<String>, depth: Int, restOfLine: LineType);
-    HaxeLine(code: String);
-    HaxeBlock(lines: Int, code: String);
-    BlockComment(lines: Int);
-    EOF(file: String);
-    NoOp;
-}
+import src.HankLine.HankLine;
+import src.HankLine.LineID;
+import src.HankLine.LineType;
 
 @:allow(tests.StoryTest)
 class Story {
@@ -65,10 +33,7 @@ class Story {
 
     private function dummyLine(): HankLine {
         return {
-            id: {
-                sourceFile: "",
-                lineNumber: 0,
-            },
+            id: new LineID("", 0),
             type: NoOp
         };
     }
@@ -344,10 +309,7 @@ class Story {
         while (idx < unparsedLines.length) { 
  
             var parsedLine = {
-                id: {
-                    sourceFile: file,
-                    lineNumber: idx+1,
-                },
+                id: new LineID(file, idx+1),
                 type: NoOp
             };
             var unparsedLine = unparsedLines[idx];
@@ -376,10 +338,7 @@ class Story {
         }
 
         pushScriptLine({
-            id: {
-                sourceFile: file,
-                lineNumber: idx,
-            },
+            id: new LineID(file, idx),
             type: EOF(file)
         });
     }
@@ -395,6 +354,7 @@ class Story {
         do {
             if (finished) {
                 logFrameToTranscript(Finished);
+                // trace('done here');
                 return Finished;
             }
             frame = processNextLine();
@@ -407,7 +367,7 @@ class Story {
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
         var startingId = currentLineID();
-        var startingIdStr = '{ sourceFile: "${startingId.sourceFile}", lineNumber: ${startingId.lineNumber}}';
+        interp.variables['__temp__'] = startingId;
         // debugTrace('ORIGINAL LINES: ${lines}');
         var preprocessedLines = "";
         var linesArray = lines.split('\n');
@@ -432,7 +392,7 @@ class Story {
                     var hankLine = StringTools.trim(trimmed.substr(1));
                     // TODO escape any " that might be in hank text
                     parseEmbeddedLines(startingId, childNumber, hankLine);
-                    preprocessedLines += 'story.processEmbeddedLines(${startingIdStr}, ${childNumber}, "${hankLine}");\n';
+                    preprocessedLines += 'story.processEmbeddedLines(__temp__, ${childNumber}, "${hankLine}");\n';
                     childNumber++;
                 } else {
                     preprocessedLines += trimmed+'\n';
@@ -449,7 +409,7 @@ class Story {
 
             // TODO escape any " that might be in hank text of $line
             parseEmbeddedLines(startingId, childNumber, hankLines);
-            hankBlockAsHaxe += 'story.processEmbeddedLines({${startingIdStr}}, ${childNumber}, "${hankLines}");\n';
+            hankBlockAsHaxe += 'story.processEmbeddedLines(__temp__, ${childNumber}, "${hankLines}");\n';
             childNumber++;
 
             preprocessedLines = Util.replaceEnclosure(preprocessedLines, hankBlockAsHaxe, ',,,', ',,,');
@@ -457,14 +417,14 @@ class Story {
         }
 
         if (linesArray.length > 1) {
-            // debugTrace('Parsing haxe block "${preprocessedLines}"');
+            // trace('Parsing haxe block "${preprocessedLines}"');
         }
 
         executeHaxeBlock(preprocessedLines);
 
         // trace(startingId);
         // trace(currentLineId);
-        if (startingId == currentLineID()) {stepLine();}
+        if (startingId.equals(currentLineID())) {stepLine();}
     }
 
     private var diverting = false;
@@ -496,7 +456,7 @@ class Story {
         if (line == scriptLines.length) {
             // Reached the end of the script
             finished = true;
-            trace('end of script ${rootFile}');
+            // trace('end of script ${rootFile}');
         }
     }
 
@@ -504,13 +464,14 @@ class Story {
         var idx = 0;
         while (idx < scriptLines.length) {
             var line = scriptLines[idx];
-            if (line.id == id) {
+            if (line.id.equals(id)) {
                 gotoLine(idx);
-                trace('Found the right line for id ${id}');
+                // trace('Found the right line for id ${id.sourceFile}:${id.lineNumber}');
+                return;
             }
             idx++;
         }
-        throw 'Error! Didn\'t find the right line for id ${id}';
+        throw 'Error! Didn\'t find the right line for id ${id.sourceFile}:${id.lineNumber}';
     }
 
     private function stepLine() {
@@ -601,7 +562,7 @@ class Story {
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
         if (line.type != NoOp) {
-            // debugTrace('Processing ${Std.string(line)}');
+            // trace('Processing ${Std.string(line)}');
         }
 
         var file = line.id.sourceFile;
@@ -642,13 +603,13 @@ class Story {
                 if (currentlyEmbedded()) {
                     embeddedBlocksQueued.remove(embeddedBlocksQueued[0]);
                     if (embeddedBlocksQueued.length == 0) {
-                        trace("reached end of embedded blocks");
+                        // trace("reached end of embedded blocks");
                         gotoLineByID(embeddedEntryPoint);
                         stepLine();
-                        trace('now at line ${currentLineIdx} of ${scriptLines.length}');
+                        // trace('now at line ${currentLineIdx} of ${scriptLines.length}');
                         embeddedEntryPoint = null;
                     } else {
-                        trace('another block was queued');
+                        // trace('another block was queued');
                         var nextBlock = embeddedBlocksQueued[0];
                         gotoFile(nextBlock);
                     }

@@ -63,6 +63,7 @@ class StoryTestCase extends utest.Test {
             }
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
+                // trace('${line} from ${frame}');
                 assertComplexEquals(HasText(line), frame);
             }
 

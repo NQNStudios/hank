@@ -1,8 +1,9 @@
 package tests;
 
 import src.Story;
-import src.Story.HankLine;
-import src.Story.LineType;
+import src.HankLine.HankLine;
+import src.HankLine.LineType;
+import src.HankLine.LineID;
 import src.StoryFrame;
 import utest.Assert;
 
@@ -12,10 +13,10 @@ class StoryTest extends src.StoryTestCase {
     }
 
     public function testIdEquality() {
-        var lineID = {lineNumber: 105, sourceFile: 'examples/TheIntercept/main.hank'};
-        var lineID2 = {lineNumber: 105, sourceFile: 'examples/TheIntercept/main.hank'};
+        var lineID = new LineID('examples/TheIntercept/main.hank', 105);
+        var lineID2 = new LineID('examples/TheIntercept/main.hank', 105);
 
-        Assert.isTrue(lineID == lineID2);
+        Assert.isTrue(lineID.equals(lineID2));
     }
 
     public function testParseHelloWorld() {
@@ -24,6 +25,7 @@ class StoryTest extends src.StoryTestCase {
     }
 
     public function testHelloWorld() {
+        trace('testing hello world');
         var story: Story = new Story();
         story.loadScript("examples/hello/main.hank");
         assertComplexEquals(HasText("Hello, world!"), story.nextFrame());
