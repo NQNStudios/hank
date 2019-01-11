@@ -26,12 +26,24 @@ class StoryTestCase extends utest.Test {
         var i = 0;
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
-            var frame = story.nextFrame();
+            var frame = null;
+            try {
+                frame = story.nextFrame();
+            } catch (e: Dynamic) {
+                trace('Error at ${story.lastLineID}');
+
+                throw e;
+            }
 
             if (debugPrints) {
                 trace('Frame ${i}: ${Std.string(frame)}');
             }
 
+            // Allow white-box story testing through variable checks prefixed with #
+            if (StringTools.startsWith(line, "#")) {
+                var parts = StringTools.trim(line.substr(1)).split(':');
+                Assert.equals(StringTools.trim(parts[1]), Std.string(story.interp.variables[parts[0]]) );
+            }
             if (StringTools.startsWith(line, "*")) {
                 // Collect the expected set of choices from the transcript.
                 var choices = new Array<String>();

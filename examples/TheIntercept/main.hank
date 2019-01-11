@@ -52,6 +52,32 @@ var smashingWindowItem = NONE;
 ~ var piecereturned = false;
 ~ var longgrasshooperframe = false;
 
+ /*--------------------------------------------------------------------------------
+	The original Intercept script uses Ink functions to raise and lower given attribute variables conveniently:
+
+ === function lower(ref x)
+ 	~ x = x - 1
+
+ === function raise(ref x)
+ 	~ x = x + 1
+
+	We can do the same thing in Hank by passing a string containing the variable's name to a function, and accessing that variable through the global `variables` dictionary.
+
+	Unlike in Ink, where functions can be declared anywhere in your script, Hank functions must be declared BEFORE they are called.
+
+--------------------------------------------------------------------------------*/
+
+```
+function lower(x) {
+	variables[x]--;
+}
+
+function raise(x) {
+	variables[x]++;
+}
+```
+
+
 
 // DEBUG mode adds a few shortcuts
 // In Hank, DEBUG is set automatically based on the debug argument of the Story() constructor
@@ -72,18 +98,6 @@ if (DEBUG) {
     , -> start
 }
 ```
-
- /*--------------------------------------------------------------------------------
-	Wrap up character movement using functions, in case we want to develop this logic in future
---------------------------------------------------------------------------------*/
-
-// TODO change these to Haxe functions
- === function lower(ref x)
- 	~ x = x - 1
-
- === function raise(ref x)
- 	~ x = x + 1
-
 /*--------------------------------------------------------------------------------
 
 	Start the story!
@@ -110,7 +124,7 @@ if (DEBUG) {
  			* * 	(cooperate) [Co—operate] 
 	 				I must co—operate. My credibility is my main asset. To contradict myself, or another source, would be fatal. 
 	 				I must simply hope they do not ask the questions I do not want to answer.
-		 			~ lower(forceful)
+		 			~ lower('forceful');
 	 		* * 	[Dissemble] 
 		 			Misinformation, then. Just as the war in Europe is one of plans and interceptions, not planes and bombs. 
 		 			My best hope is a story they prefer to the truth. 
@@ -150,7 +164,7 @@ if (DEBUG) {
  				I {took:lift the mug|take the mug,} and blow away the steam. It is too hot to drink. 
  				Harris picks his own up and just holds it.
  				~ teacup = true
- 				~ lower(forceful)
+ 				~ lower('forceful');
  		* 	{not teacup} [Don't take it] 
  				Just a cup of insipid canteen tea. I leave it where it is.
  				~ raise(forceful)
@@ -187,7 +201,7 @@ if (DEBUG) {
 
  		*	{not disagree} [Smile]
  			I try a weak smile. It is not returned.
- 			~ lower(forceful)
+ 			~ lower('forceful');
 		
 // Why you're here
 	- 	
@@ -219,7 +233,7 @@ if (DEBUG) {
 	-	Any of us could have taken it; and no one else would have known its worth.
  	
  		*	{forceful <= 0 }[Panic] They will pin it on me. They need a scapegoat so that the work can continue. I'm a likely target. Weaker than the rest. 
- 			~ lower(forceful)
+ 			~ lower('forceful');
  		*	[Calculate] My odds, then, are one in four. Not bad; although the stakes themselves are higher than I would like.
  			~ raise(evasive)
  		*	{evasive >= 0} [Deny] But this is still a mere formality. The work will not stop. A replacement component will be made and we will all be put back to work. We are too valuable to shoot. 
@@ -229,12 +243,12 @@ if (DEBUG) {
 
 === here_at_bletchley_diversion
 	"Here at Bletchley? Of course."
- 	~ raise(evasive)
- 	~ lower(forceful)
+ 	~ raise('evasive');
+ 	~ lower('forceful');
 	"Here, now," Harris corrects. "We are not talking to everyone. I can imagine you might feel pretty sore about that. I can imagine you feeling picked on. { forceful < 0:You're a sensitive soul.}"
 
  	* (fine) "I'm fine[."]," I reply. "This is all some misunderstanding and the quicker we have it cleared up the better."
- 		~ lower(forceful)
+ 		~ lower('forceful');
 		"I couldn't agree more." And then he comes right out with it, with an accusation. 
 	
 	*	{forceful < 0}	"What do you mean by that?"
@@ -253,7 +267,7 @@ if (DEBUG) {
 	 							~ teacup = false
  					* * * 	[No] 			
 	 							"No, { forceful >0:of course not|I suppose not}." { teacup :I put the teacup back down on the table|I push the teacup around on its base}. 
-							 	~ lower(forceful)
+							 	~ lower('forceful');
 								~ teacup = false
  					* * * 	[Evade] 		
 	 							"I don't know what I'm suggesting. I don't understand what's going on."
@@ -294,8 +308,8 @@ if (DEBUG) {
 	 	* [Lie] 		-> nope
 	 	* [Evade] 		
 	 		"The component?"
-			 ~ raise(evasive)
-			 ~ lower(forceful)
+			 ~ raise('evasive');
+			 ~ lower('forceful');
 			"Don't play stupid," he replies. "{ not missing_reel:The component that went missing this afternoon. }Where is it?"
 			
 	- 	{ not missing_reel:
@@ -337,7 +351,7 @@ if (DEBUG) {
 		 * (suppose_i_have) [Agree] 
 			 	// Regrets
 				"I suppose so," I reply. "I've done things I shouldn't have done." 
-				 ~ lower(forceful)
+				 ~ lower('forceful');
 				 -> harris_presses_for_details
 
 		* (nothing_ashamed_of) { not drugged  }   [Disagree]
@@ -371,7 +385,7 @@ if (DEBUG) {
 				
 	 	* {drugged} [No] 
 	 			I shake my head violently, to say no, that's not it, but whatever is wrong with tongue is wrong with neck too. I look across at the table at Harris' face and realise with a start how sympathetic he is. Such a kind, generous man. How can I hold anything back from him?
-			 	~ lower(forceful)
+			 	~ lower('forceful');
 				I take another mouthful of the bitter, strange—tasting tea before answering.
 			 	-> admit_open_to_pressure
 
@@ -491,7 +505,7 @@ if (DEBUG) {
 
 	*  {drugged} {forceful < 0} [Apologise]
 		"Harris, I..."
-		~lower(forceful)
+		~lower('forceful');
 		"Stop it," he interrupts. "There's no jury here to sway.  And there's no time. 
 
 - 	(tell_me_now) <> So why don't you tell me, right now. Where is it?"
@@ -514,7 +528,7 @@ if (DEBUG) {
  * { drugged  } [Dissemble]
 	 	My plan now is to blame Hooper, but I cannot seem to tell the story. Whatever they put in my tea, it rules my tongue. { forceful >1:I fight it as hard as I can but it does no good.|I am desperate to tell him everything. I am weeping with shame.} 
 	 	
-		 ~ lower(forceful)
+		 ~ lower('forceful');
 -  -> i_met_a_young_man
 
  	

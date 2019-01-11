@@ -112,6 +112,9 @@ class Story {
             transcriptFile = Some(sys.io.File.write(transcriptPath));
         }
         interp.variables['story'] = this;
+
+        // This piece of meta fuckery allows us to pass variable references in embedded script:
+        interp.variables['variables'] = interp.variables;
     }
 
     var rootFile = "";
@@ -370,6 +373,7 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
+        trace('processing ${lines}');
         var startingId = currentLineID();
         interp.variables['__temp__'] = startingId;
         // debugTrace('ORIGINAL LINES: ${lines}');
@@ -384,7 +388,7 @@ class Story {
             // we need to predeclare them all as globals in this Story's interpreter.
             var trimmed = StringTools.ltrim(line);
             if (trimmed.length > 0) {
-                if (StringTools.startsWith(trimmed, "var")) {
+                if (StringTools.startsWith(trimmed, "var ")) {
                     var varName = trimmed.split(" ")[1];
                     interp.variables[varName] = null;
                     // Strip out the `var ` prefix before executing so the global value doesn't get overshadowed by a new declaration
@@ -404,7 +408,7 @@ class Story {
             }
         }
 
-        // debugTrace('lines after processing single lines: ${preprocessedLines}');
+        trace('lines after processing single lines: ${preprocessedLines}');
 
         // Handle blocks of embedded Hank script
         while (Util.containsEnclosure(preprocessedLines, ',,,', ',,,')) {
@@ -589,7 +593,7 @@ class Story {
             case OutputText(text):
                 stepLine();
                 var textToOutput = fillBraceExpressions(text);
-                trace('text to output: ${textToOutput}');
+                // trace('text to output: ${textToOutput}');
                 var ogTextToOutput = textToOutput;
                 if (textToOutput.length > 0) {
                     // Process diverts inside of text
@@ -602,11 +606,11 @@ class Story {
 
                         divert(divertTarget);
                         var peekValue = peekUnlessNextLineText();
-                        trace('peek value: ${peekValue}');
+                        // trace('peek value: ${peekValue}');
                         textToOutput = beforeDivert + peekValue;
                     }
                     var returning = StoryFrame.HasText(StringTools.trim(textToOutput));
-                    trace('returning ${returning} for ${ogTextToOutput} from line ${currentLineID()}');
+                    // trace('returning ${returning} for ${ogTextToOutput} from line ${currentLineID()}');
                     return returning;
                 } else {
                     // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
@@ -749,10 +753,10 @@ class Story {
         // If this alt expression hasn't been encountered before, Initialize its state and store it in the altstate map
         if (!altStates.exists(currentLineMapKey())) {
             altStates[currentLineMapKey()] = new Array();
-            trace('making new altstate array for ${currentLineMapKey()}');
+            // trace('making new altstate array for ${currentLineMapKey()}');
         }
         if (altStates[currentLineMapKey()].length -1 < altExpressionIdx) {
-            trace('making new altstate for ${currentLineMapKey()} ${altExpressionIdx}');
+            // trace('making new altstate for ${currentLineMapKey()} ${altExpressionIdx}');
             var behavior = Sequence;
 
             for (keyValuePair in behaviorMap.keyValueIterator()) {
@@ -765,7 +769,7 @@ class Story {
             altStates[currentLineMapKey()].push(new AltState(behavior, alts));
         }
 
-        trace('evaluating expression ${currentLineMapKey()} ${altExpressionIdx} for ${content}');
+        //trace('evaluating expression ${currentLineMapKey()} ${altExpressionIdx} for ${content}');
         content = altStates[currentLineMapKey()][altExpressionIdx].next();
         trace (content);
 
@@ -820,7 +824,7 @@ class Story {
             text = StringTools.replace(text, '  ', ' ');
         }
 
-        trace ('final text for ${startingText} is ${text}');
+        // trace ('final text for ${startingText} is ${text}');
         return StringTools.trim(text);
     }
 
@@ -974,8 +978,8 @@ class Story {
         // TODO It's common to want to && or || section/label names, but they're integers, not bools. Allow this.
         var expandedExpression = expression;
 
-        var parsed = parser.parseString(expandedExpression);
         try {
+            var parsed = parser.parseString(expandedExpression);
             var value = interp.expr(parsed);
             // trace('evaluated ${expression} as ${value}');
             return value;
