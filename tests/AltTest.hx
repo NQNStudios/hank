@@ -23,6 +23,11 @@ class AltTest extends utest.Test {
         Assert.equals('words', seq.next());
         Assert.equals('', seq.next());
         Assert.equals('', seq.next());
+        Assert.equals('', seq.next());
+        Assert.equals('', seq.next());
+        Assert.equals('', seq.next());
+        Assert.equals('', seq.next());
+        Assert.equals('', seq.next());
     }
       
     public function testCycle() {
@@ -34,7 +39,5 @@ class AltTest extends utest.Test {
         Assert.equals('of', seq.next());
         Assert.equals('words', seq.next());
         Assert.equals('series', seq.next());
-        Assert.equals('of', seq.next());
-        Assert.equals('words', seq.next());
     }
 }    

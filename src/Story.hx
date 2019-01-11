@@ -9,17 +9,19 @@ import sys.io.FileOutput;
 import hscript.Parser;
 import hscript.Interp;
 
-import src.HankLine.HankLine;
-import src.HankLine.LineID;
-import src.HankLine.LineType;
+import src.HankLines.HankLine;
+import src.HankLines.LineID;
+import src.HankLines.LineType;
 import src.Alt.AltState;
 import src.Alt.AltBehavior;
 
 @:allow(tests.StoryTest)
+@:allow(src.StoryTestCase)
 class Story {
     private var lineCount: Int = 0;
     private var scriptLines: Array<HankLine> = new Array();
     private var currentLineIdx: Int = 0;
+    private var lastLineID = null;
     private var directory: String = "";
     private var parser = new Parser();
     private var interp = new Interp();
@@ -575,6 +577,7 @@ class Story {
 
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
+        lastLineID = line.id;
         if (line.type != NoOp) {
             // trace('Processing ${Std.string(line)}');
         }
@@ -586,7 +589,9 @@ class Story {
             case OutputText(text):
                 stepLine();
                 var textToOutput = fillBraceExpressions(text);
-                return if (textToOutput.length > 0) {
+                trace('text to output: ${textToOutput}');
+                var ogTextToOutput = textToOutput;
+                if (textToOutput.length > 0) {
                     // Process diverts inside of text
                     if (textToOutput.indexOf("->") != -1) {
                         var beforeDivert = textToOutput.split('->')[0];
@@ -596,12 +601,16 @@ class Story {
                         }
 
                         divert(divertTarget);
-                        textToOutput = beforeDivert + peekUnlessNextLineText();
+                        var peekValue = peekUnlessNextLineText();
+                        trace('peek value: ${peekValue}');
+                        textToOutput = beforeDivert + peekValue;
                     }
-                    HasText(StringTools.trim(textToOutput));
+                    var returning = StoryFrame.HasText(StringTools.trim(textToOutput));
+                    trace('returning ${returning} for ${ogTextToOutput} from line ${currentLineID()}');
+                    return returning;
                 } else {
                     // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
-                    Empty;
+                    return Empty;
                 }
 
             // Include statements do nothing, because included files' content is only displayed if diverted to.
@@ -737,13 +746,15 @@ class Story {
     ];
 
     function evaluateAlternativeExpression(content: String): String {
-        trace ('evaluating');
         // If this alt expression hasn't been encountered before, Initialize its state and store it in the altstate map
         if (!altStates.exists(currentLineMapKey())) {
             altStates[currentLineMapKey()] = new Array();
+            trace('making new altstate array for ${currentLineMapKey()}');
         }
         if (altStates[currentLineMapKey()].length -1 < altExpressionIdx) {
+            trace('making new altstate for ${currentLineMapKey()} ${altExpressionIdx}');
             var behavior = Sequence;
+
             for (keyValuePair in behaviorMap.keyValueIterator()) {
                 if (Util.startsWithOneOf(content, keyValuePair.key)) {
                     behavior = keyValuePair.value;
@@ -754,6 +765,7 @@ class Story {
             altStates[currentLineMapKey()].push(new AltState(behavior, alts));
         }
 
+        trace('evaluating expression ${currentLineMapKey()} ${altExpressionIdx} for ${content}');
         content = altStates[currentLineMapKey()][altExpressionIdx].next();
         trace (content);
 
@@ -762,8 +774,12 @@ class Story {
     }
 
     function isAlternativeExpression(content: String): Bool {
-        var altSymbols = '!&~';
-        return altSymbols.indexOf(content.charAt(0)) != -1 || content.indexOf('|') != -1;
+        for (altCodes in behaviorMap.keys()) {
+            if (Util.startsWithOneOf(content, altCodes)) {
+                return true;
+            }
+        }
+        return content.indexOf('|') != -1;
     }
 
     var altStates: Map<String, Array<AltState>> = new Map();
@@ -797,7 +813,6 @@ class Story {
             // trace (stringValue);
 
             text = Util.replaceEnclosure(text, stringValue, "{", "}");
-            trace ('final text for ${startingText} is ${text}');
         }
 
         // Also trim out all duplicate whitespace
@@ -805,7 +820,8 @@ class Story {
             text = StringTools.replace(text, '  ', ' ');
         }
 
-        return text;
+        trace ('final text for ${startingText} is ${text}');
+        return StringTools.trim(text);
     }
 
     /**

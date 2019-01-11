@@ -2,14 +2,17 @@ package src;
 
 import utest.Assert;
 import src.StoryFrame;
+import src.HankLines.LineID;
 
 class StoryTestCase extends utest.Test {
     /**
     Assert that two complex values (i.e. algebraic enums) are the same.
     **/
-    private function assertComplexEquals(expected: Dynamic, actual: Dynamic) {
-        Assert.equals(Std.string(Type.typeof(expected)), Std.string(Type.typeof(actual)));
-        Assert.equals(Std.string(expected), Std.string(actual));
+    private function assertComplexEquals(expected: Dynamic, actual: Dynamic, pos: LineID=null) {
+        if (pos == null) pos = new LineID('', 0);
+        var failureMessage = 'Assertion that ${actual} is ${expected} failed at ${pos}';
+        Assert.equals(Std.string(Type.typeof(expected)), Std.string(Type.typeof(actual)), failureMessage);
+        Assert.equals(Std.string(expected), Std.string(actual), failureMessage);
     }
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false, debugPrints: Bool = false) {
@@ -42,7 +45,7 @@ class StoryTestCase extends utest.Test {
                 }
 
                 // Assert that the storyframe is a corresponding HasChoices enum
-                assertComplexEquals(HasChoices(choices), frame);
+                assertComplexEquals(HasChoices(choices), frame, story.lastLineID);
 
                 continue;
             } else if (StringTools.startsWith(line, ">>>")) {
@@ -64,7 +67,7 @@ class StoryTestCase extends utest.Test {
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
                 // trace('${line} from ${frame}');
-                assertComplexEquals(HasText(line), frame);
+                assertComplexEquals(HasText(line), frame, story.currentLineID());
             }
 
             i += 1;

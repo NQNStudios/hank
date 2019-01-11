@@ -21,7 +21,9 @@ class AltState {
             case Sequence:
                 index = Math.floor(Math.min(alts.length-1, index+1));
             case OnceOnly:
-                index = index+1;
+                if (index >= -1) {
+                    index = index+1;
+                }
                 if (index >= alts.length) index = -2;
             case Cycle:
                 index = (index + 1) % alts.length;

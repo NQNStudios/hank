@@ -1,9 +1,9 @@
 package tests;
 
 import src.Story;
-import src.HankLine.HankLine;
-import src.HankLine.LineType;
-import src.HankLine.LineID;
+import src.HankLines.HankLine;
+import src.HankLines.LineType;
+import src.HankLines.LineID;
 import src.StoryFrame;
 import utest.Assert;
 

@@ -1,0 +1,4 @@
+- (sequence_example) {once: one|two} {sequence: ||three|four|-> cycle_example}
+-> sequence_example
+- (cycle_example) {cycle: one|two|three|four}
+-> cycle_example
