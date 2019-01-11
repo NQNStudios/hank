@@ -209,7 +209,7 @@ class Story {
                 } while (c == startingSymbol || c == ' ');
 
                 // Check for a label in parens
-                var remainder = StringTools.trim(trimmedLine.substr(depth));
+                var remainder = StringTools.trim(trimmedLine.substr(index-1));
                 var label = None;
                 var labelText = Util.findEnclosureIfStartsWith(remainder, '(', ')');
                 if (labelText.length > 0) {

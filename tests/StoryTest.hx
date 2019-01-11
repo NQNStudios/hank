@@ -120,6 +120,24 @@ class StoryTest extends src.StoryTestCase {
         var story = new Story();
         assertComplexEquals(IncludeFile("examples/main/extra.hank"),story.parseLine("INCLUDE examples/main/extra.hank", []));
 
+        story = new Story();
+        assertComplexEquals(DeclareChoice({
+            label: None,
+            expires: true,
+            text: 'deeper choice',
+            depth: 2,
+            id: 0,
+            divertTarget: None
+        }),story.parseLine("    * * deeper choice", []));
+
+        assertComplexEquals(DeclareChoice({
+            label: Some('label'),
+            expires: true,
+            text: 'deeper choice',
+            depth: 2,
+            id: 1,
+            divertTarget: None
+        }),story.parseLine("    * * (label) deeper choice", []));
         // TODO test edge cases of all line types (maybe with more separate functions too)
     }
 
