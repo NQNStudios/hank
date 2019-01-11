@@ -1,0 +1,13 @@
+This is a line that diverts -> part2
+
+- (start)
+This is a text line {if (seen_once>0) "-> second_route"} with a conditional divert in it.
+
+- (seen_once) -> start
+
+- (second_route) that can end in two different ways! -> end
+
+- (part2) to another part of the script!
+-> start
+
+- (end)

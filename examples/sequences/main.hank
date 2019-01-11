@@ -1,2 +1,6 @@
-- (start) {Hello|world|of|sequences!}
+- (start) {Hello|world|of|sequences! -> end|never shown}
+Peep
 -> start
+
+- (end) We're done here.
+For real.

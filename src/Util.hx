@@ -55,4 +55,20 @@ class Util {
 
         return (start != -1 && end != -1);
     }
+
+    public static function startsWithOneOf(str: String, prefixes: Array<String>) {
+        for (prefix in prefixes) {
+            if (StringTools.startsWith(str, prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static function stripPrefixes(str: String, prefixes: Array<String>) {
+        for (prefix in prefixes) {
+            str = StringTools.replace(str, prefix, '');
+        }
+        return StringTools.trim(str);
+    }
 }

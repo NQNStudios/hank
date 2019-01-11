@@ -1,5 +1,5 @@
 -lib hscript
 -lib utest
 -cp src
--main tests.StoryTest
+-main tests.TestMain
 --interp

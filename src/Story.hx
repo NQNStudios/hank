@@ -12,6 +12,8 @@ import hscript.Interp;
 import src.HankLine.HankLine;
 import src.HankLine.LineID;
 import src.HankLine.LineType;
+import src.Alt.AltState;
+import src.Alt.AltBehavior;
 
 @:allow(tests.StoryTest)
 class Story {
@@ -435,8 +437,7 @@ class Story {
             var lineType = scriptLines[line].type;
             switch (lineType) {
                 case Gather(Some(label), _, _):
-                    // TODO qualify label variables that occur inside a section. (This will require adding a parent property to the gather linetype)
-                    interp.variables[label]++;
+                    // Gathers don't have to increment their view count here, because processLine() will
                 case DeclareSection(name):
                     interp.variables[name]++; 
                 case DeclareSubsection(parent, name):
@@ -559,6 +560,19 @@ class Story {
         queueEmbeddedBlock(dummyFile);
     }
 
+    private function peekUnlessNextLineText(): String {
+        var idx = currentLineIdx;
+        var frame = processNextLine(); // TODO if it's a choice, just return the text before divert and rewind.
+        var val = '';
+        switch (frame) {
+            case HasText(text):
+                val = text;
+            default:
+                currentLineIdx = idx;
+        }
+        return val;
+    }
+
     /** Execute a parsed script statement **/
     private function processLine(line: HankLine): StoryFrame {
         if (line.type != NoOp) {
@@ -573,7 +587,18 @@ class Story {
                 stepLine();
                 var textToOutput = fillBraceExpressions(text);
                 return if (textToOutput.length > 0) {
-                    HasText(textToOutput);
+                    // Process diverts inside of text
+                    if (textToOutput.indexOf("->") != -1) {
+                        var beforeDivert = textToOutput.split('->')[0];
+                        var divertTarget = StringTools.trim(textToOutput.split('->')[1]).split(' ')[0];
+                        if (divertTarget.indexOf('|') != -1 ) {
+                            divertTarget = divertTarget.substr(0, divertTarget.indexOf('|'));
+                        }
+
+                        divert(divertTarget);
+                        textToOutput = beforeDivert + peekUnlessNextLineText();
+                    }
+                    HasText(StringTools.trim(textToOutput));
                 } else {
                     // A line of text might contain only a conditional value whose condition isn't met. In that case, don't return a frame
                     Empty;
@@ -676,6 +701,12 @@ class Story {
 
             // Execute gathers by updating the choice depth and continuing from that point
             case Gather(label, depth, nextPartType):
+                switch (label) {
+                    case Some(label):
+                        // TODO qualify these variable names by section in which they appear
+                        interp.variables[label]++;
+                    default:
+                }
                 // +1 is applied because it's legal to place gather unnecessary gathers of choiceDepth+1 (i.e. gather on the first line in a series of choice/gather segments.)
                 if (choiceDepth + 1 >= depth) {
                     choiceDepth = Math.floor(Math.min(choiceDepth, depth));
@@ -694,9 +725,39 @@ class Story {
         }
     }
 
+    function currentLineMapKey() {
+        return currentLineID().toString();
+    }
+
+    var behaviorMap = [
+        ['sequence:'] => Sequence,
+        ['!', 'once:'] => OnceOnly,
+        ['&', 'cycle:'] => Cycle,
+        ['~', 'shuffle:'] => Shuffle
+    ];
+
     function evaluateAlternativeExpression(content: String): String {
-        // TODO there needs to be some form of ID tracking for alternative objects
-        // Maybe a good way to do that is by scriptLines[currentLineIdx] ID object combined with content equality check. So, the only confusion will be if an author uses two identical sequence expressions on the same  line
+        trace ('evaluating');
+        // If this alt expression hasn't been encountered before, Initialize its state and store it in the altstate map
+        if (!altStates.exists(currentLineMapKey())) {
+            altStates[currentLineMapKey()] = new Array();
+        }
+        if (altStates[currentLineMapKey()].length -1 < altExpressionIdx) {
+            var behavior = Sequence;
+            for (keyValuePair in behaviorMap.keyValueIterator()) {
+                if (Util.startsWithOneOf(content, keyValuePair.key)) {
+                    behavior = keyValuePair.value;
+                    content = Util.stripPrefixes(content, keyValuePair.key);
+                }
+            }
+            var alts = content.split('|');
+            altStates[currentLineMapKey()].push(new AltState(behavior, alts));
+        }
+
+        content = altStates[currentLineMapKey()][altExpressionIdx].next();
+        trace (content);
+
+        altExpressionIdx++;
         return content;
     }
 
@@ -705,10 +766,16 @@ class Story {
         return altSymbols.indexOf(content.charAt(0)) != -1 || content.indexOf('|') != -1;
     }
 
+    var altStates: Map<String, Array<AltState>> = new Map();
+    var altExpressionIdx = 0;
     /**
     Parse and evaluate brace expressions in the text. (Ink-style alternatives AND normal haxe expressions)
     **/
     function fillBraceExpressions(text: String) {
+        // Track which alt expressions have been processed on each line
+        altExpressionIdx = 0;
+        var startingText = text;
+
         while (Util.containsEnclosure(text, "{", "}")) {
             var expression = Util.findEnclosure(text,"{","}");
             // debugTrace(expression);
@@ -716,7 +783,6 @@ class Story {
             var value = '';
 
             if (isAlternativeExpression(expression)) {
-                // TODO if it's a divert, clip off the rest of the text and start processing text from that divert
                 value = evaluateAlternativeExpression(expression);
             } else {
                 value = evaluateHaxeExpression(expression);
@@ -731,7 +797,7 @@ class Story {
             // trace (stringValue);
 
             text = Util.replaceEnclosure(text, stringValue, "{", "}");
-            // trace ( text);
+            trace ('final text for ${startingText} is ${text}');
         }
 
         // Also trim out all duplicate whitespace
@@ -889,7 +955,7 @@ class Story {
     }
 
     private function evaluateHaxeExpression(expression: String): Dynamic {
-        // It's common to want to && or || section/label names, but they're integers, not bools. Allow this.
+        // TODO It's common to want to && or || section/label names, but they're integers, not bools. Allow this.
         var expandedExpression = expression;
 
         var parsed = parser.parseString(expandedExpression);
@@ -1064,7 +1130,7 @@ class Story {
         // Update this section's view count
         // TODO or else parse __ notation for subsections
         if (!interp.variables.exists(target)) {
-            return Error('Tried to divert to undeclared section/label ${target}.');
+            throw 'Tried to divert to undeclared section/label ${target}.';
         }
 
         // Subsections can be diverted to globally by using 2 underscores (__) instead of Ink's dot (.) notation
