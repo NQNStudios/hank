@@ -1,83 +1,64 @@
-/** 
- * This is a full port of The Intercept from Ink to Hank to
- * demonstrate how Hank is different.
- */
-
 // Character variables. We track just two, using a +/- scale
-~ var forceful = 0;
-~ var evasive = 0;
+VAR forceful = 0
+VAR evasive = 0
 
 
 // Inventory Items
-~ var teacup = false;
-~ var gotcomponent = false;
+VAR teacup = false
+VAR gotcomponent = false
 
 
 // Story states: these can be done using read counts of knots; or functions that collect up more complex logic; or variables
-~ var drugged = false;
-~ var hooper_mentioned = false;
+VAR drugged = false
+VAR hooper_mentioned = false
 
-~ var losttemper = false;
-~ var admitblackmail = false;
+VAR losttemper = false
+VAR admitblackmail = false
 
 // what kind of clue did we pass to Hooper?
-```
-// Hooper Clue types
-var NONE = 0;
-var STRAIGHT = 1;
-var CHESS = 2;
-var CROSSWORD = 3;
-var hooperClueType = NONE;
-```
+CONST NONE = 0
+CONST STRAIGHT = 1
+CONST CHESS = 2
+CONST CROSSWORD = 3
+VAR hooperClueType = NONE
 
-~ var hooperConfessed = false;
+VAR hooperConfessed = false
 
-```
-// Items for smashing
-var SHOE = 1;
-var BUCKET = 2;
-var smashingWindowItem = NONE;
-```
+CONST SHOE = 1
+CONST BUCKET = 2
+VAR smashingWindowItem = NONE
 
-~ var notraitor = false;
-~ var revealedhooperasculprit = false;
-~ var smashedglass = false;
-~ var muddyshoes = false;
+VAR notraitor = false
+VAR revealedhooperasculprit = false
+VAR smashedglass = false
+VAR muddyshoes = false
 
-~ var framedhooper = false;
+VAR framedhooper = false
 
 // What did you do with the component?
-~ var putcomponentintent = false;
-~ var throwncomponentaway = false;
-~ var piecereturned = false;
-~ var longgrasshooperframe = false;
+VAR putcomponentintent = false
+VAR throwncomponentaway = false
+VAR piecereturned = false
+VAR longgrasshooperframe = false
 
 
-// DEBUG mode adds a few shortcuts
-// In Hank, DEBUG is set automatically based on the debug argument of the Story() constructor
-```
-if (DEBUG) {
-    // Haxe blocks in Hank can contain also Hank blocks!
-    // The syntax for this is 3 commas, like below.
-    ,,,
-    IN DEBUG MODE!
-    
-    * [Beginning...]	-> start
-    * [Framing Hooper...] -> claim_hooper_took_component
-    * [In with Hooper...] -> inside_hoopers_hut
-    ,,,
-    
-} else {
-    // You can embed a single Hank line in a Haxe block with a one-comma prefix. This is a nod to Lisp's quote/quasiquote syntax.
-    , -> start
+// DEBUG mode adds a few shortcuts - remember to set to false in release!
+VAR DEBUG = false
+{DEBUG:
+	IN DEBUG MODE!
+	*	[Beginning...]	-> start
+	*	[Framing Hooper...] -> claim_hooper_took_component
+	*	[In with Hooper...] -> inside_hoopers_hut
+- else:
+	// First diversion: where do we begin?
+ -> start
 }
-```
 
  /*--------------------------------------------------------------------------------
 	Wrap up character movement using functions, in case we want to develop this logic in future
 --------------------------------------------------------------------------------*/
 
-// TODO change these to Haxe functions
+
  === function lower(ref x)
  	~ x = x - 1
 
@@ -102,10 +83,10 @@ if (DEBUG) {
 		{|I rattle my fingers on the field table.|}
  		* 	(think) [Think] 
  			They suspect me to be a traitor. They think I stole the component from the calculating machine. They will be searching my bunk and cases. 
-			When they don't find it, {if (plan) "then"} they'll come back and demand I talk. 
+			When they don't find it, {plan:then} they'll come back and demand I talk. 
 			-> opts
  		*	(plan) [Plan]
- 			{if (!think) "What I am is" else "I am"} a problem—solver. Good with figures, quick with crosswords, excellent at chess. 
+ 			{not think:What I am is|I am} a problem—solver. Good with figures, quick with crosswords, excellent at chess. 
  			But in this scenario — in this trap — what is the winning play?
  			* * 	(cooperate) [Co—operate] 
 	 				I must co—operate. My credibility is my main asset. To contradict myself, or another source, would be fatal. 
