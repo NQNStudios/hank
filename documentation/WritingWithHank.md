@@ -16,6 +16,9 @@ It's also designed with redrafting in mind; so editing a flow should be fast.
 
 For a list of new features in **Hank** that aren't found in Ink, see [the last section.](#Extras)
 
-# Extras
 
-Here
+
+## Extras
+
+### Transcripts and automated testing
+
