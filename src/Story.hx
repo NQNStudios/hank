@@ -570,14 +570,21 @@ class Story {
         queueEmbeddedBlock(dummyFile);
     }
 
-    private function peekUnlessNextLineText(): String {
+    /**
+    Scan ahead to get the next text that will be output during story execution,
+    stopping if a choice is found
+    **/ 
+    private function nextOutputText(): String {
         var idx = currentLineIdx;
-        var frame = processNextLine(); // TODO if it's a choice, just return the text before divert and rewind.
+        var frame = processNextLine();
         var val = '';
         switch (frame) {
             case HasText(text):
                 val = text;
+            case Empty:
+                return nextOutputText();
             default:
+                // TODO if it's something that interrupts execution (such as a choice point), return no text and rewind.
                 currentLineIdx = idx;
         }
         return val;
@@ -609,7 +616,7 @@ class Story {
                         }
 
                         divert(divertTarget);
-                        var peekValue = peekUnlessNextLineText();
+                        var peekValue = nextOutputText();
                         // trace('peek value: ${peekValue}');
                         textToOutput = beforeDivert + peekValue;
                     }

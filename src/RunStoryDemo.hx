@@ -18,7 +18,7 @@ class RunStoryDemo {
             }
         }
 
-        var story: Story = new Story(false, "transcript.hanktest");
+        var story: Story = new Story(false, StringTools.replace(path, '.hank', '.hog'));
         story.loadScript(path);
         var frame = StoryFrame.Finished;
         do {
