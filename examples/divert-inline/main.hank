@@ -5,9 +5,14 @@ This is a text line {if (seen_once>0) "-> second_route"} with a conditional dive
 
 - (seen_once) -> start
 
-- (second_route) that can end in two different ways! -> end
+- (second_route) that can end in two different ways!
+-> end1
 
 - (part2) to another part of the script!
 -> start
 
-- (end)
+- (end1) Let's do something -> end2
+- (end2) really really crazy -> end3
+- (end3) and string together four lines with diverts -> end4
+- (end4) just to see what would happen.
+Wow.
