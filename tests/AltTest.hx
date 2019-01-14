@@ -4,11 +4,12 @@ import utest.Test;
 import utest.Assert;
 import src.Alt.AltBehavior;
 import src.Alt.AltState;
+import src.Random.Random;
 
 class AltTest extends utest.Test {
 
     public function testSequence1() {
-        var seq = new AltState(Sequence, ['series', 'of', 'words']);
+        var seq = new AltState(Sequence, ['series', 'of', 'words'], new Random());
         Assert.equals('series', seq.next());
         Assert.equals('of', seq.next());
         Assert.equals('words', seq.next());
@@ -17,7 +18,7 @@ class AltTest extends utest.Test {
     }
 
     public function testOnceOnly() {
-        var seq = new AltState(OnceOnly, ['series', 'of', 'words']);
+        var seq = new AltState(OnceOnly, ['series', 'of', 'words'], new Random());
         Assert.equals('series', seq.next());
         Assert.equals('of', seq.next());
         Assert.equals('words', seq.next());
@@ -31,7 +32,7 @@ class AltTest extends utest.Test {
     }
       
     public function testCycle() {
-        var seq = new AltState(Cycle, ['series', 'of', 'words']);
+        var seq = new AltState(Cycle, ['series', 'of', 'words'], new Random());
         Assert.equals('series', seq.next());
         Assert.equals('of', seq.next());
         Assert.equals('words', seq.next());

@@ -19,9 +19,16 @@ class StoryTestCase extends utest.Test {
 
         if (debugPrints) trace('validating ${storyFile}');
 
-        var story: Story = new Story(debug,'validating.hlog', debugPrints);
-        story.loadScript(storyFile);
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
+        // If the transcript starts with a random seed, make sure the story uses that seed
+        var randomSeed = null;
+        if (StringTools.startsWith(transcriptLines[0], '@')) {
+            randomSeed = Std.parseInt(transcriptLines[0].substr(1));
+            transcriptLines.remove(transcriptLines[0]);
+        }
+
+        var story: Story = new Story(randomSeed, debug,'validating.hlog', debugPrints);
+        story.loadScript(storyFile);
 
         var i = 0;
         while (i < transcriptLines.length) {

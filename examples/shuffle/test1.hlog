@@ -1,0 +1,13 @@
+@1396482223
+Shuffle sequences are deterministic if you specify a seed to your Story object.
+Shuffle sequences are reproducible if you specify a seed to your Story object.
+Shuffle sequences are deterministic if you specify a seed to your Story object.
+Shuffle sequences are always the same if you specify a seed to your Story object.
+Shuffle sequences are reliable if you specify a seed to your Story object.
+Shuffle sequences are always the same if you specify a seed to your Story object.
+Shuffle sequences are reproducible if you specify a seed to your Story object.
+Shuffle sequences are reproducible if you specify a seed to your Story object.
+Shuffle sequences are always the same if you specify a seed to your Story object.
+Shuffle sequences are deterministic if you specify a seed to your Story object.
+Shuffle sequences are reliable if you specify a seed to your Story object.
+Shuffle sequences are compatible with fully automated save states!

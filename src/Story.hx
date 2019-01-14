@@ -25,9 +25,9 @@ class Story {
     private var directory: String = "";
     private var parser = new Parser();
     private var interp = new Interp();
-    // TODO use interp.set(name, value) to share things (i.e. modules) to script scope
-    // TODO can objects be shared in/out of HScript?
     private var transcriptFile: Option<FileOutput> = None;
+
+    private var random: Random;
 
     private var embeddedHankBlocks: Map<LineID, Array<Bool>> = new Map();
     private var choiceDepth = 0;
@@ -102,16 +102,20 @@ class Story {
 
     /**
     Create a new Story processor.
+    @param randomSeed A seed for the random number generator used for shuffles, etc.
     @param debug Whether to output debug information to stdout
     @param transcriptPath an optional filepath to output a transcript of the story playthrough
     **/
-    public function new(debug: Bool = false, transcriptPath="", debugPrints: Bool = false) {
+    public function new(?randomSeed: Int, debug: Bool = false, transcriptPath="", debugPrints: Bool = false) {
+        random = new Random(randomSeed);
         this.debugPrints = debugPrints;
         interp.variables['DEBUG'] = debug;
         if (transcriptPath.length > 0) {
             transcriptFile = Some(sys.io.File.write(transcriptPath));
         }
+        logToTranscript('@${random.currentSeed}');
         interp.variables['story'] = this;
+        interp.variables['random'] = random;
 
         // This piece of meta fuckery allows us to pass variable references in embedded script:
         interp.variables['variables'] = interp.variables;
@@ -766,7 +770,7 @@ class Story {
                 }
             }
             var alts = content.split('|');
-            altStates[currentLineMapKey()].push(new AltState(behavior, alts));
+            altStates[currentLineMapKey()].push(new AltState(behavior, alts, random));
         }
 
         //trace('evaluating expression ${currentLineMapKey()} ${altExpressionIdx} for ${content}');
