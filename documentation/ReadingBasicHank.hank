@@ -1,0 +1,57 @@
+Hank is a scripting language for making Interactive Fiction, such as Choose-Your-Own Adventure games.
+A Hank script is really meant to be played on a computer, where the player can make choices and will only see the outcome of their own path.
+If you want to give someone feedback on their Hank games, but don't have access to a computer that runs Hank, you may have to read their scripts directly.
+This short guide will teach you how to read such Hank scripts in printed form.
+The first thing to know is that text by itself on a line will be printed to the player as-is.
+That applies to the entire first 5 lines above, and this sentence. // Anything that appears to the right of two slash marks is a comment, which the player will never see.
+/*
+Comments spanning multiple lines can appear wrapped by slashes and stars, like so.
+Comments are usually notes to the author, or explanations of the logic in a script, to make it easier for you to read.
+*/
+// Scripts can also include TODO comments, which indicate something the author hasn't written or fully fleshed out yet.
+// When proofreading a Hank script, think of TODO comments like an outline of a rough draft--don't judge them too harshly, but do try to imagine what the game would be like if the scene mentioned in the comment were finished.
+
+// The next line is a DIVERT statement, indicated by an arrow. It jumps the game's story flow from one point to another. In this case, it diverts to a section called section1, which is defined immediately after the divert statement.
+-> section1
+
+== section1
+If you encounter a DIVERT statement, you should stop reading the script and look for the section it refers to. Then, continue reading at that point.
+Here's an example DIVERT that leads you to a label at the end of the current script. Labels aren't written the way sections are, they're written with a dash followed by a name in parentheses. See if you can follow this divert:
+-> label_example
+- (second_label_example) If you jumped back here from the end of the tutorial, then you know all you need to know about diverts.
+Choice points are the next feature you need to understand. A series of choices can be defined with separate lines preceded by a star symbol.
+->choice_example
+== choice_example
+* Choice 1
+    You picked the first choice out of 3 that appeared simultaneously. Well done!
+    The lines following a choice declaration are ALL printed if the player picks that choice.
+    Any divert statements are also followed. ->choice_example
+    // That divert statement brings you back to the same choice! But each choice can only be picked once.
+* Choice 2
+    This is part of the same choice point as choice 1, even though the lines aren't immediately next to each other.
+    This particular line of text, and the one above it, only appear when you choose "Choice 2."
+    After this text shows, the game will find the GATHER that comes after Choice 3, and execute from there.
++ Choice 3
+    You know the drill. This is the last of 3 choices.
+    One thing makes it different, though: The + in front (instead of a *) makes it a permanent choice.
+    It won't disappear even if the player keeps clicking on it and looping back to the same spot forever!
+
+- The dash at the start of this line signals a GATHER statement.
+That means that any choice from the list above which doesn't execute its own divert statement (i.e. choices 2 and 3) will continue from the first GATHER statement that follows them, once they run out of their own lines.
+-> final_advice
+
+== final_advice
+That completes your quick primer on reading Hank scripts.
+One word of advice to Hank proofreaders: don't try to "debug" the code or other syntax of the script as you read it.
+While there MAY be technical mistakes in a rough draft Hank script, the author is better off using digital tools to find and fix them.
+Your job is mainly to examine the FLOW, STRUCTURE, and STYLE of the game. You might ask yourself:
+* Is the prose clear and engaging?
+* Are the events in the story well-paced?
+* Does the dialogue sound natural and fun?
+* Are there enough choices, and do the choices feel meaningful?
+
+- This guide doesn't cover everything about Hank. You'll probably see parts of scripts that you don't understand. If all else fails, fall back on just critiquing the sentences of the story individually based on what you can make out! :)
+Bonus points if you noticed that the above was a choice point with a gather! Good luck, and thanks for reading.
+THE END
+
+- (label_example) Nice work. If you want to be hardcore about getting a "proper" experience of the game, you should avoid peeking at any sections or labels unless a DIVERT statement tells you to. -> second_label_example
