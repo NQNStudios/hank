@@ -721,7 +721,17 @@ class Story {
                 }
                 
                 var availableChoices = [for (choice in collectChoicesToDisplay()) choice.text];
-                return if (availableChoices.length > 0) HasChoices(availableChoices) else Error("Ran out of available choices.");
+                if (availableChoices.length > 0) {
+                    return HasChoices(availableChoices);
+                } 
+                else {
+                    var fallback = collectFallbackChoice();
+                    if (fallback != null) {
+                        return HasText(evaluateFallbackChoice(fallback));
+                    } else {
+                        throw 'Ran out of available choices at ${currentLineMapKey()}.';
+                    }
+                }
 
             // Execute gathers by updating the choice depth and continuing from that point
             case Gather(label, depth, nextPartType):
@@ -1044,7 +1054,11 @@ class Story {
                 // Check that the choice hasn't been chosen before if it is a one-time-only
                 if (choicesEliminated.indexOf(choice.id) == -1) {
                     // fill the choice's h expressions after removing the flag expression
-                    choices.push(choiceToDisplay(choice, chosen));
+                    var displayChoice = choiceToDisplay(choice, chosen);
+                    // Don't display fallback choices (choices with no text)
+                    if (StringTools.trim(displayChoice.text.split('->')[0]).length > 0) {
+                        choices.push(displayChoice);
+                    }
                 } else {
                     // debugTrace('can\'t display "${choice.text}" because it has expired.');
                 }

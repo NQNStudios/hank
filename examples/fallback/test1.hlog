@@ -1,0 +1,23 @@
+* Sometimes
+* you try everything
+* and everything
+* and nothing seems to get you anywhere.
+>>> 3
+and nothing seems to get you anywhere.
+* Sometimes
+* you try everything
+* and everything
+>>> 0
+Sometimes
+* you try everything
+* and everything
+>>> 1
+and everything
+* you try everything
+you try everything
+This is what fallback choices are for!
+* One other thing
+>>> 0
+One other thing
+This is what fallback choices are for!
+You can put content in a fallback choice using the "choice then arrow" syntax.
