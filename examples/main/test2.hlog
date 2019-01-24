@@ -4,22 +4,18 @@ Your Hank scripts will contain the static content of your game, but they can als
 You can include choices for the player.
 * Door A looks promising!
 * Door B
->>> 0
-Door A opens and there's nothing behind it.
+> 1: Door A opens and there's nothing behind it.
 You can include choices for the player.
 * Door B
 * Choices can depend on logical conditions being truthy.
->>> 0
-Door B opens but the room on the other side is identical!
+> 1: Door B opens but the room on the other side is identical!
 You can include choices for the player.
 * Door B
 * Choices can depend on logical conditions being truthy.
->>> 1
-Choices can depend on logical conditions being truthy.
+> 2: Choices can depend on logical conditions being truthy.
 * I don't think I'll use Hank for my games.
 * Hank sounds awesome, thanks!
->>> 1
-Hank sounds awesome, thanks!
+> 2: Hank sounds awesome, thanks!
 That's the end of this example!
 These should all say 'mouse':
 mouse

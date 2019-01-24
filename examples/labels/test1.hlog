@@ -4,20 +4,17 @@ B: 0
 C: 0
 * Choice A
 * Choice B
->>> 0
-Choice A
+> 1: Choice A
 Loop #: 2
 A: 1
 B: 0
 C: 0
 * Choice B
->>> 0
-Choice B
+> 1: Choice B
 Loop #: 3
 A: 1
 B: 1
 C: 0
 * Choice C
->>> 0
-Choice C
+> 1: Choice C
 It's over!

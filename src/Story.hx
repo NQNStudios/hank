@@ -883,9 +883,8 @@ class Story {
                 stepLine();
         }
         
-        // Log the choice's index to the transcript
-        logToTranscript('>>> ${index}');
-        logToTranscript(choiceTaken.text);
+        // Log the choice's index to the transcript (1-indexed for human readability)
+        logToTranscript('> ${index+1}: ${choiceTaken.text}');
         return choiceTaken.text;
     }
 

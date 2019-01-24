@@ -67,16 +67,17 @@ class StoryTestCase extends utest.Test {
                 assertComplexEquals(HasChoices(choices), frame, story.lastLineID);
 
                 continue;
-            } else if (StringTools.startsWith(line, ">>>")) {
-                // Make the choice given.
-                var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
+            } else if (StringTools.startsWith(line, ">")) {
+                // Make the choice given, and check for expected output.
+                line = StringTools.ltrim(line.substr(1));
+                var firstColonIdx = line.indexOf(':');
+                var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
+                var expectedOutput = StringTools.trim(line.substr(firstColonIdx+1));
+                var output = story.choose(index);
                 if (debugPrints) {
                     trace(output);
                 }
-                if (fullTranscript || transcriptLines.length > i+1) {
-                    // Assert that its output equals the transcript's expected choice output.
-                    Assert.equals(transcriptLines[++i], output);
-                }
+                Assert.equals(expectedOutput, output);
             } else if (StringTools.startsWith(line, "#")) {
                 // Allow comments in a transcript that need not be validated in any way
                 if (debugPrints) {

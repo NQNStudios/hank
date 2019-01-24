@@ -3,27 +3,23 @@ Loop #: 1
 * A series of choices
 * In Hank script embedded in Haxe script embedded in Hank script!
 * What could be more fun?
->>> 2
-What could be more fun?
+> 3: What could be more fun?
 A brief moment of sanity.
 This test does nutty stuff with the Hank/Haxe embedding paradigm.
 Loop #: 2
 * A series of choices
 * In Hank script embedded in Haxe script embedded in Hank script!
 * Gosh this sucks
->>> 2
-Gosh this sucks
+> 3: Gosh this sucks
 A brief moment of sanity.
 This test does nutty stuff with the Hank/Haxe embedding paradigm.
 One more thing. We need all of the lines
 * after a choice
->>> 0
-after a choice to be executed
+> 1: after a choice to be executed
 BEFORE the gather is processed.
 What up
 One more thing. We need all of the lines
 * after a choice
->>> 0
-after a choice to be executed
+> 1: after a choice to be executed
 BEFORE the gather is processed.
 Now it's really over!
