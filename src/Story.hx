@@ -1,5 +1,6 @@
 package src;
 
+import haxe.zip.Compress;
 import haxe.ds.Option;
 import haxe.io.Bytes;
 
@@ -377,7 +378,7 @@ class Story {
 
     // TODO this doesn't allow for multiple declaration (var a, b;) and other edge cases that must exist
     private function processHaxeBlock(lines: String) {
-        trace('processing ${lines}');
+        // trace('processing ${lines}');
         var startingId = currentLineID();
         interp.variables['__temp__'] = startingId;
         // debugTrace('ORIGINAL LINES: ${lines}');
@@ -412,7 +413,7 @@ class Story {
             }
         }
 
-        trace('lines after processing single lines: ${preprocessedLines}');
+        // trace('lines after processing single lines: ${preprocessedLines}');
 
         // Handle blocks of embedded Hank script
         while (Util.containsEnclosure(preprocessedLines, ',,,', ',,,')) {
@@ -721,6 +722,7 @@ class Story {
                 }
                 
                 var availableChoices = [for (choice in collectChoicesToDisplay()) choice.text];
+                // trace('we got ${availableChoices.length} choices');
                 if (availableChoices.length > 0) {
                     return HasChoices(availableChoices);
                 } 
@@ -855,9 +857,12 @@ class Story {
     @return the choice output.
     **/
     public function choose(index: Int): String {
+        // trace('choosing idx: ${index}');
         var validChoices = collectChoicesToDisplay(true);
+        // trace('valid choices: ${validChoices}');
         var choiceTaken = validChoices[index];
 
+        // trace('choosing: ${choiceTaken.text}');
         // When the user chooses a labeled choice, its flag should be incremented
         switch (choiceTaken.label) {
             case Some(labelText):
@@ -938,10 +943,11 @@ class Story {
     Handle choice declarations starting at the current script line
     **/
     function collectRawChoices(): Array<Choice> {
+        // trace('collecting raw choices');
         var choices = new Array();
         // Scan for more choices in this set until hitting a new section declaration, a gather of the right depth, or the end of this file
         var file = currentFile();
-        var nextLineFile = file;
+        // trace(file);
         var l = currentLineIdx;
         while (l < scriptLines.length) {
 
@@ -952,14 +958,7 @@ class Story {
                     // trace(Std.string(choice));
                     // Make a copy of the choice -- although I don't remember why
                     if (choice.depth == choiceDepth) {
-                        choices.push({
-                            expires: choice.expires,
-                            label: choice.label,
-                            id: choice.id,
-                            depth: choice.depth,
-                            text: choice.text,
-                            divertTarget: choice.divertTarget
-                            });
+                        choices.push(copyChoice(choice));
                     }
                 // Stop searching when we hit a gather of the current depth
                 case Gather(_, depth,_):
@@ -974,21 +973,16 @@ class Story {
                     break;
                 default:
             }
-
-            nextLineFile = scriptLines[l++].id.sourceFile;
-            // debugTrace(nextLineFile);
+            l++;
         }
 
-        if (l < scriptLines.length) {
-            // debugTrace('Stopped collecting choices before ${scriptLines[l].type}');
-        } else {
-            // debugTrace('Stopped collecting choices at EOF');
-        }
+        // trace('Stopped collecting choices with ${choices.length} before ${scriptLines[l]}');
 
         return choices;
     }
 
     private function collectFallbackChoice() {
+        // trace('collecting fallback choices');
         var choices = collectRawChoices();
         for (choice in choices) {
             if (choice.text.length == 0) {
@@ -1056,25 +1050,29 @@ class Story {
     @param chosen Whether to show the choice's "before" or "after" text to the player
     **/
     private function choiceToDisplay(choice: Choice, chosen: Bool): Choice {
+        var text = choice.text;
         // Don't display the choice's condition
-        if (Util.startsWithEnclosure(choice.text, "{", "}")) {
-            choice.text = StringTools.trim(Util.replaceEnclosure(choice.text, "", "{", "}"));
+        if (Util.startsWithEnclosure(text, "{", "}")) {
+            text = StringTools.trim(Util.replaceEnclosure(text, "", "{", "}"));
         }
         // Handle bracket hiding
         // If it's been chosen, drop the bracket contents and keep what's next
-        if (Util.containsEnclosure(choice.text, "[", "]")) {
+        if (Util.containsEnclosure(text, "[", "]")) {
             if (chosen) {
-                choice.text = Util.replaceEnclosure(choice.text, "", "[", "]");
+                text = Util.replaceEnclosure(text, "", "[", "]");
                 // Remove double spaces resulting from this
-                choice.text = StringTools.replace(choice.text, "  ", " ");
+                text = StringTools.replace(text, "  ", " ");
             } else {
-                choice.text = choice.text.substr(0, choice.text.indexOf('[')) + Util.findEnclosure(choice.text, "[", "]");
+                text = text.substr(0, text.indexOf('[')) + Util.findEnclosure(text, "[", "]");
             }
         }
 
-        choice.text = fillBraceExpressions(choice.text);
-        choice.text = StringTools.trim(choice.text);
-        return choice;
+        text = fillBraceExpressions(text);
+        text = StringTools.trim(text);
+
+        var displayChoice = copyChoice(choice);
+        displayChoice.text = text;
+        return displayChoice;
     }
 
     private var choicesEliminated: Array<Int> = new Array();
@@ -1086,14 +1084,13 @@ class Story {
             if (checkChoiceCondition(choice)) {
                 // Check that the choice hasn't been chosen before if it is a one-time-only
                 if (choicesEliminated.indexOf(choice.id) == -1) {
+                    // trace(choice.text);
                     // fill the choice's h expressions after removing the flag expression
                     var displayChoice = choiceToDisplay(choice, chosen);
                     // Don't display fallback choices (choices with no text)
-                    if (StringTools.trim(displayChoice.text.split('->')[0]).length > 0) {
+                    if (StringTools.trim(choice.text.split('->')[0]).length > 0) {
                         choices.push(displayChoice);
                     }
-                } else {
-                    // debugTrace('can\'t display "${choice.text}" because it has expired.');
                 }
             }
         }
@@ -1262,6 +1259,16 @@ class Story {
             throw "Can't have stitches within stitches";
         }
         return Empty;
+    }
+    function copyChoice(choice: Choice): Choice {
+        return {
+            expires: choice.expires,
+            label: choice.label,
+            id: choice.id,
+            depth: choice.depth,
+            text: choice.text,
+            divertTarget: choice.divertTarget
+        };
     }
 }
 

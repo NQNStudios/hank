@@ -12,3 +12,4 @@ typedef Choice = {
     // Choices can be declared with a divert target on the same line. That target will be stored in this optional field.
     var divertTarget: Option<String>;
 }
+
