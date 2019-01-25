@@ -5,10 +5,10 @@ class RunStoryDemo {
         var input = Sys.stdin();
 
         var debug = false;
-        trace("Enter a path to a hank story file. Prepend with * for debug prints. (default is examples/main.hank): ");
+        trace("Enter a path to a hank story file. Prepend with * for debug prints. (default is examples/main/main.hank): ");
         var path = input.readLine();
         path = if (path.length == 0) {
-            "examples/main.hank";
+            "examples/main/main.hank";
         } else {
             if (path.charAt(0) == '*') {
                 debug = true;
@@ -18,7 +18,7 @@ class RunStoryDemo {
             }
         }
 
-        var story: Story = new Story(false, StringTools.replace(path, '.hank', '.hog'));
+        var story: Story = new Story(false, StringTools.replace(path, '.hank', '.hlog'));
         story.loadScript(path);
         var frame = StoryFrame.Finished;
         do {

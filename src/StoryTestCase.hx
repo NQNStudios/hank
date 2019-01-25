@@ -37,7 +37,7 @@ class StoryTestCase extends utest.Test {
             try {
                 frame = story.nextFrame();
             } catch (e: Dynamic) {
-                trace('Error at ${story.lastLineID}');
+                trace('Error at ${story.lastLineID} while validating ${transcriptFile}');
 
                 throw e;
             }
@@ -69,13 +69,19 @@ class StoryTestCase extends utest.Test {
                 continue;
             } else if (StringTools.startsWith(line, ">>>")) {
                 // Make the choice given.
-                var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
-                if (debugPrints) {
-                    trace(output);
-                }
-                if (fullTranscript || transcriptLines.length > i+1) {
-                    // Assert that its output equals the transcript's expected choice output.
-                    Assert.equals(transcriptLines[++i], output);
+                try {
+                    var output = story.choose(Std.parseInt(StringTools.trim(line.substr(3))));
+                    if (debugPrints) {
+                        trace(output);
+                    }
+                    if (fullTranscript || transcriptLines.length > i+1) {
+                        // Assert that its output equals the transcript's expected choice output.
+                        Assert.equals(transcriptLines[++i], output);
+                    }
+                } catch (e: Dynamic) {
+                    trace('Error at ${story.lastLineID} while validating ${transcriptFile}');
+
+                    throw e;
                 }
             } else if (StringTools.startsWith(line, "#")) {
                 // Allow comments in a transcript that need not be validated in any way
