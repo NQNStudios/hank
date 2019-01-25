@@ -727,7 +727,7 @@ class Story {
                 else {
                     var fallback = collectFallbackChoice();
                     if (fallback != null) {
-                        return HasText(evaluateFallbackChoice(fallback));
+                        return chooseFallbackChoice(fallback);
                     } else {
                         throw 'Ran out of available choices at ${currentLineMapKey()}.';
                     }
@@ -877,25 +877,30 @@ class Story {
             case Some(target):
                 divert(target);
             case None:
-                // Otherwise, find the line where the choice taken occurs
-                for (i in currentLineIdx...scriptLines.length) {
-                    switch (scriptLines[i].type) {
-                        case DeclareChoice(choice):
-                            if (choice.id == choiceTaken.id) {
-                                gotoLine(i);
-                                break;
-                            }
-                        default:
-                    }
-                }
-
-                // Move to the line following this choice.
-                stepLine();
+                // Otherwise, follow the choice's branch.
+                gotoChoiceBranch(choiceTaken);
         }
         
         // Log the choice's index to the transcript (1-indexed for human readability)
         logToTranscript('> ${index+1}: ${choiceTaken.text}');
         return choiceTaken.text;
+    }
+
+    private function gotoChoiceBranch(choiceTaken: Choice) {
+        // find the line where the choice taken occurs
+        for (i in currentLineIdx...scriptLines.length) {
+            switch (scriptLines[i].type) {
+                case DeclareChoice(choice):
+                    if (choice.id == choiceTaken.id) {
+                        gotoLine(i);
+                        break;
+                    }
+                default:
+            }
+        }
+
+        // Move to the line following this choice.
+        stepLine();
     }
 
     /**
@@ -981,6 +986,35 @@ class Story {
         }
 
         return choices;
+    }
+
+    private function collectFallbackChoice() {
+        var choices = collectRawChoices();
+        for (choice in choices) {
+            if (choice.text.length == 0) {
+                return choice;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+    Return the first frame following a fallback choice, pushing the flow forward down that branch.
+    **/
+    private function chooseFallbackChoice(choice: Choice): StoryFrame {
+        switch (choice.divertTarget) {
+            case Some(target):
+                // "choice then arrow syntax" should simply evaluate the lines following this choice
+                if (target.length == 0) {
+                    gotoChoiceBranch(choice);
+                    return nextFrame();
+                } else {
+                    return divert(target);
+                }
+            default:
+                throw 'Syntax error in fallback choice: no ->';
+        }
     }
 
     /**
