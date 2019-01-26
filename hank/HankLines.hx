@@ -1,7 +1,7 @@
 package hank;
 
 import haxe.ds.Option;
-import hank.Choice.Choice;
+import hank.Choice;
 
 class LineID {
     public var sourceFile: String;
@@ -20,9 +20,14 @@ class LineID {
     }
 }
 
-typedef HankLine = {
-    var id: LineID;
-    var type: LineType;
+class HankLine {
+    public var id: LineID;
+    public var type: LineType;
+
+    public function new(id: LineID, type: LineType) {
+        this.id = id;
+        this.type = type;
+    }
 }
 
 enum LineType {

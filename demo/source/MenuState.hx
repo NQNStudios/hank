@@ -30,10 +30,12 @@ class MenuState extends FlxState
 			var frame = _story.nextFrame();
 			switch (frame) {
 				case HasText(text):
-					typeText += text;
+					typeText += text+'\n';
 				default:
+					break;
 			}
 		}
+		trace(typeText);
 		_typeText = new FlxTypeText(15, 10, FlxG.width - 30, typeText, 16, true);
 	}
 	
@@ -42,15 +44,15 @@ class MenuState extends FlxState
 	 */
 	override public function create():Void
 	{
-		_story = new Story("assets/scripts/main.hank");
+		_story = new Story();
+		_story.loadScript("assets/scripts/main.hank");
 		// Set a background color
 		FlxG.cameras.bgColor = 0xff131c1b;
 		
 		var square = new FlxSprite(10, 10);
 		square.makeGraphic(FlxG.width - 20, FlxG.height - 76, 0xff333333);
 		
-		// TODO populate this with text from the Story parser
-		_typeText = new FlxTypeText(15, 10, FlxG.width - 30, "Hello, and welcome to the FlxTypeText demo. You can press the buttons below and see the different ways to control this class. Enjoy! :)", 16, true);
+		revealText();
 		
 		_typeText.delay = 0.1;
 		_typeText.eraseDelay = 0.2;

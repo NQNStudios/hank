@@ -1,5 +1,4 @@
 -lib hscript
 -lib utest
--cp hank
 -main tests.TestMain
 --interp

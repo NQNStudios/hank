@@ -9,11 +9,8 @@ import sys.io.FileOutput;
 import hscript.Parser;
 import hscript.Interp;
 
-import hank.HankLines.HankLine;
-import hank.HankLines.LineID;
-import hank.HankLines.LineType;
-import hank.Alt.AltState;
-import hank.Alt.AltBehavior;
+import hank.HankLines;
+import hank.Alt;
 
 @:allow(tests.StoryTest)
 @:allow(hank.StoryTestCase)
@@ -21,7 +18,7 @@ class Story {
     private var lineCount: Int = 0;
     private var scriptLines: Array<HankLine> = new Array();
     private var currentLineIdx: Int = 0;
-    private var lastLineID = null;
+    private var lastLineID: LineID = null;
     private var directory: String = "";
     private var parser = new Parser();
     private var interp = new Interp();
@@ -36,10 +33,7 @@ class Story {
     private var choicesParsed = 0;
 
     private function dummyLine(): HankLine {
-        return {
-            id: new LineID("", 0),
-            type: NoOp
-        };
+        return new HankLine(new LineID("", 0), NoOp);
     }
 
     private function currentLine() {
@@ -111,7 +105,11 @@ class Story {
         this.debugPrints = debugPrints;
         interp.variables['DEBUG'] = debug;
         if (transcriptPath.length > 0) {
-            transcriptFile = Some(sys.io.File.write(transcriptPath));
+            if (transcriptPath.indexOf(".hank") != -1) {
+                trace("Warning! You might be trying to overwrite your script instead of specifying an hlog for the transcript.");
+            } else {
+                transcriptFile = Some(sys.io.File.write(transcriptPath));
+            }
         }
         logToTranscript('@${random.currentSeed}');
         interp.variables['story'] = this;
@@ -319,10 +317,7 @@ class Story {
         var idx = 0;
         while (idx < unparsedLines.length) { 
  
-            var parsedLine = {
-                id: new LineID(file, idx+1),
-                type: NoOp
-            };
+            var parsedLine = new HankLine(new LineID(file, idx+1), NoOp);
             var unparsedLine = unparsedLines[idx];
             parsedLine.type = parseLine(unparsedLine, unparsedLines.slice(idx+1));
             if (file.indexOf('EMBEDDED') == 0) {
@@ -348,10 +343,7 @@ class Story {
             }
         }
 
-        pushScriptLine({
-            id: new LineID(file, idx),
-            type: EOF(file)
-        });
+        pushScriptLine(new HankLine(new LineID(file, idx), EOF(file)));
     }
 
     private var started = false;
@@ -745,10 +737,7 @@ class Story {
                 // +1 is applied because it's legal to place gather unnecessary gathers of choiceDepth+1 (i.e. gather on the first line in a series of choice/gather segments.)
                 if (choiceDepth + 1 >= depth) {
                     choiceDepth = Math.floor(Math.min(choiceDepth, depth));
-                    return processLine({
-                        id: currentLineID(),
-                        type: nextPartType
-                    });
+                    return processLine(new HankLine(currentLineID(), nextPartType));
                 } else {
                     return Error('Encountered a gather for depth ${depth} when the current depth was ${choiceDepth}');
                 }

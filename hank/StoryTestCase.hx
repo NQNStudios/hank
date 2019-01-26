@@ -1,7 +1,7 @@
 package hank;
 
 import utest.Assert;
-import hank.HankLines.LineID;
+import hank.HankLines;
 import hank.StoryFrame;
 
 class StoryTestCase extends utest.Test {
