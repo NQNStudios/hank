@@ -1,4 +1,4 @@
-package src;
+package hank;
 
 /* This file is cribbed from HaxeFlixel's FlxRandom.hx and FlxMath.hx (MIT License), with modifications by Nat Quayle Nelson for compatibility.
 

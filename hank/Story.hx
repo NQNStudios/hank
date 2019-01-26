@@ -1,6 +1,5 @@
-package src;
+package hank;
 
-import haxe.zip.Compress;
 import haxe.ds.Option;
 import haxe.io.Bytes;
 
@@ -10,14 +9,14 @@ import sys.io.FileOutput;
 import hscript.Parser;
 import hscript.Interp;
 
-import src.HankLines.HankLine;
-import src.HankLines.LineID;
-import src.HankLines.LineType;
-import src.Alt.AltState;
-import src.Alt.AltBehavior;
+import hank.HankLines.HankLine;
+import hank.HankLines.LineID;
+import hank.HankLines.LineType;
+import hank.Alt.AltState;
+import hank.Alt.AltBehavior;
 
 @:allow(tests.StoryTest)
-@:allow(src.StoryTestCase)
+@:allow(hank.StoryTestCase)
 class Story {
     private var lineCount: Int = 0;
     private var scriptLines: Array<HankLine> = new Array();

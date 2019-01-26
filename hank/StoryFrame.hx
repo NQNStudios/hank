@@ -1,4 +1,4 @@
-package src;
+package hank;
 
 enum StoryFrame {
     HasText(text: String);

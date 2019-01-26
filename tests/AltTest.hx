@@ -2,9 +2,9 @@ package tests;
 
 import utest.Test;
 import utest.Assert;
-import src.Alt.AltBehavior;
-import src.Alt.AltState;
-import src.Random.Random;
+import hank.Alt.AltBehavior;
+import hank.Alt.AltState;
+import hank.Random.Random;
 
 class AltTest extends utest.Test {
 

@@ -1,7 +1,7 @@
-package src;
+package hank;
 
 import haxe.ds.Option;
-import src.Choice.Choice;
+import hank.Choice.Choice;
 
 class LineID {
     public var sourceFile: String;

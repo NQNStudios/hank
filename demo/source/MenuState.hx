@@ -9,6 +9,7 @@ import flixel.FlxState;
 import flixel.system.FlxAssets;
 import flixel.ui.FlxButton;
 import flixel.addons.text.FlxTypeText;
+import hank.Story;
 
 /**
  * A FlxState which can be used for the game's menu.
@@ -17,12 +18,31 @@ class MenuState extends FlxState
 {
 	var _typeText:FlxTypeText;
 	var _status:FlxTypeText;
+	var _story:Story;
+
+	function revealText() {
+		if (_typeText != null) {
+			remove(_typeText);
+		}
+
+		var typeText = "";
+		while (true) {
+			var frame = _story.nextFrame();
+			switch (frame) {
+				case HasText(text):
+					typeText += text;
+				default:
+			}
+		}
+		_typeText = new FlxTypeText(15, 10, FlxG.width - 30, typeText, 16, true);
+	}
 	
 	/**
 	 * Function that is called up when to state is created to set it up. 
 	 */
 	override public function create():Void
 	{
+		_story = new Story("assets/scripts/main.hank");
 		// Set a background color
 		FlxG.cameras.bgColor = 0xff131c1b;
 		

@@ -1,8 +1,8 @@
-package src;
+package hank;
 
 import utest.Assert;
-import src.StoryFrame;
-import src.HankLines.LineID;
+import hank.HankLines.LineID;
+import hank.StoryFrame;
 
 class StoryTestCase extends utest.Test {
     /**

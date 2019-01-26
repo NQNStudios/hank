@@ -1,3 +1,3 @@
 -lib hscript
--main src.RunStoryDemo
+-main hank.RunStoryDemo
 --interp

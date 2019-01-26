@@ -1,13 +1,13 @@
 package tests;
 
-import src.Story;
-import src.HankLines.HankLine;
-import src.HankLines.LineType;
-import src.HankLines.LineID;
-import src.StoryFrame;
+import hank.Story;
+import hank.HankLines.HankLine;
+import hank.HankLines.LineType;
+import hank.HankLines.LineID;
+import hank.StoryFrame;
 import utest.Assert;
 
-class StoryTest extends src.StoryTestCase {
+class StoryTest extends hank.StoryTestCase {
     public function testIdEquality() {
         var lineID = new LineID('examples/TheIntercept/main.hank', 105);
         var lineID2 = new LineID('examples/TheIntercept/main.hank', 105);

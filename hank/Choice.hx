@@ -1,4 +1,4 @@
-package src;
+package hank;
 
 import haxe.ds.Option;
 
