@@ -845,8 +845,10 @@ class Story {
     @return the choice output.
     **/
     public function choose(index: Int): String {
-        // trace('choosing idx: ${index}');
         var validChoices = collectChoicesToDisplay(true);
+        if (index < 0 || index >= validChoices.length) {
+            throw 'trying to choose ${index} which is out of range';
+        }
         // trace('valid choices: ${validChoices}');
         var choiceTaken = validChoices[index];
 
