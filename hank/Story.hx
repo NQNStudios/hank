@@ -36,6 +36,13 @@ class Story {
         return new HankLine(new LineID("", 0), NoOp);
     }
 
+    public function addVariable(name: String, value: Dynamic) {
+        if (interp.variables.exists(name)) {
+            throw 'trying to add duplicate variable to Story: ${name}';
+        }
+        interp.variables[name] = value;
+    }
+
     private function currentLine() {
         // trace('getting line ${currentLineIdx} of ${scriptLines.length}');
         return scriptLines[currentLineIdx];
