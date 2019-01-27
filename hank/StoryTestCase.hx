@@ -38,6 +38,7 @@ class StoryTestCase extends utest.Test {
                 frame = story.nextFrame();
             } catch (e: Dynamic) {
                 trace('Error at ${story.lastLineID} while validating ${transcriptFile}');
+                trace(Std.string(story.scriptLines[story.currentLineIdx]));
 
                 throw e;
             }
@@ -73,10 +74,10 @@ class StoryTestCase extends utest.Test {
                 var firstColonIdx = line.indexOf(':');
                 var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
                 var expectedOutput = StringTools.trim(line.substr(firstColonIdx+1));
-                trace('expecting: ${expectedOutput}');
+                // trace('expecting: ${expectedOutput}');
                 try {
                     var output = story.choose(index);
-                    trace('got: ${output}');
+                    // trace('got: ${output}');
                     Assert.equals(expectedOutput, output);
                 } catch (e: Dynamic) {
                     trace('Error at ${story.lastLineID} while validating ${transcriptFile}');

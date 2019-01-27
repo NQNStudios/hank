@@ -28,6 +28,10 @@ class HankLine {
         this.id = id;
         this.type = type;
     }
+
+    public function toString() {
+        return '${id.toString()}: ${type}';
+    }
 }
 
 enum LineType {
