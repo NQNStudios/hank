@@ -15,6 +15,15 @@ class StoryTest extends hank.StoryTestCase {
         Assert.isTrue(lineID.equals(lineID2));
     }
 
+    public function testHasChoicesBlocksProgression() {
+        var story = new Story();
+        story.loadScript('examples/TheIntercept/main.hank');
+        story.nextFrame();
+        for (i in 0...5) {
+            assertComplexEquals(HasChoices(['Hut 14']), story.nextFrame());
+        }
+    }
+
     public function testParseHelloWorld() {
         var story: Story = new Story();
         story.loadScript("examples/hello/main.hank"); assertComplexEquals(OutputText('Hello, world!'), story.scriptLines[0].type);
