@@ -65,10 +65,17 @@ class Util {
         return false;
     }
 
+    /**
+    Strip whichever of the given prefix list comes first at the start of a string
+    **/
     public static function stripPrefixes(str: String, prefixes: Array<String>) {
         for (prefix in prefixes) {
-            str = StringTools.replace(str, prefix, '');
+            if (str.indexOf(prefix) == 0) {
+                str = StringTools.replace(str, prefix, '');
+                return StringTools.trim(str);
+            }
         }
-        return StringTools.trim(str);
+
+        return str;
     }
 }
