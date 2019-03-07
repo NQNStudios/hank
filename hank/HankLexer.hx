@@ -44,8 +44,8 @@ class HankLexer extends Lexer implements RuleBuilder {
 
     public static var tok = @:rule [
         // Brackets
-        "(" => TParenOpen,
-        ")" => TParenClose,
+        "\\(" => TParenOpen,
+        "\\)" => TParenClose,
         "[" => TSquareOpen,
         "]" => TSquareClose,
         "{" => TCurlyOpen,
@@ -82,20 +82,23 @@ class HankLexer extends Lexer implements RuleBuilder {
     ];
 
     public static var lineComment = @:rule [
-        '\n' => {
+        '\\n' => {
             lexer.curPos().pmax;
         },
         '[^"]' => {
+            trace('heyyyyya');
 			buf.add(lexer.current);
 			lexer.token(lineComment);
         }
     ];
 
     public static var blockComment = @:rule [
-        '*/' => {
+        '\\*/' => {
+            trace("OUT");
             lexer.curPos().pmax;
         },
         '[^"]' => {
+            trace(lexer.current);
 			buf.add(lexer.current);
 			lexer.token(blockComment);
         }
