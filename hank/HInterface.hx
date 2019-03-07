@@ -4,29 +4,21 @@ import hscript.Parser;
 import hscript.Interp;
 import hscript.Expr;
 
-import hank.Story;
-
-
 /**
  Interface between a Hank story, and its embedded hscript interpreter
 **/
 @:allow(tests.HInterfaceTest)
 class HInterface {
     var BOOLEAN_OPS = ['&&', '||', '!'];
-    var story: Story;
 
     var parser: Parser = new Parser();
     var interp: Interp = new Interp();
 
-    public function new(story: Story) {
-        this.story = story;
-        interp.variables['story'] = story;
-
-        // TODO allow constructing the interface with external state variables. These variables should all be serializable so stories can be deterministically replayed
-        // TODO although... that excludes something like FlxG. Maybe 2 different pipelines for passing in Haxe objects, one serializable and one not.
-
+    public function new(?variables: Map<String, Dynamic>) {
+        if (variables != null) {
+            interp.variables = variables;
+        }
     }
-
 
     /**
      Run a pre-processed block of Haxe embedded in a Hank story.
@@ -41,7 +33,7 @@ class HInterface {
      Convert numerical value expressions to booleans for binary operations
     **/
     function boolify(expr: Expr): Expr {
-        // TODO this may work but it is not well-thought-out and may have unintended consequences
+        // TODO this won't work in cases where the expression is already a bool
         return EBinop('>', expr, EConst(CInt(0)));
     }
 

@@ -9,7 +9,10 @@ class Story {
     var hInterface: HInterface;
 
     public function new() {
-        hInterface = new HInterface(this);
+        var variables = [
+            'story' => this
+        ];
+        hInterface = new HInterface(variables);
     }
 
     /** Parse and run embedded Hank script on the fly. **/

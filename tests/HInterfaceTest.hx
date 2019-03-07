@@ -1,6 +1,5 @@
 package tests;
 
-import hank.Story;
 import utest.Test;
 import utest.Assert;
 
@@ -11,7 +10,7 @@ class HInterfaceTest extends utest.Test {
     var hInterface: HInterface;
 
     public function setup() {
-        hInterface = new HInterface(new Story());
+        hInterface = new HInterface();
     }
 
     function assertVar(name: String, value: Dynamic) {
