@@ -6,9 +6,10 @@
     "description": "Narrative scripting language for HaxeFlixel games based on Inkle's Ink engine",
     "version": "0.0.6",
     "releasenote": "It isn't safe to use this library yet.",
-    "contributors": ["NQNStudios"],
+    "contributors": ["NQNStudios", "Zicklag"],
     "dependencies": {
         "hscript": "",
+        "hxparse": "",
         "utest": ""
     }
 }

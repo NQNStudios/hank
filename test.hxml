@@ -1,4 +1,5 @@
 -lib hscript
 -lib utest
+-lib hxparse
 -main tests.TestMain
 --interp
