@@ -52,4 +52,21 @@ class FileBufferTest extends utest.Test {
         HankAssert.equals(Some('extra.hank'), file.takeUntil("\n".split("")));
         HankAssert.equals(expectedPosition3, file.position());
     }
+
+    function testTakeLine() {
+        var expectedPosition1 = {
+            file: 'examples/main/main.hank',
+            line: 1,
+            column: 0
+        };
+        var expectedPosition2 = {
+            file: 'examples/main/main.hank',
+            line: 2,
+            column: 0
+        };
+
+        HankAssert.equals(expectedPosition1, file.position());
+        HankAssert.equals(Some('INCLUDE extra.hank'), file.takeLine());
+        HankAssert.equals(expectedPosition2, file.position());
+    }
 }

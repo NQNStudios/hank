@@ -33,8 +33,10 @@ class FileBuffer {
         };
     }
 
-    /** Peek through the buffer until encountering one of the given terminator sequences **/
-    public function peekUntil(terminators: Array<String>): Option<String> {
+    /** Peek through the buffer until encountering one of the given terminator sequences
+    @param eofTerminates Whether the end of the file is also a valid terminator
+    **/
+    public function peekUntil(terminators: Array<String>, eofTerminates: Bool = false): Option<String> {
         var index = buffer.length;
 
         for (terminator in terminators) {
@@ -42,7 +44,7 @@ class FileBuffer {
             index = nextIndex < index ? nextIndex : index;
         }
 
-        return if (index < buffer.length) {
+        return if (index < buffer.length || eofTerminates) {
             Some(buffer.substr(0, index));
         } else {
             None;
@@ -64,8 +66,8 @@ class FileBuffer {
     }
 
     /** Take data from the file until encountering one of the given terminator sequences. **/
-    public function takeUntil(terminators: Array<String>, dropTerminator = true): Option<String> {
-        return switch (peekUntil(terminators)) {
+    public function takeUntil(terminators: Array<String>, eofTerminates: Bool = false, dropTerminator = true): Option<String> {
+        return switch (peekUntil(terminators, eofTerminates)) {
             case Some(s):
                 // Remove the desired data from the buffer
                 drop(s);
@@ -81,6 +83,25 @@ class FileBuffer {
 
                 // Return the desired data
                 Some(s);
+            case None:
+                None;
+        }
+    }
+
+    /** Take the next line of data from the file.
+    @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
+    **/
+    public function takeLine(trimmed = ''): Option<String> {
+        var nextLine = takeUntil('\n'.split(''), true);
+        return switch (nextLine) {
+            case Some(nextLine):
+                if (trimmed.indexOf('r') != -1) {
+                    nextLine = StringTools.rtrim(nextLine);
+                }
+                if (trimmed.indexOf('l') != -1) {
+                    nextLine = StringTools.ltrim(nextLine);
+                }
+                Some(nextLine);
             case None:
                 None;
         }
