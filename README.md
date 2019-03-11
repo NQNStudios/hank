@@ -8,7 +8,7 @@ engine. It is currently just a proof of concept, but you may use it at your own 
 
 ## Install
 
-Hank currently requires Haxe 3.4.7. I recommend using [hvm](https://github.com/dpeek/hvm) and typing `hvm use 3.4.7`.
+Hank currently requires Haxe 3.4.7. I recommend using [hvm](https://github.com/dpeek/hvm) and typing `hvm use haxe 3.4.7`.
 
 ## Comparison with Ink and Inkjs
 
