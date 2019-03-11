@@ -10,14 +10,15 @@ import utest.Assert;
 import hxparse.LexerTokenSource;
 
 import hank.HankLexer;
+import hank.HankLexer.HankToken;
 
+import tests.HankAssert;
 
 class HankLexerTest extends utest.Test {
     
     public function testLexMainExample() {
-        trace('constructing');
         var lexer = new HankLexer(ByteData.ofString(File.getContent('examples/main/main.hank')), 'testScript');
         var ts = new LexerTokenSource(lexer, HankLexer.tok);
-        trace(ts.token());
+        HankAssert.equals(TInclude("extra.hank"), ts.token());
     }
 }
