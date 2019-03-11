@@ -1,4 +1,7 @@
 // comments in Hank start with a double-slash
+/* Or you can split comments
+across more than one line */
+/* Or you can use block comments inline */
 ~ var demo_var = "dynamic content"; // Hank scripts can embed Haxe logic by starting a line with '~'
 ~ var part1 = "haxe";
 ~ var part2 = "expressions";
