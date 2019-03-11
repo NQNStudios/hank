@@ -95,13 +95,25 @@ class FileBuffer {
         }
     }
 
-    /** Take the next line of data from the file.
+    /** Take the specified number of characters from the file **/
+    public function take(chars: Int) {
+        var data = buffer.substr(0, chars);
+        drop(data);
+        return data;
+    }
+
+    /** Take the next line of data from the file. (Stops for comments)
     @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
     **/
     public function takeLine(trimmed = ''): Option<String> {
-        var nextLine = takeUntil('\n'.split(''), true);
+        var nextLine = if (StringTools.startsWith(buffer, '//') || StringTools.startsWith(buffer, '/*')) {
+            takeUntil(['\n'], true);
+        } else {
+            takeUntil(['\n', '//', '/*'], true);
+        }
         return switch (nextLine) {
             case Some(nextLine):
+                trace(nextLine);
                 if (trimmed.indexOf('r') != -1) {
                     nextLine = StringTools.rtrim(nextLine);
                 }
@@ -112,5 +124,29 @@ class FileBuffer {
             case None:
                 None;
         }
+    }
+
+    public function peekWhichComesNext(terminators: Array<String>): Option<Array<Int>> {
+        var peek = peekUntil(terminators);
+        switch (peek) {
+            case Some(peekedPast):
+                var index = peekedPast.length;
+                var which = -1;
+                for (i in 0...terminators.length) {
+                    var terminator = terminators[i];
+                    if (StringTools.startsWith(buffer.substr(index), terminator)) {
+                        which = i;
+                        break;
+                    }
+                }
+                return Some([which, index]);
+            case None:
+                return None;
+        }
+    }
+
+    /** Give text back to the buffer **/
+    public function give(s: String) {
+        buffer = s + buffer;
     }
 }
