@@ -34,7 +34,8 @@ enum HankToken {
     TTripleComma;
     // Other
     TInclude(p:String);
-    TWord(w:String);
+    TChar(c:String);
+    TWhitespace;
     TEof;
 }
 class N {
@@ -88,12 +89,9 @@ class HankLexer extends Lexer implements RuleBuilder {
             lexer.token(include);
             TInclude(buf.toString());
         },
-        "." => {
-            buf = new StringBuf();
-            lexer.token(word);
-            TWord(buf.toString());
-        },
-        "" => TEof
+        "[ \t]" => TWhitespace,
+        "" => TEof,
+        "." => TChar(lexer.current)
     ];
 
     public static var lineComment = @:rule [
@@ -128,18 +126,4 @@ class HankLexer extends Lexer implements RuleBuilder {
 			lexer.token(include);
         }
     ];
-
-    public static var word = @:rule [
-        '\n' => {
-            lexer.curPos().pmax;
-        },
-        ' ' => {
-            lexer.curPos().pmax;
-        },
-        '[^"]' => {
-			buf.add(lexer.current);
-			lexer.token(include);
-        }
-    ];
-
 }
