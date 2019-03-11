@@ -69,4 +69,14 @@ class FileBufferTest extends utest.Test {
         HankAssert.equals(Some('INCLUDE extra.hank'), file.takeLine());
         HankAssert.equals(expectedPosition2, file.position());
     }
+
+    function testTakeLineEOF() {
+        var buffer = new FileBuffer('.travis.yml');
+        buffer.takeLine();
+        buffer.takeLine();
+        buffer.takeLine();
+        buffer.takeLine();
+        buffer.takeLine();
+        HankAssert.equals(None, buffer.takeLine());
+    }
 }

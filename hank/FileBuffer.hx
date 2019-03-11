@@ -37,11 +37,13 @@ class FileBuffer {
     @param eofTerminates Whether the end of the file is also a valid terminator
     **/
     public function peekUntil(terminators: Array<String>, eofTerminates: Bool = false): Option<String> {
+        if (buffer.length == 0) return None;
+
         var index = buffer.length;
 
         for (terminator in terminators) {
             var nextIndex = buffer.indexOf(terminator);
-            index = nextIndex < index ? nextIndex : index;
+            index = (nextIndex != -1 && nextIndex < index) ? nextIndex : index;
         }
 
         return if (index < buffer.length || eofTerminates) {
@@ -54,7 +56,7 @@ class FileBuffer {
     /**
      Drop the given string from the front of buffer, updating the current position
     **/
-    function drop(s: String) {
+    public function drop(s: String) {
         var lines = s.split('\n');
         if (lines.length > 1) {
             line += lines.length - 1;
@@ -62,6 +64,11 @@ class FileBuffer {
         } else {
             column += lines[lines.length-1].length;
         }
+        var dropped = buffer.substr(0, s.length);
+        if (dropped != s) {
+            throw 'FileBuffer drop error at ${position()}: Expected to drop ${s} but was ${dropped}';
+        }
+
         buffer = buffer.substr(s.length);
     }
 
