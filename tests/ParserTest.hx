@@ -25,5 +25,11 @@ class ParserTest extends utest.Test {
         assertNextExpr(EComment("Or you can use block comments inline"));
         assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
         assertNextExpr(EComment("Hank scripts can embed Haxe logic by starting a line with '~'"));
+        nextExpr();
+        nextExpr();
+        nextExpr();
+        nextExpr();
+        assertNextExpr(EKnot("choice_example"));
+        assertNextExpr(EOutput([Text("You can include choices for the player.")]));
     }
 }
