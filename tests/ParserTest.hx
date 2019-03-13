@@ -20,9 +20,10 @@ class ParserTest extends utest.Test {
     function testParseMain() {
         var parser = new Parser();
         ast = parser.parseFile('examples/main/main.hank');
-        assertNextExpr(EComment(" comments in Hank start with a double-slash"));
-        assertNextExpr(EComment(" Or you can split comments\nacross more than one line "));
-        assertNextExpr(EComment(" Or you can use block comments inline "));
-
+        assertNextExpr(EComment("comments in Hank start with a double-slash"));
+        assertNextExpr(EComment("Or you can split comments\nacross more than one line"));
+        assertNextExpr(EComment("Or you can use block comments inline"));
+        assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
+        assertNextExpr(EComment("Hank scripts can embed Haxe logic by starting a line with '~'"));
     }
 }

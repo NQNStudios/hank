@@ -19,6 +19,7 @@ enum ExprType {
     EStitch(name: String);
     EComment(message: String);
     ENoOp;
+    EHaxeLine(haxe: String);
 }
 
 typedef HankExpr = {
@@ -37,7 +38,8 @@ class Parser {
         '->' => divert,
         '===' => knot,
         '==' => knot,
-        '=' => stitch
+        '=' => stitch,
+        '~' => haxeLine
     ];
 
     var buffers: Array<FileBuffer> = [];
@@ -115,7 +117,7 @@ class Parser {
     }
 
     static function lineComment(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
-        return EComment(line.substr(2));
+        return EComment(StringTools.trim(line.substr(2)));
     }
 
     static function blockComment(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
@@ -140,7 +142,7 @@ class Parser {
 
         text = rob.take(endIdx);
         rob.drop('*/');
-        return EComment(text);
+        return EComment(StringTools.trim(text));
     }
 
     static function include(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
@@ -165,6 +167,10 @@ class Parser {
     static function stitch(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
         var tokens = lineTokens(line, 2, position);
         return EStitch("tokens[1]");
+    }
+
+    static function haxeLine(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
+        return EHaxeLine(StringTools.trim(line.substr(1)));
     }
 
 }
