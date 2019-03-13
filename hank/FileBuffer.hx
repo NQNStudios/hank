@@ -83,7 +83,9 @@ class FileBuffer {
                 var nextTerminator = '';
                 for (terminator in terminators) {
                     if (buffer.indexOf(terminator) == 0) {
-                        drop(terminator);
+                        if (dropTerminator) {
+                            drop(terminator);
+                        }
                         break;
                     }
                 }
@@ -109,11 +111,16 @@ class FileBuffer {
         var nextLine = if (StringTools.startsWith(buffer, '//') || StringTools.startsWith(buffer, '/*')) {
             takeUntil(['\n'], true);
         } else {
-            takeUntil(['\n', '//', '/*'], true);
+            switch (peekWhichComesNext(['\n', '//', '/*'])) {
+                case Some([0, _]) | None:
+                    takeUntil(['\n'], true);
+                // Preserve // and /* if they terminate a line
+                default:
+                    takeUntil(['//', '/*'], false, false);
+            }
         }
         return switch (nextLine) {
             case Some(nextLine):
-                trace(nextLine);
                 if (trimmed.indexOf('r') != -1) {
                     nextLine = StringTools.rtrim(nextLine);
                 }
