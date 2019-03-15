@@ -1,0 +1,15 @@
+This file contains test cases for /*output expression*/ parsing.
+Multiline comments /*will not
+split*/ an output expression. This should parse as one line of output.
+Comments at the end of lines won't parse as part of the Output. // I'm my own expression!
+You can {insert} the values of expressions.
+{you} can start an output line with an insert expression.
+{shuffle: Things get weird|when you start to use sequence expressions.}
+{once: And they don't get any easier|{when you nest them|{insert}}}!
+
+You can {
+    if (flag) "insert" else "interpolate"
+} the value of multiline expressions without splitting a line of output.
+
+You can have diverts inline. -> somewhere_else
+You can have diverts as branches of a sequence {-> first_time|-> second_time}

@@ -1,18 +1,5 @@
 package hank;
 
-import haxe.ds.Option;
-
-enum OutputType {
-    Text(t: String); // Pure text that is always displayed
-    // Alt(a: Alt); // TODO re-implement Alts recursively. Each alt branch should be an Output
-    HExpression(h: String); // An embedded Haxe expression whose value will be inserted
-    InlineDivert(t: String); // A divert statement on the same line as an output sequence.
-    InlineComment(c: String); // A block comment in the middle of an output sequence
-    ToggleOutput(o: Output); // Output that will sometimes be displayed (i.e. [bracketed] section in a choice text)
-}
-
-typedef Output = Array<OutputType>;
-
 enum ExprType {
     EIncludeFile(path: String);
     EOutput(output: Output);
@@ -158,6 +145,7 @@ class Parser {
     }
 
     static function output(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
+        return EOutput(Output.parse(line));
     }
 
     static function knot(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {

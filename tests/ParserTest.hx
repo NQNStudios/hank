@@ -2,6 +2,8 @@ package tests;
 
 import hank.Parser;
 import hank.Parser.HankAST;
+import hank.Output;
+import hank.Output.OutputType;
 
 class ParserTest extends utest.Test {
     var ast: HankAST;
@@ -16,20 +18,20 @@ class ParserTest extends utest.Test {
         HankAssert.equals(expr, nextExpr());
     }
 
-
-    function testParseMain() {
+    function testParseOutput() {
         var parser = new Parser();
-        ast = parser.parseFile('examples/main/main.hank');
+        ast = parser.parseFile('examples/parsing/output.hank');
+    }
+
+
+    function testParseMisc() {
+        var parser = new Parser();
+        ast = parser.parseFile('examples/parsing/misc.hank');
         assertNextExpr(EComment("comments in Hank start with a double-slash"));
         assertNextExpr(EComment("Or you can split comments\nacross more than one line"));
         assertNextExpr(EComment("Or you can use block comments inline"));
         assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
         assertNextExpr(EComment("Hank scripts can embed Haxe logic by starting a line with '~'"));
-        nextExpr();
-        nextExpr();
-        nextExpr();
-        nextExpr();
-        assertNextExpr(EKnot("choice_example"));
-        assertNextExpr(EOutput([Text("You can include choices for the player.")]));
+        assertNextExpr(EKnot("knot_example"));
     }
 }
