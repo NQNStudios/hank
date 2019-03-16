@@ -1,0 +1,6 @@
+Line of text.
+Line of text /*with a comment*/ without a comment.
+Two lines of text /*
+*/ that will be returned at the same time.
+The fifth line of text. // Nonsense
+Number six.
