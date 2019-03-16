@@ -209,4 +209,13 @@ class FileBuffer {
     public function takeLine(trimmed = ''): Option<String> {
         return getLine(trimmed, takeUntil);
     }
+
+    public function skipWhitespace() {
+        var whitespace = cleanBuffer.substr(0, cleanBuffer.length - StringTools.ltrim(cleanBuffer).length);
+        drop(whitespace);
+    }
+
+    public function isEmpty() {
+        return cleanBuffer.length == 0;
+    }
 }

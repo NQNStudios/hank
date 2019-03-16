@@ -100,4 +100,24 @@ class FileBufferTest extends utest.Test {
         // EOF
         HankAssert.equals(None, file.takeLine());
     }
+
+    function testGetLineTrimming() {
+        file = new FileBuffer('examples/parsing/whitespace.txt');
+
+        HankAssert.equals(Some("Just give me this output."), file.peekLine("lr"));
+        HankAssert.equals(Some("        Just give me this output."), file.peekLine("r"));
+        HankAssert.equals(Some("        Just give me this output.     "), file.peekLine(""));
+        HankAssert.equals(Some("Just give me this output.     "), file.takeLine("l"));
+
+        HankAssert.equals(Some("and on the next line, this output."), file.takeLine("lr"));
+        HankAssert.equals(Some("Here, just this"), file.takeLine("lr"));
+        HankAssert.equals(Some("I only want this stuff"), file.takeLine("lr"));
+    }
+
+    function testSkipWhitespace() {
+        file = new FileBuffer('examples/parsing/whitespace.txt');
+
+        file.skipWhitespace();
+        HankAssert.equals("Just", file.take(4));
+    }
 }

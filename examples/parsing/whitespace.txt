@@ -1,0 +1,4 @@
+        Just give me this output.     
+/*comment*/     and on the next line, this output.
+        Here, just this // and not this
+I only want this stuff              // not all those spaces!
