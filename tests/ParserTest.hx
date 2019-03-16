@@ -21,17 +21,15 @@ class ParserTest extends utest.Test {
     function testParseOutput() {
         var parser = new Parser();
         ast = parser.parseFile('examples/parsing/output.hank');
+        assertNextExpr(EOutput(new Output([Text("This file contains test cases for output expression parsing.")])));
+        assertNextExpr(EOutput(new Output([Text("A line won't be interrupted or anything.")])));
     }
 
 
     function testParseMisc() {
         var parser = new Parser();
         ast = parser.parseFile('examples/parsing/misc.hank');
-        assertNextExpr(EComment("comments in Hank start with a double-slash"));
-        assertNextExpr(EComment("Or you can split comments\nacross more than one line"));
-        assertNextExpr(EComment("Or you can use block comments inline"));
         assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
-        assertNextExpr(EComment("Hank scripts can embed Haxe logic by starting a line with '~'"));
         assertNextExpr(EKnot("knot_example"));
     }
 }

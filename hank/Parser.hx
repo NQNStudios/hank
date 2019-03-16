@@ -6,7 +6,6 @@ enum ExprType {
     EDivert(target: String);
     EKnot(name: String);
     EStitch(name: String);
-    EComment(message: String);
     ENoOp;
     EHaxeLine(haxe: String);
 }
@@ -22,8 +21,6 @@ typedef HankAST = Array<HankExpr>;
 class Parser {
     var symbols = [
         'INCLUDE ' => include,
-        '//' => lineComment,
-        '/*' => blockComment,
         '->' => divert,
         '===' => knot,
         '==' => knot,
@@ -105,35 +102,6 @@ class Parser {
         return tokens;
     }
 
-    static function lineComment(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
-        return EComment(StringTools.trim(line.substr(2)));
-    }
-
-    static function blockComment(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
-        var text = line.substr(2);
-        rob.give(text + '\n');
-
-        var nesting = 1;
-        var endIdx = -1;
-
-        while (nesting > 0) {
-            var nextCommentTerminator = rob.peekWhichComesNext(['/*', '*/']);
-            switch (nextCommentTerminator) {
-                case Some([0, index]):
-                    nesting += 1;
-                case Some([1, index]):
-                    nesting -= 1;
-                    endIdx = index;
-                case None:
-                    throw 'Block comment starting at ${position} never terminates!';
-            }
-        }
-
-        text = rob.take(endIdx);
-        rob.drop('*/');
-        return EComment(StringTools.trim(text));
-    }
-
     static function include(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
         var tokens = lineTokens(line, 2, position);
         return EIncludeFile(tokens[1]);
@@ -145,7 +113,7 @@ class Parser {
     }
 
     static function output(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {
-        return EOutput(Output.parse(line));
+        return EOutput(Output.parse(line, rob));
     }
 
     static function knot(line: String, rob: FileBuffer, position: FileBuffer.Position) : ExprType {

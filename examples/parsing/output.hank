@@ -1,4 +1,5 @@
-This file contains test cases for /*output expression*/ parsing.
+This file contains test cases for output expression parsing.
+A line won't be interrupted /*by inline comments*/ or anything.
 Multiline comments /*will not
 split*/ an output expression. This should parse as one line of output.
 Comments at the end of lines won't parse as part of the Output. // I'm my own expression!
@@ -13,3 +14,4 @@ You can {
 
 You can have diverts inline. -> somewhere_else
 You can have diverts as branches of a sequence {-> first_time|-> second_time}
+You can have partial output[.]that changes after a choice is made!
