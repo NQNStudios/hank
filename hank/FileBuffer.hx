@@ -94,7 +94,6 @@ class FileBuffer {
             throw 'Expected to drop "${s}" but was "${actual}"';
         }
 
-
         var lines = s.split('\n');
         if (lines.length > 1) {
             line += lines.length - 1;
@@ -180,11 +179,9 @@ class FileBuffer {
         return data;
     }
 
-    /** Take the next line of data from the file.
-    @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
-    **/
-    public function takeLine(trimmed = ''): Option<String> {
-        var nextLine = takeUntil(['\n'], true);
+    /** DRY Helper for peekLine() and takeLine() **/
+    function getLine(trimmed: String, retriever: Array<String> -> Bool -> Bool -> Option<BufferOutput>): Option<String> {
+        var nextLine = retriever(['\n'], true, true);
         return switch (nextLine) {
             case Some({output: nextLine, terminator: _}):
                 if (trimmed.indexOf('r') != -1) {
@@ -196,6 +193,20 @@ class FileBuffer {
                 Some(nextLine);
             case None:
                 None;
-        }
+        };
+    }
+
+    /** Peek the next line of data from the file.
+    @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
+    **/
+    public function peekLine(trimmed = ''): Option<String> {
+        return getLine(trimmed, peekUntil);
+    }
+
+    /** Take the next line of data from the file.
+    @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
+    **/
+    public function takeLine(trimmed = ''): Option<String> {
+        return getLine(trimmed, takeUntil);
     }
 }

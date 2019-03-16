@@ -66,6 +66,14 @@ class FileBufferTest extends utest.Test {
         assertPosition();
     }
 
+    function testPeekLine() {
+        assertPosition();
+        HankAssert.equals(Some('Line of text.'), file.peekLine());
+        assertPosition();
+        HankAssert.equals(Some('Line of text.'), file.peekLine());
+        assertPosition();
+    }
+
     function testTakeLine() {
         assertPosition();
 
