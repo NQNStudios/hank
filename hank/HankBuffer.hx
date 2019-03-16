@@ -3,7 +3,7 @@ package hank;
 import haxe.ds.Option;
 
 /**
- A position in a FileBuffer, used for debugging.
+ A position in a HankBuffer, used for debugging.
 **/
 typedef Position = {
     var file: String;
@@ -17,23 +17,29 @@ typedef BufferOutput = {
 };
 
 /**
- Helper class for reading/parsing information from a file. Completely drops comments
+ Helper class for reading/parsing information from a string buffer. Completely drops comments
 **/
-class FileBuffer {
+class HankBuffer {
     var path: String;
     var cleanBuffer: String;
     var rawBuffer: String;
-    var line: Int = 1;
-    var column: Int = 1;
+    var line: Int;
+    var column: Int;
 
-    public function new(path: String) {
-        // Keep a raw buffer of the file for tracking accurate file positions
-        rawBuffer = sys.io.File.getContent(path);
-        // Keep a clean buffer for returning data without comments getting in the way
-        cleanBuffer = stripComments(rawBuffer, '//', '\n', false);
-        cleanBuffer = stripComments(cleanBuffer, '/*', '*/', true);
-
+    private function new(path: String, rawBuffer: String, line: Int = 1, column: Int = 1) {
         this.path = path;
+        this.rawBuffer = rawBuffer;
+        // Keep a clean buffer for returning data without comments getting in the way
+        this.cleanBuffer = stripComments(rawBuffer, '//', '\n', false);
+        this.cleanBuffer = stripComments(cleanBuffer, '/*', '*/', true);
+        this.line = line;
+        this.column = column;
+    }
+
+    public static function FromFile(path: String) {
+        // Keep a raw buffer of the file for tracking accurate file positions
+        var rawBuffer = sys.io.File.getContent(path);
+        return new HankBuffer(path, rawBuffer);
     }
 
     function stripComments(s: String, o: String, c: String, dc: Bool): String {

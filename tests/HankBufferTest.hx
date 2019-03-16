@@ -1,17 +1,17 @@
 package tests;
 
 import haxe.ds.Option;
-import hank.FileBuffer;
-import hank.FileBuffer.Position;
+import hank.HankBuffer;
+import hank.HankBuffer.Position;
 
-class FileBufferTest extends utest.Test {
-    var file: FileBuffer;
+class HankBufferTest extends utest.Test {
+    var file: HankBuffer;
     var path: String;
     var expectedPosition: Position;
 
     function setup() {
         path = 'examples/parsing/file.txt';
-        file = new FileBuffer(path);
+        file = HankBuffer.FromFile(path);
         expectedPosition = {
             file: path,
             line: 1,
@@ -102,7 +102,7 @@ class FileBufferTest extends utest.Test {
     }
 
     function testGetLineTrimming() {
-        file = new FileBuffer('examples/parsing/whitespace.txt');
+        file = HankBuffer.FromFile('examples/parsing/whitespace.txt');
 
         HankAssert.equals(Some("Just give me this output."), file.peekLine("lr"));
         HankAssert.equals(Some("        Just give me this output."), file.peekLine("r"));
@@ -115,7 +115,7 @@ class FileBufferTest extends utest.Test {
     }
 
     function testSkipWhitespace() {
-        file = new FileBuffer('examples/parsing/whitespace.txt');
+        file = HankBuffer.FromFile('examples/parsing/whitespace.txt');
 
         file.skipWhitespace();
         HankAssert.equals("Just", file.take(4));
