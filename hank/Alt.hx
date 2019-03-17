@@ -37,10 +37,14 @@ class Alt {
 
         for (prefix in behaviorMap.keys()) {
             if (StringTools.startsWith(expr, prefix)) {
-                var _outputs = StringTools.trim(expr.substr(prefix.length));
+                var outputExprs = StringTools.trim(expr.substr(prefix.length));
+                var outputsBuffer = HankBuffer.Dummy(outputExprs);
+
+                var eachOutputExpr = outputsBuffer.rootSplit('|');
+                var outputs = [for(outputExpr in eachOutputExpr) Output.parse(HankBuffer.Dummy(outputExpr))];
 
                 buffer.take(rawExpr.length);
-                return Some(new Alt(behaviorMap[prefix], []));
+                return Some(new Alt(behaviorMap[prefix], outputs));
             }
         }
 

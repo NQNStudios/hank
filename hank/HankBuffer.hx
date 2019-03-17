@@ -71,6 +71,10 @@ class HankBuffer {
         this.column = column;
     }
 
+    public static function Dummy(text: String) {
+        return new HankBuffer('_', text, 1, 1);
+    }
+
     public static function FromFile(path: String) {
         // Keep a raw buffer of the file for tracking accurate file positions
         var rawBuffer = sys.io.File.getContent(path);
@@ -93,6 +97,31 @@ class HankBuffer {
 
     public function indexOf(s: String): Int {
         return cleanBuffer.indexOf(s);
+    }
+
+    public function everyIndexOf(s: String): Array<Int> {
+        return [for (i in 0...cleanBuffer.length) i].filter(function(i) return cleanBuffer.charAt(i) == s);
+    }
+
+    public function everyRootIndexOf(s: String) {
+        return [for (i in everyIndexOf(s)) i].filter(function(i) return depthAtIndex('{', '}', i) == 0);
+    }
+
+    public function rootSplit(delimiter: String): Array<String> {
+        var rootIndices = everyRootIndexOf(delimiter);
+
+        if (rootIndices.length == 0) {
+            return [cleanBuffer];
+        }
+
+        var substrs = [];
+        var lastIdx = 0;
+        for (i in rootIndices) {
+            substrs.push(cleanBuffer.substr(lastIdx, i-lastIdx));
+            lastIdx = i+1;
+        }
+        substrs.push(cleanBuffer.substr(lastIdx));
+        return substrs;
     }
 
     public function length(): Int {
@@ -270,6 +299,23 @@ class HankBuffer {
 
     public function isEmpty() {
         return cleanBuffer.length == 0;
+    }
+
+    /** 
+     By counting matched pairs of o and c, find out the nesting depth of the char at the given index 
+    **/
+    public function depthAtIndex(o: String, c: String, index: Int) {
+        var depth = 0;
+        var snippet = cleanBuffer.substr(0, index);
+        for (i in 0...snippet.length) {
+            var whichC = snippet.charAt(i);
+            if (whichC == o) {
+                depth += 1;
+            } else if (whichC == c) {
+                depth -= 1;
+            }
+        }
+        return depth; 
     }
 
     /** Return the start index and length of number of characters left the buffer before a nestable expression terminates **/

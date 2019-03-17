@@ -36,7 +36,8 @@ class ParserTest extends utest.Test {
                     new Alt(
                         Shuffle, 
                         [
-                            new Output([Text("Things get weird"), Text("when you start to use sequence expressions.")])
+                            new Output([Text("Things get weird")]), 
+                            new Output([Text("when you start to use sequence expressions.")])
                         ]
                     )
                 )
