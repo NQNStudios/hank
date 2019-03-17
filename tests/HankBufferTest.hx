@@ -70,6 +70,8 @@ class HankBufferTest extends utest.Test {
         assertPosition();
         HankAssert.equals(Some('Line of text.'), file.peekLine());
         assertPosition();
+        file.takeLine();
+        HankAssert.equals(Some('Line of text  without a comment.'), file.peekLine());
     }
 
     function testTakeLine() {

@@ -230,10 +230,13 @@ class HankBuffer {
     }
 
     /** DRY Helper for peekLine() and takeLine() **/
-    function getLine(trimmed: String, retriever: Array<String> -> Bool -> Bool -> Option<BufferOutput>): Option<String> {
-        var nextLine = retriever(['\n'], true, true);
+    function getLine(trimmed: String, retriever: Array<String> -> Bool -> Bool -> Option<BufferOutput>, dropNewline: Bool): Option<String> {
+        var nextLine = retriever(['\n'], true, false);
         return switch (nextLine) {
             case Some({output: nextLine, terminator: _}):
+                if (dropNewline && !isEmpty()) {
+                    drop('\n');
+                }
                 if (trimmed.indexOf('r') != -1) {
                     nextLine = StringTools.rtrim(nextLine);
                 }
@@ -250,14 +253,14 @@ class HankBuffer {
     @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
     **/
     public function peekLine(trimmed = ''): Option<String> {
-        return getLine(trimmed, peekUntil);
+        return getLine(trimmed, peekUntil, false);
     }
 
     /** Take the next line of data from the file.
     @param trimmed Which sides of the line to trim ('r' 'l', 'lr', or 'rl')
     **/
     public function takeLine(trimmed = ''): Option<String> {
-        return getLine(trimmed, takeUntil);
+        return getLine(trimmed, takeUntil, true);
     }
 
     public function skipWhitespace() {

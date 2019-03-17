@@ -1,5 +1,5 @@
 This file contains test cases for output expression parsing.
-A line won't /*--absolutely will not!--*/be interrupted /*by inline comments*/ or anything.
+    A line won't /*--absolutely will not!--*/be interrupted /*by inline comments*/ or anything.
 Multiline comments /*will not
 split*/ an output expression. This should parse as one line of output.
 Comments at the end of lines won't parse as part of the Output. // I'm my own expression!

@@ -43,11 +43,16 @@ class Output {
             }
             if (endSegment == buffer.length() || endSegment != 0) {
                 var peekLine = buffer.peekLine().unwrap();
+                trace('peek: $peekLine');
                 if (peekLine.length < endSegment) {
-                    parts.push(Text(buffer.takeLine().unwrap()));
+                    var text = buffer.takeLine().unwrap();
+                    trace(text);
+                    parts.push(Text(text));
                     break;
                 } else {
-                    parts.push(Text(buffer.take(endSegment)));
+                    var text = buffer.take(endSegment);
+                    trace(text);
+                    parts.push(Text(text));
                 }
             } else {
                 if (buffer.indexOf('{{') == 0) {
@@ -58,15 +63,22 @@ class Output {
             }
         }
 
-        // Parse out optional text parts
+        // If the last output is Text, it should be trimmed at the end.
+        if (parts.length > 0) {
+            var lastPart = parts[parts.length - 1];
+            switch(lastPart) {
+                case Text(t):
+                    parts[parts.length -1] = Text(StringTools.rtrim(t));
+                default:
+            }
+        }
 
-        // Find the first level of nested brace, expressions, and parse them out
+        // TODO parse out optional text parts
 
         return new Output(parts);
     }
 
     public static function parseHaxeExpression(buffer: HankBuffer) {
-        trace('parseHaxeExpresion');
         var rawExpression = buffer.findNestedExpression('{', '}').unwrap().checkValue();
         // Strip out the enclosing braces
         var hExpression = rawExpression.substr(1, rawExpression.length - 2);
@@ -78,7 +90,6 @@ class Output {
     }
 
     public static function parseAltExpression(buffer: HankBuffer) {
-        trace('parseAltExpression');
         return AltExpression({behavior: Cycle, outputs:[]});
     }
 }

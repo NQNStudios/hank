@@ -23,6 +23,8 @@ class ParserTest extends utest.Test {
         ast = parser.parseFile('examples/parsing/output.hank');
         assertNextExpr(EOutput(new Output([Text("This file contains test cases for output expression parsing.")])));
         assertNextExpr(EOutput(new Output([Text("A line won't be interrupted  or anything.")])));
+        assertNextExpr(EOutput(new Output([Text("Multiline comments  an output expression. This should parse as one line of output.")])));
+        assertNextExpr(EOutput(new Output([Text("Comments at the end of lines won't parse as part of the Output.")])));
     }
 
 
