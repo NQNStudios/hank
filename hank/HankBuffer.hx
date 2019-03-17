@@ -107,6 +107,11 @@ class HankBuffer {
         return [for (i in everyIndexOf(s)) i].filter(function(i) return depthAtIndex('{', '}', i) == 0);
     }
 
+    public function rootIndexOf(s: String) {
+        // Not the most efficient implementation, but DRY.
+        return everyRootIndexOf(s)[0];
+    }
+
     public function rootSplit(delimiter: String): Array<String> {
         var rootIndices = everyRootIndexOf(delimiter);
 

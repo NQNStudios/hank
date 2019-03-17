@@ -25,20 +25,21 @@ class Output {
     public static function parse(buffer: HankBuffer): Output {
         var parts = [];
 
-        // First of all, split up the optional segments (ToggleOutputs) and parse them separately
-        // TODO this doesn't work because it seeks ahead to the next bracket through ALL LINES of the buffer. This needs to only run when we're on an individual line
+        // If brackets appear on this line, the first step is to break it up into ToggleOutput segments because ToggleOutputs need to be outermost in the hierarchy. 
         var findBracketExpression = buffer.findNestedExpression('[', ']');
         switch (findBracketExpression) {
             case Some(slice):
-                var part1 = buffer.take(slice.start);
-                buffer.take(1);
-                var part2 = buffer.take(slice.length-2);
-                buffer.take(1);
+                if (slice.start < buffer.rootIndexOf('\n')) {
+                    var part1 = buffer.take(slice.start);
+                    buffer.take(1);
+                    var part2 = buffer.take(slice.length-2);
+                    buffer.take(1);
 
-                var parts = parse(HankBuffer.Dummy(part1)).parts;
-                parts.push(ToggleOutput(parse(HankBuffer.Dummy(part2)), false));
-                parts.push(ToggleOutput(parse(buffer), true));
-                return new Output(parts);
+                    var parts = parse(HankBuffer.Dummy(part1)).parts;
+                    parts.push(ToggleOutput(parse(HankBuffer.Dummy(part2)), false));
+                    parts.push(ToggleOutput(parse(buffer), true));
+                    return new Output(parts);
+                }
 
             case None:
                 // This is an individual Output to parse
