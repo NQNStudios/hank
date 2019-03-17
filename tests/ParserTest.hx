@@ -89,5 +89,9 @@ class ParserTest extends utest.Test {
         ast = parser.parseFile('examples/parsing/misc.hank');
         assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
         assertNextExpr(EKnot("knot_example"));
+        assertNextExpr(EStitch("stitch_example"));
+        assertNextExpr(EDivert("divert_example"));
+        assertNextExpr(EDivert("divert_example"));
+        assertNextExpr(EDivert("divert_example"));
     }
 }

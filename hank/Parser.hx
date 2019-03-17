@@ -21,6 +21,9 @@ typedef HankExpr = {
 
 typedef HankAST = Array<HankExpr>;
 
+/**
+ Parses Hank scripts into ASTs for a Story object to interpret. Additional parsing happens in Alt.hx and Output.hx
+**/
 @:allow(tests.ParserTest)
 class Parser {
     var symbols = [
@@ -29,7 +32,7 @@ class Parser {
         '===' => knot,
         '==' => knot,
         '=' => stitch,
-        '~' => haxeLine
+        '~' => haxeLine,
     ];
 
     var buffers: Array<HankBuffer> = [];
@@ -117,8 +120,10 @@ class Parser {
     }
 
     static function divert(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        var tokens = lineTokens(buffer, 2, position);
-        return EDivert("tokens[1]");
+        buffer.drop('->');
+        buffer.skipWhitespace();
+        var tokens = lineTokens(buffer, 1, position);
+        return EDivert(tokens[0]);
     }
 
     static function output(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
@@ -132,7 +137,7 @@ class Parser {
 
     static function stitch(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         var tokens = lineTokens(buffer, 2, position);
-        return EStitch("tokens[1]");
+        return EStitch(tokens[1]);
     }
 
     static function haxeLine(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
