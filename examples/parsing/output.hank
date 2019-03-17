@@ -15,5 +15,5 @@ You can {
 
 You can have diverts inline. -> somewhere_else 
 You can have diverts as branches of a sequence {> -> first_time|-> second_time}
-You can have partial output[.]that changes after a choice is made!
+You can have partial output[.] that changes after a choice is made!
 You can have partial output [{really_tricky_now} with expressions inside it!] that changes after a choice is made!

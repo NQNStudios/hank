@@ -75,7 +75,11 @@ class ParserTest extends utest.Test {
                 ])
             ]))
         ])));
-        trace(nextExpr());
+        assertNextExpr(EOutput(new Output([
+            Text("You can have partial output"),
+            ToggleOutput(new Output([Text(".")]), false),
+            ToggleOutput(new Output([Text(" that changes after a choice is made!")]), true)
+        ])));
         trace(nextExpr());
     }
 
