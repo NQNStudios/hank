@@ -12,6 +12,8 @@ enum ExprType {
     EStitch(name: String);
     ENoOp;
     EHaxeLine(haxe: String);
+
+    EHaxeBlock(haxe: String);
 }
 
 typedef HankExpr = {
@@ -33,6 +35,7 @@ class Parser {
         '==' => knot,
         '=' => stitch,
         '~' => haxeLine,
+        '```' => haxeBlock
     ];
 
     var buffers: Array<HankBuffer> = [];
@@ -145,4 +148,34 @@ class Parser {
         return EHaxeLine(buffer.takeLine('lr').unwrap());
     }
 
+    static function haxeBlock(buffer: HankBuffer, position: HankBuffer.Position): ExprType {
+        buffer.drop('```');
+        var rawContents = buffer.takeUntil(['```'], false, true).unwrap().output;
+        var processedContents = '';
+
+        var blockBuffer = HankBuffer.Dummy(rawContents);
+
+        // Transform , and ,,, expressions into Hank embedded in Haxe embedded in Hank
+        do {
+            var nextLine = blockBuffer.takeLine('lr').unwrap();
+            if (StringTools.startsWith(nextLine, ',')) {
+                nextLine = StringTools.trim(nextLine.substr(1));
+                processedContents += 'story.runEmbeddedHank("${escapeQuotes(nextLine)}");';
+            } else if (nextLine == ',,,'){
+                var embeddedHankBlock = blockBuffer.takeUntil(['```'],false,true).unwrap().output;
+                processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}");';
+            } else {
+                processedContents += nextLine;
+            }
+        } while (!blockBuffer.isEmpty());
+
+        return  EHaxeBlock(processedContents);
+    }
+
+    static function escapeQuotes(s: String) {
+        var escaped = s;
+        escaped = StringTools.replace(escaped, "'", "\\'");
+        escaped = StringTools.replace(escaped, '"', '\\"');
+        return escaped;
+    }
 }

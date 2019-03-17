@@ -9,3 +9,16 @@ across more than one line */
 -> divert_example
 ->divert_example
       ->divert_example
+
+```
+var haxeVar = 'test';
+var test2 = 5;
+```
+
+```
+, Output this
+```
+
+```
+, Output "this"
+```

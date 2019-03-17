@@ -93,5 +93,9 @@ class ParserTest extends utest.Test {
         assertNextExpr(EDivert("divert_example"));
         assertNextExpr(EDivert("divert_example"));
         assertNextExpr(EDivert("divert_example"));
+
+        assertNextExpr(EHaxeBlock("var haxeVar = 'test';var test2 = 5;"));
+        assertNextExpr(EHaxeBlock('story.runEmbeddedHank("Output this");'));
+        assertNextExpr(EHaxeBlock('story.runEmbeddedHank("Output \\"this\\"");'));
     }
 }
