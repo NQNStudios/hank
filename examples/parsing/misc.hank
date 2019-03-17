@@ -5,7 +5,11 @@ across more than one line */
 ~ var demo_var = "dynamic content"; // Hank scripts can embed Haxe logic by starting a line with '~'
 
 == knot_example
+=== knot_example
+===knot_example
+==knot_example
 = stitch_example
+=stitch_example
 -> divert_example
 ->divert_example
       ->divert_example

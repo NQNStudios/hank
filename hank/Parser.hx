@@ -134,13 +134,21 @@ class Parser {
     }
 
     static function knot(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        var tokens = lineTokens(buffer, 2, position);
-        return EKnot(tokens[1]);
+        buffer.drop('==');
+        if (buffer.peekAhead(0, 1) == '=')
+        {
+            buffer.drop('=');
+        }
+        buffer.skipWhitespace();
+        var tokens = lineTokens(buffer, 1, position);
+        return EKnot(tokens[0]);
     }
 
     static function stitch(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        var tokens = lineTokens(buffer, 2, position);
-        return EStitch(tokens[1]);
+        buffer.drop('=');
+        buffer.skipWhitespace();
+        var tokens = lineTokens(buffer, 1, position);
+        return EStitch(tokens[0]);
     }
 
     static function haxeLine(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
