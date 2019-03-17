@@ -3,9 +3,7 @@ package tests;
 import hank.Parser;
 import hank.Parser.HankAST;
 import hank.Output;
-import hank.Output.OutputType;
 import hank.Alt;
-import hank.Alt.AltBehavior;
 
 class ParserTest extends utest.Test {
     var ast: HankAST;
@@ -66,6 +64,19 @@ class ParserTest extends utest.Test {
         );
 
         assertNextExpr(EOutput(new Output([Text("You can "), HExpression('\n    if (flag) "insert" else "interpolate"\n'), Text(" the value of multiline expressions without splitting a line of output.")])));
+        assertNextExpr(EOutput(new Output([Text("You can have diverts inline. "), InlineDivert("somewhere_else")])));
+        assertNextExpr(EOutput(new Output([Text("You can have diverts as branches of a sequence "), AltExpression(
+            new Alt(Sequence, [
+                new Output([
+                    InlineDivert("first_time")
+                ]),
+                new Output([
+                    InlineDivert("second_time")
+                ])
+            ]))
+        ])));
+        trace(nextExpr());
+        trace(nextExpr());
     }
 
 

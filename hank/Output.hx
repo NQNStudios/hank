@@ -25,6 +25,9 @@ class Output {
     public static function parse(buffer: HankBuffer): Output {
         var parts = [];
 
+        // First of all, split up the optional segments (ToggleOutputs) and parse them separately
+
+
         while (!buffer.isEmpty()) {
             var endSegment = buffer.length();
             var findBraceExpression = buffer.findNestedExpression('{', '}');
@@ -35,7 +38,6 @@ class Output {
             }
             if (endSegment == buffer.length() || endSegment != 0) {
                 var peekLine = buffer.peekLine().unwrap();
-                trace('peek: $peekLine');
                 if (peekLine.length < endSegment) {
                     var text = buffer.takeLine().unwrap();
                     trace(text);
@@ -53,12 +55,13 @@ class Output {
             }
         }
 
-        // If the last output is Text, it should be trimmed at the end.
+        // If the last output is Text, it could contain optional text or an inline divert. Or just need rtrimming.
         if (parts.length > 0) {
             var lastPart = parts[parts.length - 1];
             switch(lastPart) {
                 case Text(t):
-                    parts[parts.length -1] = Text(StringTools.rtrim(t));
+                    parts.remove(lastPart);
+                    parts = parts.concat(parseLastText(t));
                 default:
             }
         }
@@ -66,6 +69,24 @@ class Output {
         // TODO parse out optional text parts
 
         return new Output(parts);
+    }
+
+    /** The last part of an output expression outside of braces can include an inline divert -> like_so **/
+    public static function parseLastText(text: String): Array<OutputType> {
+        var parts = [];
+
+        var divertIndex = text.lastIndexOf('->');
+        if (divertIndex != -1) {
+            if (divertIndex != 0) {
+                parts.push(Text(text.substr(0, divertIndex)));
+            }
+            var target = StringTools.trim(text.substr(divertIndex+2));
+            parts.push(InlineDivert(target));
+        } else {
+            parts.push(Text(StringTools.rtrim(text)));
+        }
+        
+        return parts;
     }
 
     public static function parseBraceExpression(buffer: HankBuffer): OutputType {
@@ -81,8 +102,6 @@ class Output {
         var rawExpression = buffer.findNestedExpression('{', '}').unwrap().checkValue();
         // Strip out the enclosing braces
         var hExpression = rawExpression.substr(1, rawExpression.length - 2);
-
-        // TODO process quasiquotes??
 
         buffer.take(rawExpression.length);
         return HExpression(hExpression);

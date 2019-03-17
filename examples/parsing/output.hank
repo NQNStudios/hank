@@ -7,12 +7,13 @@ You can {insert} the values of expressions.
 {you} can start an output line with an insert expression. {and_end_one}
 {shuffle: Things get weird|when you start to use sequence expressions.}
 // If you don't believe me, just look at ParserTest.hx!!
-{once: And they don't get any {easier}|{>when you nest them|{insert}}}!
+{once: And they don't get any {easier}|{> when you nest them|{insert}}}!
 
 You can {
     if (flag) "insert" else "interpolate"
 } the value of multiline expressions without splitting a line of output.
 
-You can have diverts inline. -> somewhere_else
-You can have diverts as branches of a sequence {-> first_time|-> second_time}
+You can have diverts inline. -> somewhere_else 
+You can have diverts as branches of a sequence {> -> first_time|-> second_time}
 You can have partial output[.]that changes after a choice is made!
+You can have partial output [{really_tricky_now} with expressions inside it!] that changes after a choice is made!
