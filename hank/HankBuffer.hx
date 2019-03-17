@@ -91,6 +91,14 @@ class HankBuffer {
         return s;
     }
 
+    public function indexOf(s: String) {
+        return cleanBuffer.indexOf(s);
+    }
+
+    public function length(): Int {
+        return cleanBuffer.length;
+    }
+
     public function position(): Position {
         return new Position(path, line, column);
     }
@@ -262,7 +270,7 @@ class HankBuffer {
     }
 
     /** Return the start index and length of number of characters left the buffer before a nestable expression terminates **/
-    public function findNestedExpression(o: String, c: String, start: Int = 0): Option<BufferSlice> {
+    public function findNestedExpression(o: String, c: String, start: Int = 0, throwExceptions: Bool = true): Option<BufferSlice> {
         var startIdx = start;
         var endIdx = start;
         var depth = 0;
@@ -276,10 +284,16 @@ class HankBuffer {
             if (nextOpeningIdx == -1 && nextClosingIdx == -1) {
                 return None;
             } else if (depth == 0 && nextOpeningIdx == -1 ) {
-                throw 'FUBAR';
+                if (throwExceptions)
+                    throw 'Your input file $path has an expression with an unmatched closing operator $c';
+                else
+                    return None;
             }
             else if (depth != 0 && nextClosingIdx == -1) {
-                throw 'FUBAR';
+                if (throwExceptions)
+                    throw 'Your input file $path has an expression with an unmatched opening operator $o';
+                else
+                    return None;
             }
             else if (nextOpeningIdx != -1 && nextOpeningIdx < nextClosingIdx) {
                 if (depth == 0) {

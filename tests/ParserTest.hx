@@ -22,7 +22,7 @@ class ParserTest extends utest.Test {
         var parser = new Parser();
         ast = parser.parseFile('examples/parsing/output.hank');
         assertNextExpr(EOutput(new Output([Text("This file contains test cases for output expression parsing.")])));
-        assertNextExpr(EOutput(new Output([Text("A line won't be interrupted or anything.")])));
+        assertNextExpr(EOutput(new Output([Text("A line won't be interrupted  or anything.")])));
     }
 
 
