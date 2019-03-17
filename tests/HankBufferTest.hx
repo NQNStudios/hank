@@ -1,5 +1,7 @@
 package tests;
 
+using hank.Extensions.OptionExtender;
+
 import haxe.ds.Option;
 import hank.HankBuffer;
 import hank.HankBuffer.Position;
@@ -12,11 +14,7 @@ class HankBufferTest extends utest.Test {
     function setup() {
         path = 'examples/parsing/file.txt';
         file = HankBuffer.FromFile(path);
-        expectedPosition = {
-            file: path,
-            line: 1,
-            column: 1
-        };
+        expectedPosition = new Position(path, 1, 1);
     }
 
     function assertPosition() {
@@ -119,5 +117,18 @@ class HankBufferTest extends utest.Test {
 
         file.skipWhitespace();
         HankAssert.equals("Just", file.take(4));
+    }
+
+    function testFindNestedExpression() {
+        file = HankBuffer.FromFile('examples/parsing/nesting.txt');
+        var slice1 = file.findNestedExpression('{', '}', 0);
+        HankAssert.contains("doesn't contain what comes first", slice1.unwrap().checkValue());
+        HankAssert.contains("Ends before here", slice1.unwrap().checkValue());
+        var slice2 = file.findNestedExpression('{', '}', 1);
+        HankAssert.notContains("doesn't contain what comes first", slice2.unwrap().checkValue());
+        HankAssert.notContains("Ends before here", slice2.unwrap().checkValue());
+        var slice3 = file.findNestedExpression('{{', '}}', 0);
+        HankAssert.equals(52, slice3.unwrap().start);
+        HankAssert.equals(6, slice3.unwrap().length);
     }
 }

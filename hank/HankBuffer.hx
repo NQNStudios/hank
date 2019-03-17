@@ -5,10 +5,45 @@ import haxe.ds.Option;
 /**
  A position in a HankBuffer, used for debugging.
 **/
-typedef Position = {
-    var file: String;
-    var line: Int;
-    var column: Int;
+class Position {
+    public var file: String;
+    public var line: Int;
+    public var column: Int;
+
+    public function new(file: String, line: Int, column: Int) {
+        this.file = file;
+        this.line = line;
+        this.column = column;
+    }
+
+    public function equals(other: Position) {
+        return file == other.file && line == other.line && column == other.column;
+    }
+}
+
+/**
+Reference to a slice of the buffer, which expires when the buffer changes its state.
+**/
+@:allow(hank.HankBuffer)
+class BufferSlice {
+    public var start(default, null): Int;
+    public var length(default, null): Int;
+    var anchorPosition: Position;
+    var buffer: HankBuffer;
+
+    private function new(start: Int, length: Int, buffer: HankBuffer) {
+        this.start = start;
+        this.length = length;
+        this.anchorPosition = buffer.position();
+        this.buffer = buffer;
+    }
+
+    public function checkValue() {
+        if (!buffer.position().equals(anchorPosition)) {
+            throw 'Tried to access an expired BufferSlice.';
+        }
+        return buffer.peekAhead(start, length);
+    }
 }
 
 typedef BufferOutput = {
@@ -57,12 +92,14 @@ class HankBuffer {
     }
 
     public function position(): Position {
-        return {
-            file: path,
-            line: line,
-            column: column
-        };
+        return new Position(path, line, column);
     }
+
+    /** Peek at contents buffer waiting further ahead in the buffer **/
+    public function peekAhead(start: Int, length: Int) {
+        return cleanBuffer.substr(start, length);
+    }
+
     /** Peek through the buffer until encountering one of the given terminator sequences
     @param eofTerminates Whether the end of the file is also a valid terminator
     **/
@@ -175,7 +212,6 @@ class HankBuffer {
         }
     }
 
-    /** Take the specified number of characters from the file **/
     public function take(chars: Int) {
         if (cleanBuffer.length < chars) {
             throw 'Not enough characters left in buffer.';
@@ -223,5 +259,42 @@ class HankBuffer {
 
     public function isEmpty() {
         return cleanBuffer.length == 0;
+    }
+
+    /** Return the start index and length of number of characters left the buffer before a nestable expression terminates **/
+    public function findNestedExpression(o: String, c: String, start: Int = 0): Option<BufferSlice> {
+        var startIdx = start;
+        var endIdx = start;
+        var depth = 0;
+
+
+        var nextIdx = start;
+        do {
+            var nextOpeningIdx = cleanBuffer.indexOf(o, nextIdx);
+            var nextClosingIdx = cleanBuffer.indexOf(c, nextIdx);
+
+            if (nextOpeningIdx == -1 && nextClosingIdx == -1) {
+                return None;
+            } else if (depth == 0 && nextOpeningIdx == -1 ) {
+                throw 'FUBAR';
+            }
+            else if (depth != 0 && nextClosingIdx == -1) {
+                throw 'FUBAR';
+            }
+            else if (nextOpeningIdx != -1 && nextOpeningIdx < nextClosingIdx) {
+                if (depth == 0) {
+                    startIdx = nextOpeningIdx;
+                }
+                depth += 1;
+                nextIdx = nextOpeningIdx + o.length;
+            } else {
+                depth -= 1;
+                nextIdx = nextClosingIdx + c.length;
+                endIdx = nextClosingIdx + c.length;
+            }
+
+        } while (depth > 0 && nextIdx < cleanBuffer.length);
+
+        return Some(new BufferSlice(startIdx, endIdx - startIdx, this));
     }
 }
