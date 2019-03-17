@@ -38,7 +38,7 @@ class BufferSlice {
         this.buffer = buffer;
     }
 
-    public function checkValue() {
+    public function checkValue(): String {
         if (!buffer.position().equals(anchorPosition)) {
             throw 'Tried to access an expired BufferSlice.';
         }
@@ -91,7 +91,7 @@ class HankBuffer {
         return s;
     }
 
-    public function indexOf(s: String) {
+    public function indexOf(s: String): Int {
         return cleanBuffer.indexOf(s);
     }
 
@@ -104,7 +104,7 @@ class HankBuffer {
     }
 
     /** Peek at contents buffer waiting further ahead in the buffer **/
-    public function peekAhead(start: Int, length: Int) {
+    public function peekAhead(start: Int, length: Int): String {
         return cleanBuffer.substr(start, length);
     }
 

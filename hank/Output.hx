@@ -27,18 +27,10 @@ class Output {
 
         while (!buffer.isEmpty()) {
             var endSegment = buffer.length();
-            var findHaxeExpression = buffer.findNestedExpression('{', '}');
-            var findAltExpression = buffer.findNestedExpression('{{', '}}', 0, false); // Single brace expressions trip up the double brace search, so don't throw exceptions
-            switch (findHaxeExpression) {
+            var findBraceExpression = buffer.findNestedExpression('{', '}');
+            switch (findBraceExpression) {
                 case Some(slice):
-                    if (slice.start < endSegment)
-                        endSegment = slice.start;
-                default:
-            }
-            switch (findAltExpression) {
-                case Some(slice):
-                    if (slice.start < endSegment)
-                        endSegment = slice.start;
+                    endSegment = slice.start;
                 default:
             }
             if (endSegment == buffer.length() || endSegment != 0) {
@@ -47,7 +39,9 @@ class Output {
                 if (peekLine.length < endSegment) {
                     var text = buffer.takeLine().unwrap();
                     trace(text);
-                    parts.push(Text(text));
+                    if (text.length > 0) {
+                        parts.push(Text(text));
+                    }
                     break;
                 } else {
                     var text = buffer.take(endSegment);
@@ -55,11 +49,7 @@ class Output {
                     parts.push(Text(text));
                 }
             } else {
-                if (buffer.indexOf('{{') == 0) {
-                    parts.push(parseAltExpression(buffer));
-                } else {
-                    parts.push(parseHaxeExpression(buffer));
-                }
+                parts.push(parseBraceExpression(buffer));
             }
         }
 
@@ -78,7 +68,16 @@ class Output {
         return new Output(parts);
     }
 
-    public static function parseHaxeExpression(buffer: HankBuffer) {
+    public static function parseBraceExpression(buffer: HankBuffer): OutputType {
+        switch (Alt.parse(buffer)) {
+            case Some(altExpression):
+                return AltExpression(altExpression);
+            default:
+                return parseHaxeExpression(buffer);
+        }
+    }
+
+    public static function parseHaxeExpression(buffer: HankBuffer): OutputType {
         var rawExpression = buffer.findNestedExpression('{', '}').unwrap().checkValue();
         // Strip out the enclosing braces
         var hExpression = rawExpression.substr(1, rawExpression.length - 2);
@@ -87,9 +86,5 @@ class Output {
 
         buffer.take(rawExpression.length);
         return HExpression(hExpression);
-    }
-
-    public static function parseAltExpression(buffer: HankBuffer) {
-        return AltExpression({behavior: Cycle, outputs:[]});
     }
 }

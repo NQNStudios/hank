@@ -1,5 +1,8 @@
 package hank;
 
+import haxe.ds.Option;
+using Extensions.OptionExtender;
+
 enum AltBehavior {
     Sequence;
     OnceOnly;
@@ -7,9 +10,42 @@ enum AltBehavior {
     Shuffle;
 }
 
-typedef Alt = {
+@:allow(hank.AltInstance)
+class Alt {
     var behavior: AltBehavior;
     var outputs: Array<Output>;
+
+    static var behaviorMap = [
+        '>' => Sequence,
+        '!' => OnceOnly,
+        '&' => Cycle,
+        '~' => Shuffle,
+        'seq:' => Sequence,
+        'once:' => OnceOnly,
+        'cycle:' => Cycle,
+        'shuffle:' => Shuffle
+    ];
+
+    public function new(behavior: AltBehavior, outputs: Array<Output>) {
+        this.behavior = behavior;
+        this.outputs = outputs;
+    }
+
+    public static function parse(buffer: HankBuffer): Option<Alt> {
+        var rawExpr = buffer.findNestedExpression('{', '}').unwrap().checkValue();
+        var expr = rawExpr.substr(1, rawExpr.length-2);
+
+        for (prefix in behaviorMap.keys()) {
+            if (StringTools.startsWith(expr, prefix)) {
+                var _outputs = StringTools.trim(expr.substr(prefix.length));
+
+                buffer.take(rawExpr.length);
+                return Some(new Alt(behaviorMap[prefix], []));
+            }
+        }
+
+        return None;
+    }
 }
 
 class AltInstance {
@@ -18,10 +54,7 @@ class AltInstance {
     var random: Random;
 
     public function new(behavior: AltBehavior, outputs: Array<Output>, random: Random) {
-        this.alt = {
-            behavior: behavior,
-            outputs: outputs
-        };
+        this.alt = new Alt(behavior, outputs);
         this.random = random;
     }
 
