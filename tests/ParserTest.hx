@@ -106,5 +106,7 @@ class ParserTest extends utest.Test {
 
         assertNextExpr(EChoice(0, true, None, None, 1, new Output([Text("Simplest possible choice")]),None));
         assertNextExpr(EChoice(1, false, None, Some("condition"), 2, new Output([Text("Choice that ends with a divert")]),Some("target")));
+        assertNextExpr(EChoice(2, true, None, None, 1, new Output([]),Some("fallback_choice")));
+        assertNextExpr(EChoice(3, true, None, None, 1, new Output([]),Some("")));
     }
 }

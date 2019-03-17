@@ -32,3 +32,5 @@ var test2 = 5;
 
 * Simplest possible choice
 ++ {condition} Choice that ends with a divert -> target
+* ->fallback_choice
+* ->
