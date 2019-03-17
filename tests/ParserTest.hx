@@ -101,5 +101,7 @@ class ParserTest extends utest.Test {
         assertNextExpr(EHaxeBlock("var haxeVar = 'test';var test2 = 5;"));
         assertNextExpr(EHaxeBlock('story.runEmbeddedHank("Output this");'));
         assertNextExpr(EHaxeBlock('story.runEmbeddedHank("Output \\"this\\"");'));
+        assertNextExpr(EGather(None, 1, EOutput(new Output([Text("no label gather on an output")]))));
+        assertNextExpr(EGather(Some('labeled'), 2, EOutput(new Output([Text("deep gather")]))));
     }
 }

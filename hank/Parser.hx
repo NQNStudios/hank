@@ -1,6 +1,7 @@
 package hank;
 
 using Extensions.OptionExtender;
+import haxe.ds.Option;
 
 enum ExprType {
     EIncludeFile(path: String);
@@ -14,6 +15,7 @@ enum ExprType {
     EHaxeLine(haxe: String);
 
     EHaxeBlock(haxe: String);
+    EGather(label: Option<String>, depth: Int, expr: ExprType);
 }
 
 typedef HankExpr = {
@@ -28,14 +30,15 @@ typedef HankAST = Array<HankExpr>;
 **/
 @:allow(tests.ParserTest)
 class Parser {
-    var symbols = [
-        'INCLUDE ' => include,
-        '->' => divert,
-        '===' => knot,
-        '==' => knot,
-        '=' => stitch,
-        '~' => haxeLine,
-        '```' => haxeBlock
+    static var symbols: Array<Map<String, HankBuffer -> HankBuffer.Position -> ExprType>> = [
+        ['INCLUDE ' => include],
+        ['->' => divert],
+        ['===' => knot],
+        ['==' => knot],
+        ['=' => stitch],
+        ['~' => haxeLine],
+        ['```' => haxeBlock],
+        ['-' => gather]
     ];
 
     var buffers: Array<HankBuffer> = [];
@@ -86,7 +89,7 @@ class Parser {
         return parsedAST;
     }
 
-    function parseExpr(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
+    static function parseExpr(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         var line = buffer.peekLine();
         switch (line) {
             case None:
@@ -96,13 +99,15 @@ class Parser {
                     return ENoOp;
                 }
 
-                for (symbol in symbols.keys()) {
+                for (rule in symbols) {
+                    var symbol = rule.keys().next();
+                    var rule = rule[symbol];
                     if (StringTools.startsWith(line, symbol)) {
-                        return symbols[symbol](buffer, position);
+                        return rule(buffer, position);
                     }
                 }
 
-                return output(buffers[0], position);
+                return output(buffer, position);
         }
 
     }
@@ -154,6 +159,27 @@ class Parser {
     static function haxeLine(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         buffer.drop('~');
         return EHaxeLine(buffer.takeLine('lr').unwrap());
+    }
+
+    static function gather(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
+        var depth = 0;
+        var c = '';
+        do {
+            c = buffer.peek(1);
+            if (c == '-') {
+                buffer.take(1);
+                depth += 1;
+            }
+        } while (c == '-');
+        buffer.skipWhitespace();
+        var label = if (buffer.peek(1) == '(') {
+            var text = buffer.takeUntil([')'], true).unwrap().output.substr(1);
+            buffer.skipWhitespace();
+            Some(text);
+        } else {
+            None;
+        };
+        return EGather(label, depth, parseExpr(buffer, buffer.position()));
     }
 
     static function haxeBlock(buffer: HankBuffer, position: HankBuffer.Position): ExprType {

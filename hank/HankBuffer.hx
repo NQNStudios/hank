@@ -254,11 +254,16 @@ class HankBuffer {
         }
     }
 
-    public function take(chars: Int) {
+    public function peek(chars: Int) {
         if (cleanBuffer.length < chars) {
             throw 'Not enough characters left in buffer.';
         }
         var data = cleanBuffer.substr(0, chars);
+        return data;
+    }
+
+    public function take(chars: Int) {
+        var data = peek(chars);
         drop(data);
         return data;
     }
