@@ -43,6 +43,29 @@ class ParserTest extends utest.Test {
                 )
             ]))
         );
+        assertNextExpr(
+            EOutput(new Output([
+                AltExpression(
+                    new Alt(
+                        OnceOnly, 
+                        [
+                            new Output([Text("And they don't get any "), HExpression("easier")]), 
+                            new Output([AltExpression(
+                                new Alt(
+                                    Sequence,
+                                    [
+                                        new Output([Text("when you nest them")]),
+                                        new Output([HExpression("insert")])
+                                    ]
+                                )
+                            )]
+                        )]
+                    )
+                ), Text("!")
+            ]))
+        );
+
+        assertNextExpr(EOutput(new Output([Text("You can "), HExpression('\n    if (flag) "insert" else "interpolate"\n'), Text(" the value of multiline expressions without splitting a line of output.")])));
     }
 
 

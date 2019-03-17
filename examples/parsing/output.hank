@@ -7,7 +7,7 @@ You can {insert} the values of expressions.
 {you} can start an output line with an insert expression. {and_end_one}
 {shuffle: Things get weird|when you start to use sequence expressions.}
 // If you don't believe me, just look at ParserTest.hx!!
-{once: And they don't get any {easier}|{when you nest them|{insert}}}!
+{once: And they don't get any {easier}|{>when you nest them|{insert}}}!
 
 You can {
     if (flag) "insert" else "interpolate"
