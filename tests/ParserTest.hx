@@ -103,5 +103,8 @@ class ParserTest extends utest.Test {
         assertNextExpr(EHaxeBlock('story.runEmbeddedHank("Output \\"this\\"");'));
         assertNextExpr(EGather(None, 1, EOutput(new Output([Text("no label gather on an output")]))));
         assertNextExpr(EGather(Some('labeled'), 2, EOutput(new Output([Text("deep gather")]))));
+
+        assertNextExpr(EChoice(0, true, None, None, 1, new Output([Text("Simplest possible choice")]),None));
+        assertNextExpr(EChoice(1, false, None, Some("condition"), 2, new Output([Text("Choice that ends with a divert")]),Some("target")));
     }
 }

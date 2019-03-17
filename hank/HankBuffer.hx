@@ -268,6 +268,30 @@ class HankBuffer {
         return data;
     }
 
+    /** Count consecutive occurrence of the given string at the current buffer position, dropping the counted sequence **/
+    public function countConsecutive(s: String) {
+        var num = 0;
+
+        while (cleanBuffer.substr(0, s.length) == s) {
+            num += 1;
+            drop(s);
+        }
+
+        return num;
+    }
+
+    /** If the given expression comes next in the buffer, take its contents. Otherwise, return None **/
+    public function expressionIfNext(o: String, c: String): Option<String> {
+        if (StringTools.startsWith(cleanBuffer, o)) {
+            drop(o);
+            var end = cleanBuffer.indexOf(c);
+            var content = take(end);
+            drop(c);
+            return Some(content);
+        }
+        return None;
+    } 
+
     /** DRY Helper for peekLine() and takeLine() **/
     function getLine(trimmed: String, retriever: Array<String> -> Bool -> Bool -> Option<BufferOutput>, dropNewline: Bool): Option<String> {
         var nextLine = retriever(['\n'], true, false);

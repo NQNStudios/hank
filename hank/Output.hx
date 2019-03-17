@@ -1,5 +1,6 @@
 package hank;
 
+import haxe.ds.Option;
 using Extensions.OptionExtender;
 
 enum OutputType {
@@ -73,6 +74,11 @@ class Output {
             }
         }
 
+        parts = updateLastPart(parts);
+        return new Output(parts);
+    }
+
+    private static function updateLastPart(parts: Array<OutputType>) {
         // If the last output is Text, it could contain optional text or an inline divert. Or just need rtrimming.
         if (parts.length > 0) {
             var lastPart = parts[parts.length - 1];
@@ -83,11 +89,9 @@ class Output {
                 default:
             }
         }
-
-        // TODO parse out optional text parts
-
-        return new Output(parts);
+        return parts;
     }
+
 
     /** The last part of an output expression outside of braces can include an inline divert -> like_so **/
     public static function parseLastText(text: String): Array<OutputType> {
@@ -123,5 +127,20 @@ class Output {
 
         buffer.take(rawExpression.length);
         return HExpression(hExpression);
+    }
+
+    /** If an instance of Output ends in an inline divert, remove that divert from this Output and return its target **/
+    public function takeInlineDivert(): Option<String> {
+        if (parts.length == 0) return None;
+        var lastPart = parts[parts.length-1];
+        switch (lastPart) {
+            case InlineDivert(target):
+                parts.remove(lastPart);
+                parts = updateLastPart(parts);
+                return Some(target);
+            default:
+                return None;
+        }
+
     }
 }

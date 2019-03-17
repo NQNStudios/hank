@@ -16,6 +16,8 @@ enum ExprType {
 
     EHaxeBlock(haxe: String);
     EGather(label: Option<String>, depth: Int, expr: ExprType);
+    // Choices are the most complicated expressions 
+    EChoice(id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>);
 }
 
 typedef HankExpr = {
@@ -38,7 +40,9 @@ class Parser {
         ['=' => stitch],
         ['~' => haxeLine],
         ['```' => haxeBlock],
-        ['-' => gather]
+        ['-' => gather],
+        ['*' => choice],
+        ['+' => choice]
     ];
 
     var buffers: Array<HankBuffer> = [];
@@ -162,24 +166,28 @@ class Parser {
     }
 
     static function gather(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        var depth = 0;
-        var c = '';
-        do {
-            c = buffer.peek(1);
-            if (c == '-') {
-                buffer.take(1);
-                depth += 1;
-            }
-        } while (c == '-');
+        var depth = buffer.countConsecutive('-');
         buffer.skipWhitespace();
-        var label = if (buffer.peek(1) == '(') {
-            var text = buffer.takeUntil([')'], true).unwrap().output.substr(1);
-            buffer.skipWhitespace();
-            Some(text);
-        } else {
-            None;
-        };
+        var label = buffer.expressionIfNext('(', ')');
+        buffer.skipWhitespace();
         return EGather(label, depth, parseExpr(buffer, buffer.position()));
+    }
+
+    static var choices: Int = 0;
+    
+    static function choice(buffer: HankBuffer, position: HankBuffer.Position): ExprType {
+        var symbol = buffer.peek(1);
+        var onceOnly = symbol == '*';
+        var depth = buffer.countConsecutive(symbol);
+        buffer.skipWhitespace();
+        var label = buffer.expressionIfNext('(', ')');
+        buffer.skipWhitespace();
+        var condition = buffer.expressionIfNext('{','}');
+        buffer.skipWhitespace();
+        var output = Output.parse(buffer);
+        var divertTarget = output.takeInlineDivert();
+
+        return EChoice(choices++, onceOnly, label, condition, depth, output, divertTarget);
     }
 
     static function haxeBlock(buffer: HankBuffer, position: HankBuffer.Position): ExprType {

@@ -29,3 +29,6 @@ var test2 = 5;
 
 - no label gather on an output
 --(labeled) deep gather
+
+* Simplest possible choice
+++ {condition} Choice that ends with a divert -> target
