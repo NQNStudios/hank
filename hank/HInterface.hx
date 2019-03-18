@@ -20,6 +20,10 @@ class HInterface {
         }
     }
 
+    public function getVariable(v: String) {
+        return interp.variables[v];
+    }
+
     /**
      Run a pre-processed block of Haxe embedded in a Hank story.
     **/

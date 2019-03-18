@@ -59,14 +59,12 @@ class Output {
                 var peekLine = buffer.peekLine().unwrap();
                 if (peekLine.length < endSegment) {
                     var text = buffer.takeLine().unwrap();
-                    trace(text);
                     if (text.length > 0) {
                         parts.push(Text(text));
                     }
                     break;
                 } else {
                     var text = buffer.take(endSegment);
-                    trace(text);
                     parts.push(Text(text));
                 }
             } else {
@@ -142,5 +140,15 @@ class Output {
                 return None;
         }
 
+    }
+
+    public function format(): String {
+        var fullOutput = '';
+
+        for (part in parts) {
+
+        }
+
+        return fullOutput;
     }
 }

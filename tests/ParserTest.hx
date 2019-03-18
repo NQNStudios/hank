@@ -1,9 +1,10 @@
 package tests;
 
 import hank.Parser;
-import hank.Parser.HankAST;
+import hank.HankAST;
 import hank.Output;
 import hank.Alt;
+import hank.HankAssert;
 
 class ParserTest extends utest.Test {
     var ast: HankAST;
@@ -80,7 +81,7 @@ class ParserTest extends utest.Test {
             ToggleOutput(new Output([Text(".")]), false),
             ToggleOutput(new Output([Text(" that changes after a choice is made!")]), true)
         ])));
-        trace(nextExpr());
+        // TODO test the last one
     }
 
 

@@ -1,4 +1,4 @@
-package tests;
+package hank;
 
 import utest.Assert;
 

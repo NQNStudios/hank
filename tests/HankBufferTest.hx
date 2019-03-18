@@ -5,6 +5,7 @@ using hank.Extensions.OptionExtender;
 import haxe.ds.Option;
 import hank.HankBuffer;
 import hank.HankBuffer.Position;
+import hank.HankAssert;
 
 class HankBufferTest extends utest.Test {
     var file: HankBuffer;

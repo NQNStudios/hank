@@ -1,18 +1,59 @@
 package hank;
 
-import hank.HInterface;
+using HankAST.ASTExtension;
+import hank.HankAST.ExprType;
+
+/**
+ Possible states of the story being executed.
+**/
+enum StoryFrame {
+    HasText(text: String);
+    HasChoices(choices: Array<String>);
+    Finished;
+}
 
 /**
  Runtime interpreter for Hank stories.
 **/
+@:allow(hank.StoryTestCase)
 class Story {
     var hInterface: HInterface;
+    var random: Random;
 
-    public function new() {
+    var ast: HankAST;
+    var exprIndex: Int;
+
+    var parser: Parser;
+
+    public function new(script: String, ?randomSeed: Int) {
+        random = new Random(randomSeed);
+
+        parser = new Parser();
+        ast = parser.parseFile(script);
+        // viewCounts = new ViewCounts(ast);
+
         var variables = [
-            'story' => this
+            'story' => this/*,
+            'viewCounts' => viewCounts
+            */
         ];
         hInterface = new HInterface(variables);
+
+        exprIndex = ast.findFile(script);
+    }
+
+    public function nextFrame(): StoryFrame {
+        switch (ast[exprIndex].expr) {
+            case EOutput(output):
+                return HasText(output.format());
+            default:
+                return Finished;
+        }
+        return Finished;
+    }
+
+    public function choose(choiceIndex: Int): String {
+        return '';
     }
 
     /** Parse and run embedded Hank script on the fly. **/
