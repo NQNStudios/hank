@@ -30,14 +30,11 @@ class Story {
 
         parser = new Parser();
         ast = parser.parseFile(script);
-        // viewCounts = new ViewCounts(ast);
 
-        var variables = [
-            'story' => this/*,
-            'viewCounts' => viewCounts
-            */
-        ];
-        hInterface = new HInterface(variables);
+        var viewCounts = new ViewCounts(ast);
+
+        hInterface = new HInterface(viewCounts);
+        hInterface.addVariable('story', this);
 
         exprIndex = ast.findFile(script);
     }
@@ -51,6 +48,11 @@ class Story {
             case EOutput(output):
                 exprIndex += 1;
                 return HasText(output.format(hInterface, false));
+            case EHaxeLine(h):
+                exprIndex += 1;
+
+                hInterface.runEmbeddedHaxe(h);
+                return nextFrame();
             default:
                 return Finished;
         }

@@ -13,38 +13,73 @@ class HInterface {
 
     var parser: Parser = new Parser();
     var interp: Interp = new Interp();
+    var viewCounts: ViewCounts;
 
-    public function new(?variables: Map<String, Dynamic>) {
-        if (variables != null) {
-            interp.variables = variables;
+    public function new(viewCounts: ViewCounts) {
+        this.viewCounts = viewCounts;
+
+        this.interp.variables['_isTruthy'] = isTruthy;
+    }
+
+    static function isTruthy(v: Dynamic) {
+        switch (Type.typeof(v)) {
+            case TBool:
+                return v;
+            case TInt | TFloat:
+                return v > 0;
+            default:
+                throw '$v cannot be coerced to a boolean';
         }
     }
 
-    public function getVariable(v: String) {
-        return interp.variables[v];
+    public function addVariable(identifier: String, value: Dynamic) {
+        this.interp.variables[identifier] = value;
     }
 
     /**
      Run a pre-processed block of Haxe embedded in a Hank story.
     **/
-    public function runEmbeddedHaxe(haxe: String) {
-        var expr = parser.parseString(haxe);
+    public function runEmbeddedHaxe(h: String) {
+        trace(h);
+        var expr = parser.parseString(h);
         expr = transmute(expr);
         interp.execute(expr);
+    }
+
+    public function evaluateExpr(h: String): String {
+        var expr = parser.parseString(h);
+        trace(expr);
+        expr = transmute(expr);
+        var val = interp.expr(expr);
+        if (val == null) {
+            return '';
+        } else {
+            return Std.string(val);
+        }
+    }
+
+    public function resolve(identifier: String, scope: String): Dynamic {
+        if (interp.variables.exists(identifier)) {
+            return interp.variables[identifier];
+        } else {
+            return viewCounts.resolve(identifier, scope);
+        }
     }
 
     /**
      Convert numerical value expressions to booleans for binary operations
     **/
     function boolify(expr: Expr): Expr {
-        // TODO this won't work in cases where the expression is already a bool
-        return EBinop('>', expr, EConst(CInt(0)));
+        return ECall(EIdent('_isTruthy'), [expr]);
     }
 
     /**
      Adapt an expression for the embedded context
     **/
     function transmute(expr: Expr) {
+        if (expr == null) {
+            return null;
+        }
         return switch (expr) {
             case EIdent(name):
                 // TODO if the name is a root-level view count, return EArray(view_counts, ...)

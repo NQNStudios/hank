@@ -151,6 +151,7 @@ class Output {
                     fullOutput += t;
                 case AltExpression(a):
                 case HExpression(h):
+                    fullOutput += hInterface.evaluateExpr(h);
                 case InlineDivert(t):
                 case ToggleOutput(o, b):
                     if (b != displayToggles) {

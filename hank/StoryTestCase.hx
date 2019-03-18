@@ -23,7 +23,7 @@ class StoryTestCase extends utest.Test {
             // Allow white-box story testing through variable checks prefixed with #
             if (StringTools.startsWith(line, "#")) {
                 var parts = StringTools.trim(line.substr(1)).split(':');
-                HankAssert.equals(StringTools.trim(parts[1]), Std.string(story.hInterface.getVariable(parts[0])));
+                HankAssert.equals(StringTools.trim(parts[1]), Std.string(story.hInterface.resolve(parts[0], '')));
             }
             if (StringTools.startsWith(line, "*")) {
                 // Collect the expected set of choices from the transcript.

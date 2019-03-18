@@ -2,7 +2,8 @@
 Have you tried inserting {test} in your Hank stories?
 ~ var good = true;
 Rumor has it, it can be {if (good) {
-    'rewarding'
+    'rewarding';
 } else {
-    'obnoxious'
+    'obnoxious';
 }} to write a story with {test}.
+Null values will simply not appear.{if (!good) 'Invisible.'}
