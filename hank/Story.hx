@@ -43,9 +43,14 @@ class Story {
     }
 
     public function nextFrame(): StoryFrame {
+        if (exprIndex >= ast.length) {
+            return Finished;
+        }
+
         switch (ast[exprIndex].expr) {
             case EOutput(output):
-                return HasText(output.format());
+                exprIndex += 1;
+                return HasText(output.format(hInterface, false));
             default:
                 return Finished;
         }

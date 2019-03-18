@@ -142,11 +142,21 @@ class Output {
 
     }
 
-    public function format(): String {
+    public function format(hInterface: HInterface, displayToggles: Bool): String {
         var fullOutput = '';
 
         for (part in parts) {
-
+            switch (part) {
+                case Text(t):
+                    fullOutput += t;
+                case AltExpression(a):
+                case HExpression(h):
+                case InlineDivert(t):
+                case ToggleOutput(o, b):
+                    if (b != displayToggles) {
+                        fullOutput += o.format(hInterface, displayToggles);
+                    }
+            }
         }
 
         return fullOutput;
