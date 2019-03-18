@@ -1,31 +1,7 @@
 package hank;
 
 using Extensions.OptionExtender;
-import haxe.ds.Option;
-
-enum ExprType {
-    EIncludeFile(path: String);
-
-    EOutput(o: Output);
-
-    EDivert(target: String);
-    EKnot(name: String);
-    EStitch(name: String);
-    ENoOp;
-    EHaxeLine(haxe: String);
-
-    EHaxeBlock(haxe: String);
-    EGather(label: Option<String>, depth: Int, expr: ExprType);
-    // Choices are the most complicated expressions 
-    EChoice(id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>);
-}
-
-typedef HankExpr = {
-    var position: HankBuffer.Position;
-    var expr: ExprType;
-}
-
-typedef HankAST = Array<HankExpr>;
+import hank.HankAST.ExprType;
 
 /**
  Parses Hank scripts into ASTs for a Story object to interpret. Additional parsing happens in Alt.hx and Output.hx
