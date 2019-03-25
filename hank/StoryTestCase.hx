@@ -20,11 +20,13 @@ class StoryTestCase extends utest.Test {
             var line = transcriptLines[i];
             var frame = story.nextFrame();
 
-            // Allow white-box story testing through variable checks prefixed with #
+            // TODO Allow white-box story testing through variable checks prefixed with #
+/*
             if (StringTools.startsWith(line, "#")) {
                 var parts = StringTools.trim(line.substr(1)).split(':');
                 HankAssert.equals(StringTools.trim(parts[1]), Std.string(story.hInterface.resolve(parts[0], '')));
             }
+*/
             if (StringTools.startsWith(line, "*")) {
                 // Collect the expected set of choices from the transcript.
                 var choices = new Array<String>();

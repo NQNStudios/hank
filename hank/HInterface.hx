@@ -13,11 +13,8 @@ class HInterface {
 
     var parser: Parser = new Parser();
     var interp: Interp = new Interp();
-    var viewCounts: ViewCounts;
 
     public function new(viewCounts: ViewCounts) {
-        this.viewCounts = viewCounts;
-
         this.interp.variables['_isTruthy'] = isTruthy;
     }
 
@@ -40,7 +37,6 @@ class HInterface {
      Run a pre-processed block of Haxe embedded in a Hank story.
     **/
     public function runEmbeddedHaxe(h: String) {
-        trace(h);
         var expr = parser.parseString(h);
         expr = transmute(expr);
         interp.execute(expr);
@@ -48,21 +44,12 @@ class HInterface {
 
     public function evaluateExpr(h: String): String {
         var expr = parser.parseString(h);
-        trace(expr);
         expr = transmute(expr);
         var val = interp.expr(expr);
         if (val == null) {
             return '';
         } else {
             return Std.string(val);
-        }
-    }
-
-    public function resolve(identifier: String, scope: String): Dynamic {
-        if (interp.variables.exists(identifier)) {
-            return interp.variables[identifier];
-        } else {
-            return viewCounts.resolve(identifier, scope);
         }
     }
 
