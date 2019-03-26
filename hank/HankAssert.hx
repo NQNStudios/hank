@@ -41,5 +41,14 @@ class HankAssert {
         }
     }
 
-
+    public static function throws(f: Void -> Void, ?message: String) {
+        try {
+            f();
+            Assert.fail("Expected an exception to be thrown");
+        } catch (e: String) {
+            if (message != null) {
+                Assert.equals(message, e);
+            }
+        }
+    }
 }

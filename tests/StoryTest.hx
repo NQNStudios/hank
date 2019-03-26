@@ -11,12 +11,12 @@ class StoryTest extends hank.StoryTestCase {
 
             for (file in files) {
                 if (StringTools.endsWith(file, '.hlog')) {
-                    trace('    Running ${file}');
 
                     var disabled = file.indexOf("disabled") != -1;
                     var debug = file.indexOf("debug") != -1;
                     var partial = file.indexOf("partial") != -1;
                     if (!disabled) {
+                        trace('    Running ${file}');
                         validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial);
                     }
                 }

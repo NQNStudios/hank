@@ -3,6 +3,7 @@ package tests;
 import utest.Test;
 import utest.Assert;
 
+import hank.HankAssert;
 using hank.Extensions;
 import hank.HInterface;
 import hank.StoryTree;
@@ -38,6 +39,16 @@ class HInterfaceTest extends utest.Test {
     public function testBoolification() {
         hInterface.runEmbeddedHaxe('var test = 7; var test2 = if(test) true else false;');
         assertExpr('test2', true);
+    }
+
+    public function testNullErrors() {
+       HankAssert.throws(function() {
+           hInterface.evaluateExpr('undeclared_variable');
+       });
+    }
+
+    public function testIfIdiom() {
+       HankAssert.equals("", hInterface.evaluateExpr('if (false) "something"'));
     }
 
 }
