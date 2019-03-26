@@ -7,6 +7,10 @@ class StoryNode {
     public var astIndex(default, null): Int;
     var children: Map<String, StoryNode> = new Map();
 
+    public function toString() {
+        return '{Node@${astIndex}: ${[for(key in children.keys()) key]}}';
+    }
+
     public function new(astIndex: Int) {
         this.astIndex = astIndex;
     }
