@@ -1,6 +1,7 @@
 package hank;
 
 using Reflect;
+import Type;
 
 import hscript.Parser;
 import hscript.Interp;
@@ -28,18 +29,20 @@ class HInterface {
         if (variables.exists(name)) {
             return variables[name];
         } else {
-trace(Type.typeof(container)) ;
-trace(Type.typeof(container).getName()) ;
-            if (Type.typeof(container).getName() == 'StoryNode') {
-                var node: StoryNode = cast(container, StoryNode);
-                switch (node.resolve(name)) {
-                    case Some(node):
-                        return viewCounts[node];
-                    case None:
-                        throw 'Cannot resolve ${name}';
-                }
-            } else {
-                return container.field(name);
+            // If the variable is a StoryNode, don't return the node, return its viewCount
+            var type = Type.typeof(container);
+            switch (type) {
+                case TClass(c):
+                    trace(c);
+                    var node: StoryNode = cast(container, StoryNode);
+                    switch (node.resolve(name)) {
+                        case Some(node):
+                            return viewCounts[node];
+                        case None:
+                            throw 'Cannot resolve ${name}';
+                    }
+                default:
+                    return container.field(name);
             }
         }
     }

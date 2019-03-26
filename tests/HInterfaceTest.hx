@@ -9,6 +9,16 @@ import hank.HInterface;
 import hank.StoryTree;
 import hank.Parser;
 
+class TestObject {
+    public var i: Int;
+    public var o: TestObject;
+    public function new(i: Int, o: TestObject) {
+        this.i = i;
+        this.o = o;
+    }
+
+}
+
 class HInterfaceTest extends utest.Test {
 
     var hInterface: HInterface;
@@ -18,6 +28,7 @@ class HInterfaceTest extends utest.Test {
         var viewCounts = storyTree.createViewCounts();
 
         viewCounts[storyTree.resolve("start").unwrap()] = 5;
+        viewCounts[storyTree.resolve("start").unwrap().resolve("one").unwrap()] = 2;
 
         hInterface = new HInterface(storyTree, viewCounts);
     }
@@ -28,6 +39,21 @@ class HInterfaceTest extends utest.Test {
 
     function testViewCount() {
         assertExpr('start', 5);
+        //assertExpr('start.one', 5);
+    }
+
+    function testClassInstanceDotAccess() {
+        hInterface.addVariable('test1', new TestObject(0, new TestObject(1, new TestObject(2, null))));
+        assertExpr('test1.i', 0);
+        assertExpr('test1.o.i', 1);
+        assertExpr('test1.o.o.i', 2);
+    }
+
+    function testAnonymousDotAccess() {
+        hInterface.runEmbeddedHaxe('var obj = {x: 5, y: "hey", z: { b: 9}};');
+        assertExpr('obj.x', 5);
+        assertExpr('obj.y', 'hey');
+        assertExpr('obj.z.b', 9);
     }
 
     public function testVarDeclaration() {
