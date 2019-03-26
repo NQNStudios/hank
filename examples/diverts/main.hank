@@ -11,14 +11,14 @@ Fourth output.
 
 = one
 
--(gather) {if (!gather) 'First output. '} {start} {start.one} {start.two} {gather} 
+-(gather) {if (gather == 1) 'First output.'} {start} {start.one} {start.two} {gather} 
 
 -> two
 
 = two
 
-Second output. {start} {start.one} {start.two} {start.one.gather}
--> start.one.gather
+Second output. {start} {start.one} {start.two} {one.gather}
+-> one.gather
 
 -> three
 

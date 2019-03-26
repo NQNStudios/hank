@@ -23,7 +23,8 @@ class HInterface {
     var viewCounts: Map<StoryNode, Int>;
 
     public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
-        this.interp.variables['_isTruthy'] = isTruthy;
+        this.interp.variables['_isTruthy'] = isTruthy.bind(viewCounts);
+        this.interp.variables['_valueOf'] = valueOf.bind(viewCounts);
         this.interp.variables['_resolve'] = resolveInScope.bind(this.interp.variables);
         this.interp.variables['_resolveField'] = resolveField.bind(this.interp.variables);
         this.viewCounts = viewCounts;
@@ -42,7 +43,6 @@ class HInterface {
     }
 
     static function resolveInScope(variables: Map<String, Dynamic>, name: String): Dynamic {
-        trace(variables['scope']);
         var scope: Array<Dynamic> = cast(variables['scope'], Array<Dynamic>);
         for (container in scope) {
             switch (resolve(variables, container, name)) {
@@ -76,7 +76,11 @@ class HInterface {
         }
     }
 
-    static function isTruthy(v: Dynamic) {
+    static function isTruthy(viewCounts: Map<StoryNode, Int>, v: Dynamic) {
+        if (isStoryNode(v)) {
+            var node: StoryNode = cast(v, StoryNode);
+            return viewCounts[node] > 0;
+        }
         switch (Type.typeof(v)) {
             case TBool:
                 return v;
@@ -109,21 +113,32 @@ class HInterface {
         expr = transmute(expr);
         var val = interp.expr(expr);
 
-        return Std.string(if (val == null) {
+        if (val == null) {
             throw 'Expression ${h} evaluated to null';
-        } else if (isStoryNode(val)) {
+        }
+        
+        return Std.string(valueOf(viewCounts, val));
+        
+    }
+
+    static function valueOf(viewCounts: Map<StoryNode, Int>, val: Dynamic): Dynamic {
+        return if (isStoryNode(val)) {
             var node: StoryNode = cast(val, StoryNode);
             viewCounts[node];
         } else {
             val;
-        });
+        };
     }
 
     /**
      Convert numerical value expressions to booleans for binary operations
     **/
     function boolify(expr: Expr): Expr {
-        return ECall(EIdent('_isTruthy'), [expr]);
+        return ECall(EIdent('_isTruthy'), [transmute(expr)]);
+    }
+
+    function valify(expr: Expr): Expr {
+        return ECall(EIdent('_valueOf'), [transmute(expr)]);
     }
 
     /**
@@ -151,7 +166,7 @@ class HInterface {
                 if (BOOLEAN_OPS.indexOf(op) != -1) {
                     EBinop(op, boolify(e1), boolify(e2));
                 } else {
-                    expr;
+                    EBinop(op, valify(e1), valify(e2));
                 }
             case EUnop(op, prefix, e):
                 if (BOOLEAN_OPS.indexOf(op) != -1) {
