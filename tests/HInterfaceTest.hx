@@ -22,10 +22,13 @@ class TestObject {
 class HInterfaceTest extends utest.Test {
 
     var hInterface: HInterface;
+    var storyTree: StoryNode;
+    var root: Array<StoryNode>;
 
     public function setup() {
-        var storyTree = StoryNode.FromAST(new Parser().parseFile("examples/subsections/main.hank"));
+        storyTree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank"));
         var viewCounts = storyTree.createViewCounts();
+        root = [storyTree];
 
         viewCounts[storyTree.resolve("start").unwrap()] = 5;
         viewCounts[storyTree.resolve("start").unwrap().resolve("one").unwrap()] = 2;
@@ -34,8 +37,12 @@ class HInterfaceTest extends utest.Test {
         hInterface = new HInterface(storyTree, viewCounts);
     }
 
-    function assertExpr(name: String, value: Dynamic) {
-        Assert.equals(Std.string(value), hInterface.evaluateExpr(name));
+    function assertExpr(name: String, value: Dynamic, ?scope: Array<StoryNode>) {
+        // TODO write some tests that test scoped resolution
+        if (scope == null) {
+            scope = root;
+        }
+        Assert.equals(Std.string(value), hInterface.evaluateExpr(name, scope));
     }
 
     function testViewCount() {
@@ -52,32 +59,32 @@ class HInterfaceTest extends utest.Test {
     }
 
     function testAnonymousDotAccess() {
-        hInterface.runEmbeddedHaxe('var obj = {x: 5, y: "hey", z: { b: 9}};');
+        hInterface.runEmbeddedHaxe('var obj = {x: 5, y: "hey", z: { b: 9}};', root);
         assertExpr('obj.x', 5);
         assertExpr('obj.y', 'hey');
         assertExpr('obj.z.b', 9);
     }
 
     public function testVarDeclaration() {
-        hInterface.runEmbeddedHaxe('var test = "str"');
+        hInterface.runEmbeddedHaxe('var test = "str"', root);
         assertExpr('test', 'str');
-        hInterface.runEmbeddedHaxe('var test2 = 2');
+        hInterface.runEmbeddedHaxe('var test2 = 2', root);
         assertExpr('test2', 2);
     }
 
     public function testBoolification() {
-        hInterface.runEmbeddedHaxe('var test = 7; var test2 = if(test) true else false;');
+        hInterface.runEmbeddedHaxe('var test = 7; var test2 = if(test) true else false;', root);
         assertExpr('test2', true);
     }
 
     public function testNullErrors() {
        HankAssert.throws(function() {
-           hInterface.evaluateExpr('undeclared_variable');
+           hInterface.evaluateExpr('undeclared_variable', root);
        });
     }
 
     public function testIfIdiom() {
-       HankAssert.equals("", hInterface.evaluateExpr('if (false) "something"'));
+       HankAssert.equals("", hInterface.evaluateExpr('if (false) "something"', root));
     }
 
 }

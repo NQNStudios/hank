@@ -3,6 +3,8 @@ package hank;
 import haxe.ds.Option;
 using Extensions.OptionExtender;
 
+import hank.StoryTree;
+
 enum OutputType {
     Text(t: String); // Pure text that is always displayed
     AltExpression(a: Alt);
@@ -142,7 +144,7 @@ class Output {
 
     }
 
-    public function format(hInterface: HInterface, displayToggles: Bool): String {
+    public function format(hInterface: HInterface, scope: Array<StoryNode>, displayToggles: Bool): String {
         var fullOutput = '';
 
         for (part in parts) {
@@ -152,12 +154,12 @@ class Output {
                 case AltExpression(a):
                     // TODO evaluate the alt expression deterministically
                 case HExpression(h):
-                    fullOutput += hInterface.evaluateExpr(h);
+                    fullOutput += hInterface.evaluateExpr(h, scope);
                 case InlineDivert(t):
                     // TODO follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                 case ToggleOutput(o, b):
                     if (b != displayToggles) {
-                        fullOutput += o.format(hInterface, displayToggles);
+                        fullOutput += o.format(hInterface, scope, displayToggles);
                     }
             }
         }

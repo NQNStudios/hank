@@ -38,7 +38,7 @@ class StoryTreeTest extends utest.Test {
     }
 
     function testParse() {
-        var tree = StoryNode.FromAST(new Parser().parseFile("examples/subsections/main.hank"));
+        var tree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank"));
 
         HankAssert.isSome(tree.resolve("start"));
         HankAssert.isSome(tree.resolve("three"));

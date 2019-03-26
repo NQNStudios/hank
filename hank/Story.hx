@@ -58,11 +58,11 @@ class Story {
         switch (expr) {
             case EOutput(output):
                 exprIndex += 1;
-                return HasText(output.format(hInterface, false));
+                return HasText(output.format(hInterface, nodeScopes, false));
             case EHaxeLine(h):
                 exprIndex += 1;
 
-                hInterface.runEmbeddedHaxe(h);
+                hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
             case EDivert(target):
                 return divertTo(target);

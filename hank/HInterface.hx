@@ -2,11 +2,13 @@ package hank;
 
 using Reflect;
 using Type;
+import haxe.ds.Option;
 
 import hscript.Parser;
 import hscript.Interp;
 import hscript.Expr;
 
+using hank.Extensions;
 import hank.StoryTree;
 
 /**
@@ -22,8 +24,8 @@ class HInterface {
 
     public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
         this.interp.variables['_isTruthy'] = isTruthy;
-        this.interp.variables['_resolve'] = resolve.bind(this.interp.variables, storyTree);
-        this.interp.variables['_resolveField'] = resolve.bind(this.interp.variables);
+        this.interp.variables['_resolve'] = resolveInScope.bind(this.interp.variables);
+        this.interp.variables['_resolveField'] = resolveField.bind(this.interp.variables);
         this.viewCounts = viewCounts;
     }
 
@@ -39,21 +41,38 @@ class HInterface {
         return false;
     }
 
-    static function resolve(variables: Map<String, Dynamic>, container: Dynamic, name: String): Dynamic {
-        if (variables.exists(name)) {
-            return variables[name];
-        } else if (isStoryNode(container)) {
-            // If the variable is a StoryNode, don't return the node, return its viewCount
-            var node: StoryNode = cast(container, StoryNode);
-            switch (node.resolve(name)) {
-                case Some(node):
-                    return node;
+    static function resolveInScope(variables: Map<String, Dynamic>, name: String): Dynamic {
+        trace(variables['scope']);
+        var scope: Array<Dynamic> = cast(variables['scope'], Array<Dynamic>);
+        for (container in scope) {
+            switch (resolve(variables, container, name)) {
+                case Some(v):
+                    return v;
                 case None:
-                    throw 'Cannot resolve ${name}';
             }
         }
+
+        throw 'Could not resolve $name in scope $scope.';
+    }
+
+    static function resolveField(variables: Map<String, Dynamic>, container: Dynamic, name: String): Dynamic {
+        return resolve(variables, container, name).unwrap();
+    }
+
+    static function resolve(variables: Map<String, Dynamic>, container: Dynamic, name: String): Option<Dynamic> {
+        if (variables.exists(name)) {
+            return Some(variables[name]);
+        } else if (isStoryNode(container)) {
+            var node: StoryNode = cast(container, StoryNode);
+            return node.resolve(name);
+        }
         else {
-            return container.field(name);
+            var val = container.field(name);
+            if (val != null) {
+                return Some(val);
+            } else {
+                return None;
+            }
         }
     }
 
@@ -75,13 +94,17 @@ class HInterface {
     /**
      Run a pre-processed block of Haxe embedded in a Hank story.
     **/
-    public function runEmbeddedHaxe(h: String) {
+    public function runEmbeddedHaxe(h: String, scope: Array<Dynamic>) {
+        interp.variables['scope'] = scope;
+
         var expr = parser.parseString(h);
         expr = transmute(expr);
         interp.execute(expr);
     }
 
-    public function evaluateExpr(h: String): String {
+    public function evaluateExpr(h: String, scope: Array<Dynamic>): String {
+        interp.variables['scope'] = scope;
+
         var expr = parser.parseString(h);
         expr = transmute(expr);
         var val = interp.expr(expr);
