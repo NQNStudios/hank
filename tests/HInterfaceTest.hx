@@ -4,14 +4,14 @@ import utest.Test;
 import utest.Assert;
 
 import hank.HInterface;
-import hank.ViewCounts;
+import hank.StoryTree;
 
 class HInterfaceTest extends utest.Test {
 
     var hInterface: HInterface;
 
     public function setup() {
-        hInterface = new HInterface(new ViewCounts([]));
+        hInterface = new HInterface(new StoryNode(0), new Map());
     }
 
     function assertVar(name: String, value: Dynamic) {

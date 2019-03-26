@@ -1,6 +1,7 @@
 package hank;
 
 import utest.Assert;
+import haxe.ds.Option;
 
 class HankAssert {
     /**
@@ -23,4 +24,22 @@ class HankAssert {
     public static function notContains(unexpected: String, actual: String) {
         Assert.equals(-1, actual.indexOf(unexpected));
     }
+
+    public static function isSome<T>(option: Option<T>) {
+        switch (option) {
+            case Some(_):
+            case None:
+                Assert.fail();
+        }
+    }
+
+    public static function isNone<T>(option: Option<T>) {
+        switch (option) {
+            case Some(_):
+                Assert.fail();
+            case None:
+        }
+    }
+
+
 }

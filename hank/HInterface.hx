@@ -1,8 +1,12 @@
 package hank;
 
+using Reflect;
+
 import hscript.Parser;
 import hscript.Interp;
 import hscript.Expr;
+
+import hank.StoryTree;
 
 /**
  Interface between a Hank story, and its embedded hscript interpreter
@@ -14,8 +18,28 @@ class HInterface {
     var parser: Parser = new Parser();
     var interp: Interp = new Interp();
 
-    public function new(viewCounts: ViewCounts) {
+    public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
         this.interp.variables['_isTruthy'] = isTruthy;
+        this.interp.variables['_resolve'] = resolve.bind(this.interp.variables, viewCounts, storyTree);
+        this.interp.variables['_resolveField'] = resolve.bind(this.interp.variables, viewCounts);
+    }
+
+    static function resolve(variables: Map<String, Dynamic>, viewCounts: Map<StoryNode, Int>,container: Dynamic, name: String): Dynamic {
+        if (variables.exists(name)) {
+            return variables[name];
+        } else {
+            if (Type.typeof(container).getName() == 'StoryNode') {
+                var node: StoryNode = cast(container, StoryNode);
+                switch (node.resolve(name)) {
+                    case Some(node):
+                        return viewCounts[node];
+                    case None:
+                        throw 'Cannot resolve ${name}';
+                }
+            } else {
+                return container.field(name);
+            }
+        }
     }
 
     static function isTruthy(v: Dynamic) {
@@ -69,9 +93,8 @@ class HInterface {
         }
         return switch (expr) {
             case EIdent(name):
-                // TODO if the name is a root-level view count, return EArray(view_counts, ...)
-                // Or if it's a nested view count of the current scope, also need to resolve that
-                EIdent(name);
+                // Identifiers need to be resolved
+                ECall(EIdent('_resolve'), [EConst(CString(name))]);
             case EVar(name, _, nested):
                 // Declare all variables in embedded global context
                 interp.variables[name] = null;
@@ -81,8 +104,7 @@ class HInterface {
             case EBlock(nestedExpressions):
                 EBlock([for(nested in nestedExpressions) transmute(nested)]);
             case EField(nested, f):
-                // TODO this is where . access on view counts will be handled by transmuting to an EArray
-                EField(transmute(nested), f);
+                ECall(EIdent('_resolveField'), [transmute(nested), EConst(CString(f))]);
             case EBinop(op, e1, e2):
                 if (BOOLEAN_OPS.indexOf(op) != -1) {
                     EBinop(op, boolify(e1), boolify(e2));

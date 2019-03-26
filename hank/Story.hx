@@ -2,6 +2,7 @@ package hank;
 
 using HankAST.ASTExtension;
 import hank.HankAST.ExprType;
+import hank.StoryTree;
 
 /**
  Possible states of the story being executed.
@@ -23,7 +24,11 @@ class Story {
     var ast: HankAST;
     var exprIndex: Int;
 
+    var storyTree: StoryNode;
+    var viewCounts: Map<StoryNode, Int>;
+
     var parser: Parser;
+
 
     public function new(script: String, ?randomSeed: Int) {
         random = new Random(randomSeed);
@@ -31,9 +36,13 @@ class Story {
         parser = new Parser();
         ast = parser.parseFile(script);
 
-        var viewCounts = new ViewCounts(ast);
+        storyTree = StoryNode.FromAST(ast);
+        viewCounts = new Map();
+        for (node in storyTree.traverseAll()) {
+            viewCounts[node] = 0;
+        }
 
-        hInterface = new HInterface(viewCounts);
+        hInterface = new HInterface(storyTree, viewCounts);
         hInterface.addVariable('story', this);
 
         exprIndex = ast.findFile(script);
