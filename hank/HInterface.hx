@@ -1,7 +1,7 @@
 package hank;
 
 using Reflect;
-import Type;
+using Type;
 
 import hscript.Parser;
 import hscript.Interp;
@@ -18,32 +18,42 @@ class HInterface {
 
     var parser: Parser = new Parser();
     var interp: Interp = new Interp();
+    var viewCounts: Map<StoryNode, Int>;
 
     public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
         this.interp.variables['_isTruthy'] = isTruthy;
-        this.interp.variables['_resolve'] = resolve.bind(this.interp.variables, viewCounts, storyTree);
-        this.interp.variables['_resolveField'] = resolve.bind(this.interp.variables, viewCounts);
+        this.interp.variables['_resolve'] = resolve.bind(this.interp.variables, storyTree);
+        this.interp.variables['_resolveField'] = resolve.bind(this.interp.variables);
+        this.viewCounts = viewCounts;
     }
 
-    static function resolve(variables: Map<String, Dynamic>, viewCounts: Map<StoryNode, Int>,container: Dynamic, name: String): Dynamic {
+    static function isStoryNode(o: Dynamic) {
+        var type = o.typeof();
+        switch (type) {
+            case TClass(c):
+                if (c.getClassName() == 'hank.StoryNode') {
+                    return true;
+                }
+            default:
+        }
+        return false;
+    }
+
+    static function resolve(variables: Map<String, Dynamic>, container: Dynamic, name: String): Dynamic {
         if (variables.exists(name)) {
             return variables[name];
-        } else {
+        } else if (isStoryNode(container)) {
             // If the variable is a StoryNode, don't return the node, return its viewCount
-            var type = Type.typeof(container);
-            switch (type) {
-                case TClass(c):
-                    trace(c);
-                    var node: StoryNode = cast(container, StoryNode);
-                    switch (node.resolve(name)) {
-                        case Some(node):
-                            return viewCounts[node];
-                        case None:
-                            throw 'Cannot resolve ${name}';
-                    }
-                default:
-                    return container.field(name);
+            var node: StoryNode = cast(container, StoryNode);
+            switch (node.resolve(name)) {
+                case Some(node):
+                    return node;
+                case None:
+                    throw 'Cannot resolve ${name}';
             }
+        }
+        else {
+            return container.field(name);
         }
     }
 
@@ -75,11 +85,15 @@ class HInterface {
         var expr = parser.parseString(h);
         expr = transmute(expr);
         var val = interp.expr(expr);
-        if (val == null) {
+
+        return Std.string(if (val == null) {
             throw 'Expression ${h} evaluated to null';
+        } else if (isStoryNode(val)) {
+            var node: StoryNode = cast(val, StoryNode);
+            viewCounts[node];
         } else {
-            return Std.string(val);
-        }
+            val;
+        });
     }
 
     /**

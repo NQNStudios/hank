@@ -29,6 +29,7 @@ class HInterfaceTest extends utest.Test {
 
         viewCounts[storyTree.resolve("start").unwrap()] = 5;
         viewCounts[storyTree.resolve("start").unwrap().resolve("one").unwrap()] = 2;
+        viewCounts[storyTree.resolve("start").unwrap().resolve("one").unwrap().resolve("gather").unwrap()] = 7;
 
         hInterface = new HInterface(storyTree, viewCounts);
     }
@@ -39,7 +40,8 @@ class HInterfaceTest extends utest.Test {
 
     function testViewCount() {
         assertExpr('start', 5);
-        //assertExpr('start.one', 5);
+        assertExpr('start.one', 2);
+        assertExpr('start.one.gather', 7);
     }
 
     function testClassInstanceDotAccess() {
