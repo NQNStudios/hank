@@ -3,31 +3,41 @@ package tests;
 import utest.Test;
 import utest.Assert;
 
+using hank.Extensions;
 import hank.HInterface;
 import hank.StoryTree;
+import hank.Parser;
 
 class HInterfaceTest extends utest.Test {
 
     var hInterface: HInterface;
 
     public function setup() {
-        hInterface = new HInterface(new StoryNode(0), new Map());
+        var storyTree = StoryNode.FromAST(new Parser().parseFile("examples/subsections/main.hank"));
+        hInterface = new HInterface(storyTree, [
+            storyTree.resolve("start").unwrap() => 5,
+
+        ]);
     }
 
-    function assertVar(name: String, value: Dynamic) {
-        Assert.equals(value, hInterface.interp.variables[name]);
+    function assertExpr(name: String, value: Dynamic) {
+        Assert.equals(Std.string(value), hInterface.evaluateExpr(name));
+    }
+
+    function testViewCount() {
+        assertExpr('start', 5);
     }
 
     public function testVarDeclaration() {
         hInterface.runEmbeddedHaxe('var test = "str"');
-        assertVar('test', 'str');
+        assertExpr('test', 'str');
         hInterface.runEmbeddedHaxe('var test2 = 2');
-        assertVar('test2', 2);
+        assertExpr('test2', 2);
     }
 
     public function testBoolification() {
         hInterface.runEmbeddedHaxe('var test = 7; var test2 = if(test) true else false;');
-        assertVar('test2', true);
+        assertExpr('test2', true);
     }
 
 }
