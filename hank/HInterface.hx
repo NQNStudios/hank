@@ -28,6 +28,8 @@ class HInterface {
         if (variables.exists(name)) {
             return variables[name];
         } else {
+trace(Type.typeof(container)) ;
+trace(Type.typeof(container).getName()) ;
             if (Type.typeof(container).getName() == 'StoryNode') {
                 var node: StoryNode = cast(container, StoryNode);
                 switch (node.resolve(name)) {

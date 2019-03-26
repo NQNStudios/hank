@@ -37,10 +37,7 @@ class Story {
         ast = parser.parseFile(script);
 
         storyTree = StoryNode.FromAST(ast);
-        viewCounts = new Map();
-        for (node in storyTree.traverseAll()) {
-            viewCounts[node] = 0;
-        }
+        viewCounts = storyTree.createViewCounts();
 
         hInterface = new HInterface(storyTree, viewCounts);
         hInterface.addVariable('story', this);

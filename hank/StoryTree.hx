@@ -34,6 +34,14 @@ class StoryNode {
         return nodes;
     }
 
+    public function createViewCounts(): Map<StoryNode, Int> {
+        var viewCounts = new Map();
+        for (node in traverseAll()) {
+            viewCounts[node] = 0;
+        }
+        return viewCounts;
+    }
+
     public static function FromAST(ast: HankAST) {
         var exprIndex = 0;
         var root = new StoryNode(-1);

@@ -15,10 +15,11 @@ class HInterfaceTest extends utest.Test {
 
     public function setup() {
         var storyTree = StoryNode.FromAST(new Parser().parseFile("examples/subsections/main.hank"));
-        hInterface = new HInterface(storyTree, [
-            storyTree.resolve("start").unwrap() => 5,
+        var viewCounts = storyTree.createViewCounts();
 
-        ]);
+        viewCounts[storyTree.resolve("start").unwrap()] = 5;
+
+        hInterface = new HInterface(storyTree, viewCounts);
     }
 
     function assertExpr(name: String, value: Dynamic) {
