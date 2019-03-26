@@ -28,6 +28,7 @@ class HankAssert {
     public static function isSome<T>(option: Option<T>) {
         switch (option) {
             case Some(_):
+                Assert.equals(0, 0);
             case None:
                 Assert.fail();
         }
@@ -38,6 +39,7 @@ class HankAssert {
             case Some(_):
                 Assert.fail();
             case None:
+                Assert.equals(0, 0);
         }
     }
 
@@ -49,6 +51,7 @@ class HankAssert {
             if (message != null) {
                 Assert.equals(message, e);
             }
+            Assert.equals(0, 0);
         }
     }
 }

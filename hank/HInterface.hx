@@ -73,7 +73,7 @@ trace(Type.typeof(container).getName()) ;
         expr = transmute(expr);
         var val = interp.expr(expr);
         if (val == null) {
-            return '';
+            throw 'Expression ${h} evaluated to null';
         } else {
             return Std.string(val);
         }
@@ -122,6 +122,10 @@ trace(Type.typeof(container).getName()) ;
             case ECall(e, params):
                 ECall(transmute(e), [for (ex in params) transmute(ex)]);
             case EIf(cond, e1, e2):
+                // To provide for the {if(cond) 'something'} idiom, give every if statement an else clause returning an empty string.
+                if (e2 == null) {
+                    e2 = EConst(CString(''));
+                }
                 EIf(boolify(cond), transmute(e1), transmute(e2));
             case EWhile(cond, e):
                 EWhile(boolify(cond), transmute(e));
