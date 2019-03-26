@@ -59,10 +59,24 @@ class Story {
 
                 hInterface.runEmbeddedHaxe(h);
                 return nextFrame();
+            case EDivert(target):
+                return divertTo(target);
+
+            // case EGather()
+                // TODO gathers need to update their view counts
             default:
                 return Finished;
         }
         return Finished;
+    }
+
+    public function divertTo(target: String) {
+        // TODO resolve the target
+        // TODO update the expression index
+        // TODO if it's a section, increase its view count
+        // TODO if it's a knot, increase its view count and increase the section's view count unless we were already in the section
+        // TODO if it's a choice, choose it, update its view count and return HasText(output).
+        return nextFrame();
     }
 
     public function choose(choiceIndex: Int): String {

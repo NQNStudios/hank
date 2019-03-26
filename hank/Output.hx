@@ -150,9 +150,11 @@ class Output {
                 case Text(t):
                     fullOutput += t;
                 case AltExpression(a):
+                    // TODO evaluate the alt expression deterministically
                 case HExpression(h):
                     fullOutput += hInterface.evaluateExpr(h);
                 case InlineDivert(t):
+                    // TODO follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                 case ToggleOutput(o, b):
                     if (b != displayToggles) {
                         fullOutput += o.format(hInterface, displayToggles);
