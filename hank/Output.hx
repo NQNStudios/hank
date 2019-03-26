@@ -164,6 +164,6 @@ class Output {
             }
         }
 
-        return fullOutput;
+        return StringTools.ltrim(fullOutput);
     }
 }

@@ -13,7 +13,12 @@ Fourth output.
 
 -(gather) {if (gather == 1) 'First output.'} {start} {start.one} {start.two} {gather} 
 
--> two
+```
+if (gather == 1)
+    , -> two
+else
+    , -> three  
+```
 
 = two
 

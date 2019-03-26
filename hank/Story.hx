@@ -64,6 +64,10 @@ class Story {
 
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
+            case EHaxeBlock(h):
+                exprIndex += 1;
+                hInterface.runEmbeddedHaxe(h, nodeScopes);
+                return nextFrame();
             case EDivert(target):
                 return divertTo(target);
 
@@ -79,6 +83,7 @@ class Story {
                 return processExpr(nextExpr);
                 
             default:
+                trace('$expr is not implemented');
                 return Finished;
         }
         return Finished;
@@ -149,7 +154,7 @@ class Story {
 
             case EStitch(_):
                 // if it's a stitch, increase its view count
-                viewCounts[target] + 1;
+                viewCounts[target] += 1;
 
                 var enclosingKnot = newScopes[1];
                 // If we weren't in the stitch's containing section before, increase its viewcount

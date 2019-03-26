@@ -167,7 +167,7 @@ class Parser {
     }
 
     static function haxeBlock(buffer: HankBuffer, position: HankBuffer.Position): ExprType {
-        buffer.drop('```');
+        buffer.drop('```\n');
         var rawContents = buffer.takeUntil(['```'], false, true).unwrap().output;
         var processedContents = '';
 
@@ -178,16 +178,16 @@ class Parser {
             var nextLine = blockBuffer.takeLine('lr').unwrap();
             if (StringTools.startsWith(nextLine, ',')) {
                 nextLine = StringTools.trim(nextLine.substr(1));
-                processedContents += 'story.runEmbeddedHank("${escapeQuotes(nextLine)}");';
+                processedContents += 'story.runEmbeddedHank("${escapeQuotes(nextLine)}"); ';
             } else if (nextLine == ',,,'){
                 var embeddedHankBlock = blockBuffer.takeUntil(['```'],false,true).unwrap().output;
-                processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}");';
+                processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}"); ';
             } else {
-                processedContents += nextLine;
+                processedContents += nextLine+' ';
             }
         } while (!blockBuffer.isEmpty());
 
-        return  EHaxeBlock(processedContents);
+        return EHaxeBlock(processedContents);
     }
 
     static function escapeQuotes(s: String) {
