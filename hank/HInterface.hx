@@ -101,6 +101,7 @@ class HInterface {
     public function runEmbeddedHaxe(h: String, scope: Array<Dynamic>) {
         interp.variables['scope'] = scope;
 
+        trace(h);
         var expr = parser.parseString(h);
         expr = transmute(expr);
         interp.execute(expr);

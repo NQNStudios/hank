@@ -33,7 +33,7 @@ class Story {
 
     var parser: Parser;
 
-    var embedded: Option<Story> = None;
+    var embeddedBlocks: Array<Story> = [];
     var parent: Option<Story> = None;
 
     function new(r: Random, p: Parser, ast: HankAST, st: StoryNode, sc: Array<StoryNode>, vc: Map<StoryNode, Int>, hi: HInterface) {
@@ -75,15 +75,18 @@ class Story {
     }
 
     public function nextFrame(): StoryFrame {
-        switch (embedded) {
-            case Some(s):
-                return s.nextFrame();
-            case None:
-                if (exprIndex >= ast.length) {
-                    return Finished;
-                }
-                return processExpr(ast[exprIndex].expr);
+        while (embeddedBlocks.length > 0) {
+            var nf = embeddedBlocks[0].nextFrame();
+            if(nf == Finished) {
+                embeddedBlocks.remove(embeddedBlocks[0]);
+            } else {
+                return nf;
+            }
         }
+        if (exprIndex >= ast.length) {
+            return Finished;
+        }
+        return processExpr(ast[exprIndex].expr);
     }
 
     private function processExpr(expr: ExprType) {
@@ -134,7 +137,6 @@ class Story {
                 case Some(node):
                     newScopes = whichScope.slice(i);
                     newScopes.insert(0, node);
-                    trace(newScopes);
                     // Then resolve the rest of the parts inward from there
                     for (part in targetParts.slice(1)) {
                         var scope = newScopes[0];
@@ -154,13 +156,13 @@ class Story {
     }
 
     public function divertTo(target: String) {
-        trace('diverting to $target');
         switch (parent) {
             case Some(p):
-                p.embedded = None; // 
+                p.embeddedBlocks = []; // 
                 return p.divertTo(target); // A divert from inside embedded hank, ends the embedding
             default:
         }
+        trace('diverting to $target');
         var newScopes = resolveNodeInScope(target);
         var targetIdx = newScopes[0].astIndex;
 
@@ -212,18 +214,17 @@ class Story {
     }
 
     public function choose(choiceIndex: Int): String {
-        switch (embedded) {
-            case Some(s):
-                return s.choose(choiceIndex);
-            case None:
-                // TODO if the choice has a label, increment its view count
-                return '';
+        if (embeddedBlocks.length > 0) {
+            return embeddedBlocks[0].choose(choiceIndex);
+        } else {
+            // if not embedded, actually make the choice
+            // TODO if the choice has a label, increment its view count
+            return '';
         }
     }
 
     /** Parse and run embedded Hank script on the fly. **/
     public function runEmbeddedHank(h: String) {
-        trace(h);
-        embedded = Some(embeddedStory(h));
+        embeddedBlocks.push(embeddedStory(h));
     }
 }

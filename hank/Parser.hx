@@ -25,7 +25,7 @@ class Parser {
     var ast: HankAST = [];
 
     public function new() {
-
+        choices = 0;
     }
 
     public function parseString(h: String): HankAST {
@@ -35,6 +35,7 @@ class Parser {
         do {
             var position = stringBuffer.position();
             stringBuffer.skipWhitespace();
+            if (stringBuffer.isEmpty()) break;
             var expr = parseExpr(stringBuffer, position);
             switch(expr) {
                 case EIncludeFile(file):
@@ -200,12 +201,12 @@ class Parser {
         // Transform , and ,,, expressions into Hank embedded in Haxe embedded in Hank
         do {
             var nextLine = blockBuffer.takeLine('lr').unwrap();
-            if (StringTools.startsWith(nextLine, ',')) {
+            if (nextLine == ',,,'){
+                var embeddedHankBlock = blockBuffer.takeUntil([',,,'],false,true).unwrap().output;
+                processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}"); ';
+            } else if (StringTools.startsWith(nextLine, ',')) {
                 nextLine = StringTools.trim(nextLine.substr(1));
                 processedContents += 'story.runEmbeddedHank("${escapeQuotes(nextLine)}"); ';
-            } else if (nextLine == ',,,'){
-                var embeddedHankBlock = blockBuffer.takeUntil(['```'],false,true).unwrap().output;
-                processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}"); ';
             } else {
                 processedContents += nextLine+' ';
             }

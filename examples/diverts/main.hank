@@ -22,7 +22,7 @@ else
 
 = two
 
-Second output. {start} {start.one} {start.two} {one.gather}
+Second output. {start} {start.one} {two} {one.gather}
 -> one.gather
 
 -> three

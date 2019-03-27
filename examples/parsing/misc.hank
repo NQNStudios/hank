@@ -26,6 +26,11 @@ var test2 = 5;
 ```
 , Output "this"
 ```
+```
+,,,
+Output "this"
+,,,
+```
 
 - no label gather on an output
 --(labeled) deep gather
