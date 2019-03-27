@@ -13,7 +13,7 @@ class StoryTestCase extends utest.Test {
             transcriptLines.remove(transcriptLines[0]);
         }
 
-        var story: Story = new Story(storyFile, randomSeed);
+        var story: Story = Story.FromFile(storyFile, randomSeed);
 
         var i = 0;
         while (i < transcriptLines.length) {
@@ -55,6 +55,10 @@ class StoryTestCase extends utest.Test {
                 // Assert that the story's next frame is HasText(line)
                 // trace('${line} from ${frame}');
                 HankAssert.equals(HasText(line), frame);
+            }
+
+            if (frame == Finished) {
+                break;
             }
 
             i += 1;

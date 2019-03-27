@@ -28,6 +28,30 @@ class Parser {
 
     }
 
+    public function parseString(h: String): HankAST {
+        var stringBuffer = HankBuffer.Dummy(h);
+
+        var parsedAST = [];
+        do {
+            var position = stringBuffer.position();
+            stringBuffer.skipWhitespace();
+            var expr = parseExpr(stringBuffer, position);
+            switch(expr) {
+                case EIncludeFile(file):
+                    throw 'cannot include files from within an embedded Hank block';
+                case ENoOp:
+                    // Drop no-ops from the AST
+                default:
+                    parsedAST.push({
+                        position: position,
+                        expr: expr
+                        });
+            }
+        } while (!stringBuffer.isEmpty());
+
+        return parsedAST;
+    }
+
     public function parseFile(f: String, includedFile = false) : HankAST {
         var directory = '';
         var lastSlashIdx = f.lastIndexOf('/');

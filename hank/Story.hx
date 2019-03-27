@@ -1,5 +1,8 @@
 package hank;
 
+import haxe.ds.Option;
+
+using hank.Extensions;
 using HankAST.ASTExtension;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
@@ -30,28 +33,57 @@ class Story {
 
     var parser: Parser;
 
+    var embedded: Option<Story> = None;
+    var parent: Option<Story> = None;
 
-    public function new(script: String, ?randomSeed: Int) {
-        random = new Random(randomSeed);
+    function new(r: Random, p: Parser, ast: HankAST, st: StoryNode, sc: Array<StoryNode>, vc: Map<StoryNode, Int>, hi: HInterface) {
+        this.random = r;
+        this.parser = p;
+        this.ast = ast;
+        this.storyTree = st;
+        this.nodeScopes = sc;
+        this.viewCounts = vc;
+        this.hInterface = hi;
+    }
 
-        parser = new Parser();
-        ast = parser.parseFile(script);
+    function embeddedStory(h: String): Story {
+        var ast = parser.parseString(h);
 
-        storyTree = StoryNode.FromAST(ast);
-        nodeScopes = [storyTree];
-        viewCounts = storyTree.createViewCounts();
+        var story = new Story(random, parser, ast, storyTree, nodeScopes, viewCounts, hInterface);
+        story.exprIndex = 0;
+        story.parent = Some(this);
+        return story;
+    }
 
-        hInterface = new HInterface(storyTree, viewCounts);
-        hInterface.addVariable('story', this);
+    public static function FromFile(script: String, ?randomSeed: Int): Story {
+        var random = new Random(randomSeed);
 
-        exprIndex = ast.findFile(script);
+        var parser = new Parser();
+        var ast = parser.parseFile(script);
+
+        var storyTree = StoryNode.FromAST(ast);
+        var nodeScopes = [storyTree];
+        var viewCounts = storyTree.createViewCounts();
+
+        var hInterface = new HInterface(storyTree, viewCounts);
+
+        var story = new Story(random, parser, ast, storyTree, nodeScopes, viewCounts, hInterface);
+        hInterface.addVariable('story', story);
+
+        story.exprIndex = ast.findFile(script);
+        return story;
     }
 
     public function nextFrame(): StoryFrame {
-        if (exprIndex >= ast.length) {
-            return Finished;
+        switch (embedded) {
+            case Some(s):
+                return s.nextFrame();
+            case None:
+                if (exprIndex >= ast.length) {
+                    return Finished;
+                }
+                return processExpr(ast[exprIndex].expr);
         }
-        return processExpr(ast[exprIndex].expr);
     }
 
     private function processExpr(expr: ExprType) {
@@ -100,17 +132,14 @@ class Story {
             var scope = whichScope[i];
             switch (scope.resolve(targetParts[0])) {
                 case Some(node):
-                    trace('found outer part ${targetParts[0]}');
                     newScopes = whichScope.slice(i);
                     newScopes.insert(0, node);
                     trace(newScopes);
                     // Then resolve the rest of the parts inward from there
                     for (part in targetParts.slice(1)) {
-                        trace('trying to find $part');
                         var scope = newScopes[0];
                         switch (scope.resolve(part)) {
                             case Some(innerNode):
-                                trace('found $part');
                                 newScopes.insert(0, innerNode);
                             case None:
                                 break;
@@ -121,11 +150,17 @@ class Story {
                 case None:
             }
         }
-        trace('done seraching');
         return newScopes;
     }
 
     public function divertTo(target: String) {
+        trace('diverting to $target');
+        switch (parent) {
+            case Some(p):
+                p.embedded = None; // 
+                return p.divertTo(target); // A divert from inside embedded hank, ends the embedding
+            default:
+        }
         var newScopes = resolveNodeInScope(target);
         var targetIdx = newScopes[0].astIndex;
 
@@ -177,12 +212,18 @@ class Story {
     }
 
     public function choose(choiceIndex: Int): String {
-        // TODO if the choice has a label, increment its view count
-        return '';
+        switch (embedded) {
+            case Some(s):
+                return s.choose(choiceIndex);
+            case None:
+                // TODO if the choice has a label, increment its view count
+                return '';
+        }
     }
 
     /** Parse and run embedded Hank script on the fly. **/
-    public function runEmbeddedHank(hank: String) {
-        // TODO       
+    public function runEmbeddedHank(h: String) {
+        trace(h);
+        embedded = Some(embeddedStory(h));
     }
 }

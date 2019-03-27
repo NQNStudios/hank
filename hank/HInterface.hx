@@ -67,7 +67,7 @@ class HInterface {
             return node.resolve(name);
         }
         else {
-            var val = container.field(name);
+            var val:Dynamic = container.field(name);
             if (val != null) {
                 return Some(val);
             } else {
@@ -141,6 +141,8 @@ class HInterface {
         return ECall(EIdent('_valueOf'), [transmute(expr)]);
     }
 
+
+
     /**
      Adapt an expression for the embedded context
     **/
@@ -175,6 +177,16 @@ class HInterface {
                     expr;
                 }
             case ECall(e, params):
+                // Here we get funky to make sure method calls are preserved as such (bound to their object) by matching ECall(EField(e, f), [])
+                switch (e) {
+                    case EField(innerE, f):
+                        var obj = interp.expr(innerE);
+                        if (obj != null) {
+                            return expr;
+                        }
+                    default:
+                }
+                trace(ECall(transmute(e), [for (ex in params) transmute(ex)]));
                 ECall(transmute(e), [for (ex in params) transmute(ex)]);
             case EIf(cond, e1, e2):
                 // To provide for the {if(cond) 'something'} idiom, give every if statement an else clause returning an empty string.
