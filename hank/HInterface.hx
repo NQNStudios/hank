@@ -107,7 +107,7 @@ class HInterface {
         interp.execute(expr);
     }
 
-    public function evaluateExpr(h: String, scope: Array<Dynamic>): String {
+    public function expr(h: String, scope: Array<Dynamic>) {
         interp.variables['scope'] = scope;
 
         var expr = parser.parseString(h);
@@ -118,8 +118,10 @@ class HInterface {
             throw 'Expression ${h} evaluated to null';
         }
         
-        return Std.string(valueOf(viewCounts, val));
-        
+        return valueOf(viewCounts, val);
+    }
+    public function evaluateExpr(h: String, scope: Array<Dynamic>): String {
+        return Std.string(expr(h, scope));
     }
 
     static function valueOf(viewCounts: Map<StoryNode, Int>, val: Dynamic): Dynamic {

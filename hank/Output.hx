@@ -27,6 +27,10 @@ class Output {
         };
     }
 
+    public function isEmpty() {
+        return parts.length == 0;
+    }
+
     public static function parse(buffer: HankBuffer): Output {
         var parts = [];
 

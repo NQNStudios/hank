@@ -42,4 +42,45 @@ class ASTExtension {
 
         return -1;
     }
+
+    public static function findEOF(ast: HankAST, path: String) {
+        for (i in 0... ast.length) {
+            var expr = ast[ast.length-1-i];
+            if (expr.position.file == path) {
+                return ast.length-1-i+1;
+            }
+        }
+
+        return -1;
+    }
+
+    /**
+     Collect every choice in the choice point starting at the given index.
+    **/
+    public static function collectChoices(ast: HankAST, startingIndex: Int, depth: Int): Array<Choice> {
+        var choices = [];
+        var currentFile = ast[startingIndex].position.file;
+        trace(currentFile);
+
+        trace(findEOF(ast, currentFile));
+
+        for (i in startingIndex... findEOF(ast, currentFile)) {
+            trace('checking');
+            switch (ast[i].expr) {
+                // Gather choices of the current depth
+                case EChoice(choice):
+                    if (choice.depth != depth) continue;
+                    else choices.push(choice);
+                // Stop at the next gather of this depth
+                case EGather(_, d, _) if (d == depth):
+                    break;
+                //Stop at knot or stitch declarations
+                case EKnot(_) | EStitch(_):
+                    break;
+                default:
+            }
+        }
+
+        return choices;
+    }
 }

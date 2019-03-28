@@ -4,6 +4,7 @@ import haxe.ds.Option;
 
 using hank.Extensions;
 using HankAST.ASTExtension;
+using HankAST.Choice;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
 
@@ -35,6 +36,11 @@ class Story {
 
     var embeddedBlocks: Array<Story> = [];
     var parent: Option<Story> = None;
+
+    var choicesTaken: Array<Int> = [];
+    var weaveDepth = 0;
+
+    var storedFrame: Option<StoryFrame> = None;
 
     function new(r: Random, p: Parser, ast: HankAST, st: StoryNode, sc: Array<StoryNode>, vc: Map<StoryNode, Int>, hi: HInterface) {
         this.random = r;
@@ -75,6 +81,12 @@ class Story {
     }
 
     public function nextFrame(): StoryFrame {
+        switch (storedFrame) {
+            case Some(f):
+                storedFrame = None;
+                return f;
+            default:
+        }
         while (embeddedBlocks.length > 0) {
             var nf = embeddedBlocks[0].nextFrame();
             if(nf == Finished) {
@@ -89,7 +101,7 @@ class Story {
         return processExpr(ast[exprIndex].expr);
     }
 
-    private function processExpr(expr: ExprType) {
+    private function processExpr(expr: ExprType): StoryFrame {
         switch (expr) {
             case EOutput(output):
                 exprIndex += 1;
@@ -104,7 +116,8 @@ class Story {
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
             case EDivert(target):
-                return divertTo(target);
+                divertTo(target);
+                return nextFrame();
 
             case EGather(label, depth, nextExpr):
                 // gathers need to update their view counts
@@ -114,14 +127,62 @@ class Story {
                         viewCounts[node] += 1;
                     case None:
                 }
-                // TODO update current weave depth
+                weaveDepth = depth;
                 return processExpr(nextExpr);
-                
+
+            case EChoice(choice):
+                if (choice.depth > weaveDepth) {
+                    weaveDepth = choice.depth;
+                } else if (choice.depth < weaveDepth) {
+                    gotoNextGather();
+                    return nextFrame();
+                }
+
+                var optionsText = [for(c in availableChoices()) c.output.format(hInterface, nodeScopes, false)];
+                if (optionsText.length > 0) {
+                    return HasChoices(optionsText);
+                } else {
+                    var fallback = fallbackChoice();
+                    return HasText(evaluateChoice(fallback));
+                }
             default:
                 trace('$expr is not implemented');
                 return Finished;
         }
         return Finished;
+    }
+
+    private function availableChoices(): Array<Choice> {
+        var choices = [];
+        var allChoices = ast.collectChoices(exprIndex, weaveDepth);
+        for (choice in allChoices) {
+            if (choicesTaken.indexOf(choice.id) == -1 || !choice.onceOnly) {
+                switch (choice.condition) {
+                    case Some(expr):
+                        if (hInterface.expr(expr, nodeScopes)) {
+                            choices.push(choice);
+                        }
+                    case None:
+                        choices.push(choice);
+                }
+            }
+        }
+
+        return choices;
+    }
+
+    private function fallbackChoice(): Choice {
+        var choices = ast.collectChoices(exprIndex, weaveDepth);
+        var lastChoice = choices[choices.length-1];
+        if (lastChoice.output.isEmpty()) {
+            return lastChoice;
+        } else {
+            throw 'there is no fallback choice!';
+        }
+    }
+
+    private function gotoNextGather() {
+
     }
 
     private function resolveNodeInScope(label: String, ?whichScope: Array<StoryNode>): Array<StoryNode> {
@@ -158,13 +219,17 @@ class Story {
     public function divertTo(target: String) {
         switch (parent) {
             case Some(p):
-                p.embeddedBlocks = []; // 
-                return p.divertTo(target); // A divert from inside embedded hank, ends the embedding
+                // A divert from inside embedded hank, must leave the embedded context
+                p.embeddedBlocks = [];
+                p.divertTo(target);
+                exprIndex = ast.length; // Must return finished
+                return;
             default:
         }
-        trace('diverting to $target');
         var newScopes = resolveNodeInScope(target);
         var targetIdx = newScopes[0].astIndex;
+
+        trace('diverting to $target');
 
         if (targetIdx == -1) {
             throw 'Divert target not found: $target';
@@ -172,6 +237,7 @@ class Story {
         // update the expression index
         exprIndex = targetIdx; 
         var target = newScopes[0];
+        weaveDepth = 0;
 
         // Update the view count
         switch (ast[exprIndex].expr) {
@@ -200,28 +266,52 @@ class Story {
                 }
                 exprIndex += 1;
 
-            // TODO if it's a choice, choose it, and return HasText(output).
-            case EChoice(_):
-                return Finished;
+            case EChoice(c):
+                storedFrame = Some(HasText(evaluateChoice(c)));
+                return;
 
             // Choices and gathers update their own view counts
             default:
         }
         // Update nodeScopes to point to the new scope
         nodeScopes = newScopes;
-
-        return nextFrame();
     }
 
     public function choose(choiceIndex: Int): String {
+        // If embedded, let the embedded section evaluate the choice
         if (embeddedBlocks.length > 0) {
             return embeddedBlocks[0].choose(choiceIndex);
         } else {
             // if not embedded, actually make the choice
-            // TODO if the choice has a label, increment its view count
-            // TODO update the weave depth
+            // TODO collect the available choices, pick the one with the given index
+            // call evaluateChoice() and return that
             return '';
         }
+    }
+
+    function evaluateChoice(choice: Choice): String {
+        // if the choice has a label, increment its view count 
+        switch (choice.label) {
+            case Some(l):
+                var node = resolveNodeInScope(l)[0];
+                viewCounts[node] += 1;
+            case None:
+        }
+        weaveDepth = choice.depth + 1;
+        // if the choice is onceOnly, add its id to the shit list
+        if (choice.onceOnly) {
+            choicesTaken.push(choice.id);
+        }
+
+
+        switch (choice.divertTarget) {
+            case Some(t):
+                divertTo(t);
+            case None:
+        }
+
+        var output = choice.output.format(hInterface, nodeScopes, true);
+        return output;
     }
 
     /** Parse and run embedded Hank script on the fly. **/
