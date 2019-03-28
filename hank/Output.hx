@@ -1,7 +1,9 @@
 package hank;
 
+using StringTools;
+
 import haxe.ds.Option;
-using Extensions.OptionExtender;
+using Extensions.Extensions;
 
 import hank.StoryTree;
 
@@ -102,10 +104,10 @@ class Output {
             if (divertIndex != 0) {
                 parts.push(Text(text.substr(0, divertIndex)));
             }
-            var target = StringTools.trim(text.substr(divertIndex+2));
+            var target = text.substr(divertIndex+2).trim();
             parts.push(InlineDivert(target));
         } else {
-            parts.push(Text(StringTools.rtrim(text)));
+            parts.push(Text(text.rtrim()));
         }
         
         return parts;
@@ -164,6 +166,6 @@ class Output {
             }
         }
 
-        return StringTools.ltrim(fullOutput);
+        return fullOutput.ltrim();
     }
 }

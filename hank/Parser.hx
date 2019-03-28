@@ -1,6 +1,7 @@
 package hank;
 
-using Extensions.OptionExtender;
+using StringTools;
+using Extensions.Extensions;
 import hank.HankAST.ExprType;
 
 /**
@@ -100,14 +101,14 @@ class Parser {
             case None:
                 throw 'Tried to parse expr when no lines were left in file';
             case Some(line):
-                if (StringTools.trim(line).length == 0) {
+                if (line.trim().length == 0) {
                     return ENoOp;
                 }
 
                 for (rule in symbols) {
                     var symbol = rule.keys().next();
                     var rule = rule[symbol];
-                    if (StringTools.startsWith(line, symbol)) {
+                    if (line.startsWith(symbol)) {
                         return rule(buffer, position);
                     }
                 }
@@ -204,8 +205,8 @@ class Parser {
             if (nextLine == ',,,'){
                 var embeddedHankBlock = blockBuffer.takeUntil([',,,'],false,true).unwrap().output;
                 processedContents += 'story.runEmbeddedHank("${escapeQuotes(embeddedHankBlock)}"); ';
-            } else if (StringTools.startsWith(nextLine, ',')) {
-                nextLine = StringTools.trim(nextLine.substr(1));
+            } else if (nextLine.startsWith(',')) {
+                nextLine = nextLine.substr(1).trim();
                 processedContents += 'story.runEmbeddedHank("${escapeQuotes(nextLine)}"); ';
             } else {
                 processedContents += nextLine+' ';
@@ -217,8 +218,8 @@ class Parser {
 
     static function escapeQuotes(s: String) {
         var escaped = s;
-        escaped = StringTools.replace(escaped, "'", "\\'");
-        escaped = StringTools.replace(escaped, '"', '\\"');
+        escaped = escaped.replace("'", "\\'");
+        escaped = escaped.replace('"', '\\"');
         return escaped;
     }
 }

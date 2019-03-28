@@ -1,6 +1,6 @@
 package tests;
 
-using hank.Extensions.OptionExtender;
+using hank.Extensions.Extensions;
 
 import haxe.ds.Option;
 import hank.HankBuffer;

@@ -2,7 +2,7 @@ package hank;
 
 import haxe.ds.Option;
 
-class OptionExtender {
+class Extensions {
     public static function unwrap<T>(o: Option<T>): T {
         switch (o) {
             case Some(value):

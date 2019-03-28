@@ -1,5 +1,7 @@
 package hank;
 
+using StringTools;
+
 import haxe.ds.Option;
 
 /**
@@ -282,7 +284,7 @@ class HankBuffer {
 
     /** If the given expression comes next in the buffer, take its contents. Otherwise, return None **/
     public function expressionIfNext(o: String, c: String): Option<String> {
-        if (StringTools.startsWith(cleanBuffer, o)) {
+        if (cleanBuffer.startsWith(o)) {
             drop(o);
             var end = cleanBuffer.indexOf(c);
             var content = take(end);
@@ -301,10 +303,10 @@ class HankBuffer {
                     drop('\n');
                 }
                 if (trimmed.indexOf('r') != -1) {
-                    nextLine = StringTools.rtrim(nextLine);
+                    nextLine = nextLine.rtrim();
                 }
                 if (trimmed.indexOf('l') != -1) {
-                    nextLine = StringTools.ltrim(nextLine);
+                    nextLine = nextLine.ltrim();
                 }
                 Some(nextLine);
             case None:
@@ -327,7 +329,7 @@ class HankBuffer {
     }
 
     public function skipWhitespace() {
-        var whitespace = cleanBuffer.substr(0, cleanBuffer.length - StringTools.ltrim(cleanBuffer).length);
+        var whitespace = cleanBuffer.substr(0, cleanBuffer.length - cleanBuffer.ltrim().length);
         drop(whitespace);
     }
 

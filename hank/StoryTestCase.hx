@@ -1,5 +1,6 @@
 package hank;
 
+using StringTools;
 import hank.Story.StoryFrame;
 
 class StoryTestCase extends utest.Test {
@@ -8,7 +9,7 @@ class StoryTestCase extends utest.Test {
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
         // If the transcript starts with a random seed, make sure the story uses that seed
         var randomSeed = null;
-        if (StringTools.startsWith(transcriptLines[0], '@')) {
+        if (transcriptLines[0].startsWith('@')) {
             randomSeed = Std.parseInt(transcriptLines[0].substr(1));
             transcriptLines.remove(transcriptLines[0]);
         }
@@ -22,30 +23,30 @@ class StoryTestCase extends utest.Test {
 
             // TODO Allow white-box story testing through variable checks prefixed with #
 /*
-            if (StringTools.startsWith(line, "#")) {
-                var parts = StringTools.trim(line.substr(1)).split(':');
-                HankAssert.equals(StringTools.trim(parts[1]), Std.string(story.hInterface.resolve(parts[0], '')));
+            if (line.startsWith("#")) {
+                var parts = line.substr(1).trim().split(':');
+                HankAssert.equals(parts[1].trim(), Std.string(story.hInterface.resolve(parts[0], '')));
             }
 */
-            if (StringTools.startsWith(line, "*")) {
+            if (line.startsWith("*")) {
                 // Collect the expected set of choices from the transcript.
                 var choices = new Array<String>();
                 do {
                     choices.push(line.substr(2));
 
                     line = transcriptLines[++i];
-                } while (line != null && StringTools.startsWith(line, "*"));
+                } while (line != null && line.startsWith("*"));
 
                 // Assert that the storyframe is a corresponding HasChoices enum
                 HankAssert.equals(HasChoices(choices), frame);
 
                 continue;
-            } else if (StringTools.startsWith(line, ">")) {
+            } else if (line.startsWith(">")) {
                 // Make the choice given, and check for expected output.
-                line = StringTools.ltrim(line.substr(1));
+                line = line.substr(1).ltrim();
                 var firstColonIdx = line.indexOf(':');
                 var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
-                var expectedOutput = StringTools.trim(line.substr(firstColonIdx+1));
+                var expectedOutput = line.substr(firstColonIdx+1).trim();
                 // trace('expecting: ${expectedOutput}');
                 var output = story.choose(index);
                 // trace('got: ${output}');

@@ -1,7 +1,9 @@
 package hank;
 
+using StringTools;
 import haxe.ds.Option;
-using Extensions.OptionExtender;
+
+using Extensions.Extensions;
 
 enum AltBehavior {
     Sequence;
@@ -36,8 +38,8 @@ class Alt {
         var expr = rawExpr.substr(1, rawExpr.length-2);
 
         for (prefix in behaviorMap.keys()) {
-            if (StringTools.startsWith(expr, prefix)) {
-                var outputExprs = StringTools.trim(expr.substr(prefix.length));
+            if (expr.startsWith(prefix)) {
+                var outputExprs = expr.substr(prefix.length).trim();
                 var outputsBuffer = HankBuffer.Dummy(outputExprs);
 
                 var eachOutputExpr = outputsBuffer.rootSplit('|');
