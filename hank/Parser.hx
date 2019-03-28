@@ -3,6 +3,7 @@ package hank;
 using StringTools;
 using Extensions.Extensions;
 import hank.HankAST.ExprType;
+import hank.HankAST.Choice;
 
 /**
  Parses Hank scripts into ASTs for a Story object to interpret. Additional parsing happens in Alt.hx and Output.hx
@@ -189,7 +190,7 @@ class Parser {
         var output = Output.parse(buffer);
         var divertTarget = output.takeInlineDivert();
 
-        return EChoice(choices++, onceOnly, label, condition, depth, output, divertTarget);
+        return EChoice({id: choices++, onceOnly: onceOnly, label: label, condition: condition, depth: depth, output: output, divertTarget: divertTarget});
     }
 
     static function haxeBlock(buffer: HankBuffer, position: HankBuffer.Position): ExprType {

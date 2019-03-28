@@ -219,6 +219,7 @@ class Story {
         } else {
             // if not embedded, actually make the choice
             // TODO if the choice has a label, increment its view count
+            // TODO update the weave depth
             return '';
         }
     }

@@ -67,7 +67,7 @@ class StoryNode {
                     var node = new StoryNode(exprIndex);
                     lastKnot.addChild(name, node);
                     lastStitch = node;
-                case EGather(Some(name), _, _) | EChoice(_, _, Some(name), _, _, _):
+                case EGather(Some(name), _, _) | EChoice({id: _, onceOnly: _, label: Some(name), condition: _, depth: _, output: _, divertTarget: _}):
                     var node = new StoryNode(exprIndex);
                     if (lastKnot == null) {
                         root.addChild(name, node);

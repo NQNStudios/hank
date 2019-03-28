@@ -2,6 +2,8 @@ package hank;
 
 import haxe.ds.Option;
 
+typedef Choice = {id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>};
+
 enum ExprType {
     EIncludeFile(path: String);
 
@@ -16,7 +18,7 @@ enum ExprType {
     EHaxeBlock(haxe: String);
     EGather(label: Option<String>, depth: Int, expr: ExprType);
     // Choices are the most complicated expressions 
-    EChoice(id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>);
+    EChoice(c: Choice);
 }
 
 typedef HankExpr = {

@@ -106,9 +106,9 @@ class ParserTest extends utest.Test {
         assertNextExpr(EGather(None, 1, EOutput(new Output([Text("no label gather on an output")]))));
         assertNextExpr(EGather(Some('labeled'), 2, EOutput(new Output([Text("deep gather")]))));
 
-        assertNextExpr(EChoice(0, true, None, None, 1, new Output([Text("Simplest possible choice")]),None));
-        assertNextExpr(EChoice(1, false, None, Some("condition"), 2, new Output([Text("Choice that ends with a divert")]),Some("target")));
-        assertNextExpr(EChoice(2, true, None, None, 1, new Output([]),Some("fallback_choice")));
-        assertNextExpr(EChoice(3, true, None, None, 1, new Output([]),Some("")));
+        assertNextExpr(EChoice({id: 0, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([Text("Simplest possible choice")]),divertTarget: None}));
+        assertNextExpr(EChoice({id: 1, onceOnly: false, label: None, condition: Some("condition"), depth: 2, output: new Output([Text("Choice that ends with a divert")]),divertTarget: Some("target")}));
+        assertNextExpr(EChoice({id: 2, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("fallback_choice")}));
+        assertNextExpr(EChoice({id: 3, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("")}));
     }
 }
