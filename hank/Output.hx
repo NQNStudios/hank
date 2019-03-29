@@ -164,12 +164,12 @@ class Output {
                 case InlineDivert(t):
                     // TODO follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                 case ToggleOutput(o, b):
-                    if (b != displayToggles) {
+                    if (b == displayToggles) {
                         fullOutput += o.format(hInterface, scope, displayToggles);
                     }
             }
         }
 
-        return fullOutput.ltrim();
+        return fullOutput;
     }
 }

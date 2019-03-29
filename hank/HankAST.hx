@@ -60,12 +60,8 @@ class ASTExtension {
     public static function collectChoices(ast: HankAST, startingIndex: Int, depth: Int): Array<Choice> {
         var choices = [];
         var currentFile = ast[startingIndex].position.file;
-        trace(currentFile);
-
-        trace(findEOF(ast, currentFile));
 
         for (i in startingIndex... findEOF(ast, currentFile)) {
-            trace('checking');
             switch (ast[i].expr) {
                 // Gather choices of the current depth
                 case EChoice(choice):
@@ -82,5 +78,29 @@ class ASTExtension {
         }
 
         return choices;
+    }
+
+    public static function findNextGather(ast: HankAST, path: String, startingIndex: Int, maxDepth: Int): Int {
+        for (i in startingIndex...findEOF(ast, path)) {
+            switch (ast[i].expr) {
+                case EGather(_, depth, _) if (depth <= maxDepth):
+                    return i;
+                default:
+            } 
+        }
+
+        return -1;
+    }
+
+    public static function indexOfChoice(ast: HankAST, id: Int): Int {
+        for (i in 0...ast.length) {
+            var expr = ast[i].expr;
+            switch (expr) {
+                case EChoice(c) if (c.id == id):
+                    return i;
+                default:
+            }
+        }
+        return -1;
     }
 }

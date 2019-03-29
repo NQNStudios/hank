@@ -52,6 +52,10 @@ class Story {
         this.hInterface = hi;
     }
 
+    function currentFile() {
+        return ast[0].position.file;
+    }
+
     function embeddedStory(h: String): Story {
         var ast = parser.parseString(h);
 
@@ -182,7 +186,14 @@ class Story {
     }
 
     private function gotoNextGather() {
+        // TODO implement this to fix the stack overflow
+        var gatherIndex = ast.findNextGather(currentFile(), exprIndex+1,weaveDepth);
 
+        if (gatherIndex == -1) {
+            throw 'Ran out of choice content, and there is no gather';
+        }
+        
+        exprIndex = gatherIndex;
     }
 
     private function resolveNodeInScope(label: String, ?whichScope: Array<StoryNode>): Array<StoryNode> {
@@ -283,9 +294,7 @@ class Story {
             return embeddedBlocks[0].choose(choiceIndex);
         } else {
             // if not embedded, actually make the choice
-            // TODO collect the available choices, pick the one with the given index
-            // call evaluateChoice() and return that
-            return '';
+            return evaluateChoice(availableChoices()[choiceIndex]);
         }
     }
 
@@ -303,11 +312,11 @@ class Story {
             choicesTaken.push(choice.id);
         }
 
-
         switch (choice.divertTarget) {
             case Some(t):
                 divertTo(t);
             case None:
+                exprIndex = ast.indexOfChoice(choice.id)+1;
         }
 
         var output = choice.output.format(hInterface, nodeScopes, true);
