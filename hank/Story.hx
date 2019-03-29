@@ -1,5 +1,6 @@
 package hank;
 
+using StringTools;
 import haxe.ds.Option;
 
 using hank.Extensions;
@@ -7,6 +8,7 @@ using HankAST.ASTExtension;
 using HankAST.Choice;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
+import hank.Alt.AltInstance;
 
 /**
  Possible states of the story being executed.
@@ -31,6 +33,7 @@ class Story {
     var storyTree: StoryNode;
     var viewCounts: Map<StoryNode, Int>;
     var nodeScopes: Array<StoryNode>;
+    var altInstances: Map<Alt, AltInstance> = new Map();
 
     var parser: Parser;
 
@@ -109,7 +112,7 @@ class Story {
         switch (expr) {
             case EOutput(output):
                 exprIndex += 1;
-                return HasText(output.format(hInterface, nodeScopes, false));
+                return HasText(output.format(this, hInterface, random, altInstances, nodeScopes, false).trim());
             case EHaxeLine(h):
                 exprIndex += 1;
 
@@ -142,7 +145,7 @@ class Story {
                     return nextFrame();
                 }
 
-                var optionsText = [for(c in availableChoices()) c.output.format(hInterface, nodeScopes, false)];
+                var optionsText = [for(c in availableChoices()) c.output.format(this, hInterface, random, altInstances, nodeScopes, false)];
                 if (optionsText.length > 0) {
                     return HasChoices(optionsText);
                 } else {
@@ -319,7 +322,7 @@ class Story {
                 exprIndex = ast.indexOfChoice(choice.id)+1;
         }
 
-        var output = choice.output.format(hInterface, nodeScopes, true);
+        var output = choice.output.format(this, hInterface, random, altInstances, nodeScopes, true);
         return output;
     }
 

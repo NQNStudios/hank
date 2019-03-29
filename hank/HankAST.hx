@@ -2,6 +2,8 @@ package hank;
 
 import haxe.ds.Option;
 
+import hank.Alt.AltInstance;
+
 typedef Choice = {id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>};
 
 enum ExprType {

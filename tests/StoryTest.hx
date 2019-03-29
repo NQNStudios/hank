@@ -1,6 +1,8 @@
 package tests;
 
+import haxe.CallStack;
 using StringTools;
+import utest.Assert;
 
 class StoryTest extends hank.StoryTestCase {
     function testAllExamples() {
@@ -19,7 +21,13 @@ class StoryTest extends hank.StoryTestCase {
                     var partial = file.indexOf("partial") != -1;
                     if (!disabled) {
                         trace('    Running ${file}');
-                        validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial);
+                        try {
+                            validateAgainstTranscript('examples/${folder}/main.hank', 'examples/${folder}/${file}', !partial);
+                        } catch (e: Dynamic) {
+                            trace('Error testing $folder/$file: $e');
+                            trace(CallStack.exceptionStack());
+                            Assert.fail();
+                        }
                     }
                 }
             }

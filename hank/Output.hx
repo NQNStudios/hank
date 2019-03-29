@@ -6,6 +6,7 @@ import haxe.ds.Option;
 using Extensions.Extensions;
 
 import hank.StoryTree;
+import hank.Alt.AltInstance;
 
 enum OutputType {
     Text(t: String); // Pure text that is always displayed
@@ -150,7 +151,7 @@ class Output {
 
     }
 
-    public function format(hInterface: HInterface, scope: Array<StoryNode>, displayToggles: Bool): String {
+    public function format(story: Story, hInterface: HInterface, random: Random, altInstances: Map<Alt, AltInstance>, scope: Array<StoryNode>, displayToggles: Bool): String {
         var fullOutput = '';
 
         for (part in parts) {
@@ -158,14 +159,28 @@ class Output {
                 case Text(t):
                     fullOutput += t;
                 case AltExpression(a):
-                    // TODO evaluate the alt expression deterministically
+                    // If this alt hasn't been evaluated yet, we need to make an instance for it
+                    if (!altInstances.exists(a)) {
+                        altInstances[a] = new AltInstance(a.behavior, a.outputs, random);
+                    }
+                    trace(a);
+                    trace([for(key in altInstances.keys()) key].length);
+                    trace(altInstances[a]);
+                    fullOutput += altInstances[a].next().format(story, hInterface, random, altInstances, scope, displayToggles);
                 case HExpression(h):
                     fullOutput += hInterface.evaluateExpr(h, scope);
                 case InlineDivert(t):
-                    // TODO follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
+                    // follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
+                    story.divertTo(t);
+                    switch (story.nextFrame()) {
+                        case HasText(text):
+                            fullOutput += text;
+                        default:
+                    }
+
                 case ToggleOutput(o, b):
                     if (b == displayToggles) {
-                        fullOutput += o.format(hInterface, scope, displayToggles);
+                        fullOutput += o.format(story, hInterface, random, altInstances, scope, displayToggles);
                     }
             }
         }

@@ -13,6 +13,7 @@ enum AltBehavior {
 }
 
 @:allow(hank.AltInstance)
+@:allow(hank.Output)
 class Alt {
     var behavior: AltBehavior;
     var outputs: Array<Output>;
@@ -22,7 +23,7 @@ class Alt {
         '!' => OnceOnly,
         '&' => Cycle,
         '~' => Shuffle,
-        'seq:' => Sequence,
+        'sequence:' => Sequence,
         'once:' => OnceOnly,
         'cycle:' => Cycle,
         'shuffle:' => Shuffle
