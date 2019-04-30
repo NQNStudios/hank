@@ -8,6 +8,7 @@ You can {insert} the values of expressions.
 {shuffle: Things get weird|when you start to use sequence expressions.}
 // If you don't believe me, just look at ParserTest.hx!!
 {once: And they don't get any {easier}|{> when you nest them|{insert}}}!
+{This is a sequence, too|}
 
 You can {
     if (flag) "insert" else "interpolate"

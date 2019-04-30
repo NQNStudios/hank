@@ -51,6 +51,8 @@ class Alt {
             }
         }
 
+	    // Sequences can also occur without the prefix
+
         return None;
     }
 }

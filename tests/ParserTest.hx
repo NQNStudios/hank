@@ -44,23 +44,33 @@ class ParserTest extends utest.Test {
         );
         assertNextExpr(
             EOutput(new Output([
-                AltExpression(
-                    new Alt(
-                        OnceOnly, 
-                        [
-                            new Output([Text("And they don't get any "), HExpression("easier")]), 
-                            new Output([AltExpression(
-                                new Alt(
-                                    Sequence,
-                                    [
-                                        new Output([Text("when you nest them")]),
-                                        new Output([HExpression("insert")])
-                                    ]
-                                )
-                            )]
+                AltExpression(new Alt(
+                    OnceOnly, 
+                    [
+                        new Output([Text("And they don't get any "), HExpression("easier")]), 
+                        new Output([AltExpression(
+                            new Alt(
+                                Sequence,
+                                [
+                                    new Output([Text("when you nest them")]),
+                                    new Output([HExpression("insert")])
+                                ]
+                            )
                         )]
-                    )
-                ), Text("!")
+                    )]
+                )),
+                Text("!")
+            ]))
+        );
+        assertNextExpr(
+            EOutput(new Output([
+				AltExpression(new Alt(
+                    Sequence,
+                    [
+                        new Output([Text('This is a sequence, too')]),
+                        new Output([OutputType.Text('')])
+                    ]
+                ))
             ]))
         );
 
@@ -110,5 +120,6 @@ class ParserTest extends utest.Test {
         assertNextExpr(EChoice({id: 1, onceOnly: false, label: None, condition: Some("condition"), depth: 2, output: new Output([Text("Choice that ends with a divert")]),divertTarget: Some("target")}));
         assertNextExpr(EChoice({id: 2, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("fallback_choice")}));
         assertNextExpr(EChoice({id: 3, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("")}));
+        
     }
 }

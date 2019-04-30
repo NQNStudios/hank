@@ -163,11 +163,9 @@ class Output {
                     if (!altInstances.exists(a)) {
                         altInstances[a] = new AltInstance(a.behavior, a.outputs, random);
                     }
-                    trace(a);
-                    trace([for(key in altInstances.keys()) key].length);
-                    trace(altInstances[a]);
                     fullOutput += altInstances[a].next().format(story, hInterface, random, altInstances, scope, displayToggles);
                 case HExpression(h):
+                    trace(h);
                     fullOutput += hInterface.evaluateExpr(h, scope);
                 case InlineDivert(t):
                     // follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
