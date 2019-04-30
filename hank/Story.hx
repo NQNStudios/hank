@@ -112,7 +112,12 @@ class Story {
         switch (expr) {
             case EOutput(output):
                 exprIndex += 1;
-                return HasText(output.format(this, hInterface, random, altInstances, nodeScopes, false).trim());
+                var text = output.format(this, hInterface, random, altInstances, nodeScopes, false).trim();
+                if (text.length == 0) {
+                    return nextFrame();
+                } else {
+                    return HasText(text);
+                }
             case EHaxeLine(h):
                 exprIndex += 1;
 

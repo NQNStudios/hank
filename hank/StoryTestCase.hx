@@ -32,7 +32,7 @@ class StoryTestCase extends utest.Test {
                     if (!disabled) {
                         trace('    Running ${file}');
                         try {
-                            validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial);
+                            validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                         } catch (e: Dynamic) {
                             trace('Error testing $folder/$file: $e');
                             trace(CallStack.exceptionStack());
@@ -45,7 +45,7 @@ class StoryTestCase extends utest.Test {
 
     }
 
-    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true) {
+    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
 
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
         // If the transcript starts with a random seed, make sure the story uses that seed
@@ -56,6 +56,8 @@ class StoryTestCase extends utest.Test {
         }
 
         var story: Story = Story.FromFile(storyFile, randomSeed);
+
+        story.hInterface.addVariable("DEBUG", debug);
 
         var i = 0;
         while (i < transcriptLines.length) {
