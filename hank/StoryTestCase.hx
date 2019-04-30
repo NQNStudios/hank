@@ -3,8 +3,49 @@ package hank;
 using StringTools;
 import hank.Story.StoryFrame;
 
+import haxe.CallStack;
+import utest.Assert;
+
 class StoryTestCase extends utest.Test {
-     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true) {
+
+    var testsDirectory: String;
+
+    public function new(testsDirectory: String) {
+        super();
+        this.testsDirectory = testsDirectory;
+    }
+
+    public function testAllExamples() {
+        var exampleFolders = sys.FileSystem.readDirectory(testsDirectory);
+
+        // Iterate through every example in the examples folder
+        for (folder in exampleFolders) {
+            trace('Running tests for example "${folder}"');
+            var files = sys.FileSystem.readDirectory('${testsDirectory}/${folder}');
+
+            for (file in files) {
+                if (file.endsWith('.hlog')) {
+
+                    var disabled = file.indexOf("disabled") != -1;
+                    var debug = file.indexOf("debug") != -1;
+                    var partial = file.indexOf("partial") != -1;
+                    if (!disabled) {
+                        trace('    Running ${file}');
+                        try {
+                            validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial);
+                        } catch (e: Dynamic) {
+                            trace('Error testing $folder/$file: $e');
+                            trace(CallStack.exceptionStack());
+                            Assert.fail();
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true) {
 
         var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
         // If the transcript starts with a random seed, make sure the story uses that seed
