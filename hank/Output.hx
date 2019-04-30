@@ -19,6 +19,7 @@ enum OutputType {
 @:allow(tests.ParserTest)
 class Output {
     var parts: Array<OutputType> = [];
+    var diverted: Bool = false;
 
     public function new(?parts: Array<OutputType>) {
         this.parts = if (parts != null) {
@@ -169,21 +170,39 @@ class Output {
                     fullOutput += altInstances[a].next().format(story, hInterface, random, altInstances, scope, displayToggles);
                 case HExpression(h):
                     trace(h);
-                    fullOutput += hInterface.evaluateExpr(h, scope);
+                    var value = hInterface.evaluateExpr(h, scope);
+                    // HExpressions that start with ',' will be parsed and formatted as their own outputs
+                    if (value.startsWith(',')) {
+                        var nestedOutput = Output.parse(HankBuffer.Dummy(value.substr(1)));
+                        value = nestedOutput.format(story, hInterface, random, altInstances, scope, displayToggles);
+                        fullOutput += value;
+                        if (nestedOutput.diverted) break;
+                    }
+                    else {
+                        fullOutput += value;
+                    }
                 case InlineDivert(t):
                     // follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                     story.divertTo(t);
+                    // Track whether the last call to format() resulted in a divert, so nested Outputs can interrupt the flow of their parents
+                    diverted = true;
                     switch (story.nextFrame()) {
                         case HasText(text):
                             fullOutput += text;
                         default:
                     }
+                    break; // Don't format the rest of this Output's parts
 
                 case ToggleOutput(o, b):
                     if (b == displayToggles) {
                         fullOutput += o.format(story, hInterface, random, altInstances, scope, displayToggles);
                     }
             }
+        }
+
+        // Remove double spaces from the output
+        while (fullOutput.indexOf("  ") != -1) {
+            fullOutput = fullOutput.replace("  ", " ");
         }
 
         return fullOutput;
