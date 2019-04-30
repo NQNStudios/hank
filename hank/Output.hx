@@ -158,6 +158,8 @@ class Output {
     public function format(story: Story, hInterface: HInterface, random: Random, altInstances: Map<Alt, AltInstance>, scope: Array<StoryNode>, displayToggles: Bool): String {
         var fullOutput = '';
 
+        diverted = false; // Clear the diverted flag
+
         for (part in parts) {
             switch (part) {
                 case Text(t):
