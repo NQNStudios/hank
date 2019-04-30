@@ -38,22 +38,23 @@ class Alt {
         var rawExpr = buffer.findNestedExpression('{', '}').unwrap().checkValue();
         var expr = rawExpr.substr(1, rawExpr.length-2);
 
+        // Sequences are the default behavior
+        var behavior = Sequence;
         for (prefix in behaviorMap.keys()) {
             if (expr.startsWith(prefix)) {
-                var outputExprs = expr.substr(prefix.length).trim();
-                var outputsBuffer = HankBuffer.Dummy(outputExprs);
-
-                var eachOutputExpr = outputsBuffer.rootSplit('|');
-                var outputs = [for(outputExpr in eachOutputExpr) Output.parse(HankBuffer.Dummy(outputExpr))];
-
-                buffer.take(rawExpr.length);
-                return Some(new Alt(behaviorMap[prefix], outputs));
+                expr = expr.substr(prefix.length).trim();
+                behavior = behaviorMap[prefix];
             }
         }
+        var outputsBuffer = HankBuffer.Dummy(expr);
+        var eachOutputExpr = outputsBuffer.rootSplit('|');
+        if (eachOutputExpr.length == 1) {
+            return None; // If no pipe is present, it's not an alt
+        }
+        var outputs = [for(outputExpr in eachOutputExpr) Output.parse(HankBuffer.Dummy(outputExpr), true)];
 
-	    // Sequences can also occur without the prefix
-
-        return None;
+        buffer.take(rawExpr.length);
+        return Some(new Alt(behavior, outputs));
     }
 }
 

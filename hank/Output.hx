@@ -32,7 +32,7 @@ class Output {
         return parts.length == 0;
     }
 
-    public static function parse(buffer: HankBuffer): Output {
+    public static function parse(buffer: HankBuffer, isPartOfAlt: Bool = false): Output {
         var parts = [];
 
         // If brackets appear on this line, the first step is to break it up into ToggleOutput segments because ToggleOutputs need to be outermost in the hierarchy. 
@@ -81,18 +81,18 @@ class Output {
             }
         }
 
-        parts = updateLastPart(parts);
+        parts = updateLastPart(parts, isPartOfAlt);
         return new Output(parts);
     }
 
-    private static function updateLastPart(parts: Array<OutputType>) {
+    private static function updateLastPart(parts: Array<OutputType>, isPartOfAlt: Bool) {
         // If the last output is Text, it could contain optional text or an inline divert. Or just need rtrimming.
         if (parts.length > 0) {
             var lastPart = parts[parts.length - 1];
             switch(lastPart) {
                 case Text(t):
                     parts.remove(lastPart);
-                    parts = parts.concat(parseLastText(t));
+                    parts = parts.concat(parseLastText(t, isPartOfAlt));
                 default:
             }
         }
@@ -101,7 +101,7 @@ class Output {
 
 
     /** The last part of an output expression outside of braces can include an inline divert -> like_so **/
-    public static function parseLastText(text: String): Array<OutputType> {
+    public static function parseLastText(text: String, isPartOfAlt: Bool): Array<OutputType> {
         var parts = [];
 
         var divertIndex = text.lastIndexOf('->');
@@ -112,7 +112,10 @@ class Output {
             var target = text.substr(divertIndex+2).trim();
             parts.push(InlineDivert(target));
         } else {
-            parts.push(Text(text.rtrim()));
+            if (!isPartOfAlt) {
+                text = text.rtrim();
+            }
+            parts.push(Text(text));
         }
         
         return parts;
@@ -143,7 +146,7 @@ class Output {
         switch (lastPart) {
             case InlineDivert(target):
                 parts.remove(lastPart);
-                parts = updateLastPart(parts);
+                parts = updateLastPart(parts, false);
                 return Some(target);
             default:
                 return None;

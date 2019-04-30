@@ -68,7 +68,7 @@ class ParserTest extends utest.Test {
                     Sequence,
                     [
                         new Output([Text('This is a sequence, too')]),
-                        new Output([OutputType.Text('')])
+                        new Output([])
                     ]
                 ))
             ]))
