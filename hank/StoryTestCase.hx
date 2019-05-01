@@ -57,7 +57,15 @@ class StoryTestCase extends utest.Test {
             transcriptLines.remove(transcriptLines[0]);
         }
 
-        var story: Story = Story.FromFile(storyFile, randomSeed);
+        var story: Story = null;
+        try {
+            story = Story.FromFile(storyFile, randomSeed);
+        } catch (e: Dynamic) {
+            trace('Error parsing $storyFile: $e');
+            trace(CallStack.exceptionStack());
+            Assert.fail();
+            return;
+        }
 
         story.hInterface.addVariable("DEBUG", debug);
 
@@ -65,15 +73,15 @@ class StoryTestCase extends utest.Test {
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
             lastTranscriptLine = i;
-            var frame = story.nextFrame();
 
-            // TODO Allow white-box story testing through variable checks prefixed with #
-/*
+            // Allow white-box story testing through expression value checks prefixed with #
             if (line.startsWith("#")) {
                 var parts = line.substr(1).trim().split(':');
-                HankAssert.equals(parts[1].trim(), Std.string(story.hInterface.resolve(parts[0], '')));
+                HankAssert.equals(parts[1].trim(), story.hInterface.evaluateExpr(parts[0], story.nodeScopes));
+                i +=1;
+                continue;
             }
-*/
+            var frame = story.nextFrame();
             if (line.startsWith("*")) {
                 // Collect the expected set of choices from the transcript.
                 var choices = new Array<String>();

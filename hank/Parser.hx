@@ -120,12 +120,16 @@ class Parser {
     }
 
     /** Split the given line into n tokens, throwing an error if there are any number of tokens other than n **/
-    static function lineTokens(buffer: HankBuffer, n: Int, position: HankBuffer.Position, rtrim: Bool = true): Array<String> {
+    static function lineTokens(buffer: HankBuffer, n: Int, position: HankBuffer.Position, throwOnMismatch: Bool = true, rtrim: Bool = true): Array<String> {
         var line = buffer.takeLine().unwrap();
         if (rtrim) line = line.rtrim();
         var tokens = line.split(' ');
         if (tokens.length != n) {
-            throw 'Wrong number of tokens at ${position}: ${tokens.length} tokens provided--should be ${n}.\nLine: `${line}`\nTokens: ${tokens}';
+            if (throwOnMismatch) {
+                throw 'Wrong number of tokens at ${position}: ${tokens.length} tokens provided--should be ${n}.\nLine: `${line}`\nTokens: ${tokens}';
+            } else {
+                return tokens.slice(0, n);
+            }
         }
         return tokens;
     }
@@ -138,7 +142,7 @@ class Parser {
     static function divert(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         buffer.drop('->');
         buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position, true);
+        var tokens = lineTokens(buffer, 1, position, true, true);
         return EDivert(tokens[0]);
     }
 
@@ -148,19 +152,20 @@ class Parser {
 
     static function knot(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         buffer.drop('==');
+        // Allow 3 equals signs like some Ink scripts use
         if (buffer.peekAhead(0, 1) == '=')
         {
             buffer.drop('=');
         }
         buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position);
+        var tokens = lineTokens(buffer, 1, position, false); // Don't throw if there's another token, like ===
         return EKnot(tokens[0]);
     }
 
     static function stitch(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         buffer.drop('=');
         buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position);
+        var tokens = lineTokens(buffer, 1, position, false);
         return EStitch(tokens[0]);
     }
 

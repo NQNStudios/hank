@@ -8,6 +8,8 @@ import hank.HankAssert;
 
 /**
  These tests are hard to maintain, and may not be relevant now that parsing largely works
+
+ Maybe a better way to test parsing would be to execute individual lines?? idk
 **/
 class ParserTest extends utest.Test {
     var ast: HankAST;
