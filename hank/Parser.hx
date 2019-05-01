@@ -3,7 +3,7 @@ package hank;
 using StringTools;
 using Extensions.Extensions;
 import hank.HankAST.ExprType;
-import hank.HankAST.Choice;
+import hank.Choice.Choice;
 
 /**
  Parses Hank scripts into ASTs for a Story object to interpret. Additional parsing happens in Alt.hx and Output.hx

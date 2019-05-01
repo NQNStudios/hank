@@ -3,8 +3,7 @@ package hank;
 import haxe.ds.Option;
 
 import hank.Alt.AltInstance;
-
-typedef Choice = {id: Int, onceOnly: Bool, label: Option<String>, condition: Option<String>, depth: Int, output: Output, divertTarget: Option<String>};
+import hank.Choice.ChoicePointInfo;
 
 enum ExprType {
     EIncludeFile(path: String);
@@ -59,8 +58,9 @@ class ASTExtension {
     /**
      Collect every choice in the choice point starting at the given index.
     **/
-    public static function collectChoices(ast: HankAST, startingIndex: Int, depth: Int): Array<Choice> {
+    public static function collectChoices(ast: HankAST, startingIndex: Int, depth: Int): ChoicePointInfo {
         var choices = [];
+        var lastChoiceIndex = 0;
         var currentFile = ast[startingIndex].position.file;
 
         for (i in startingIndex... findEOF(ast, currentFile)) {
@@ -68,7 +68,7 @@ class ASTExtension {
                 // Gather choices of the current depth
                 case EChoice(choice):
                     if (choice.depth != depth) continue;
-                    else choices.push(choice);
+                    else { lastChoiceIndex = i; choices.push(choice); };
                 // Stop at the next gather of this depth
                 case EGather(_, d, _) if (d == depth):
                     break;
@@ -79,7 +79,7 @@ class ASTExtension {
             }
         }
 
-        return choices;
+        return { choices: choices, fallbackIndex: lastChoiceIndex };
     }
 
     public static function findNextGather(ast: HankAST, path: String, startingIndex: Int, maxDepth: Int): Int {

@@ -5,7 +5,8 @@ import haxe.ds.Option;
 
 using hank.Extensions;
 using HankAST.ASTExtension;
-using HankAST.Choice;
+import hank.Choice;
+import hank.Choice.FallbackChoice;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
 import hank.Alt.AltInstance;
@@ -128,7 +129,11 @@ class Story {
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
             case EDivert(target):
-                divertTo(target);
+                if (target.length == 0) {
+                    exprIndex += 1;
+                } else {
+                    divertTo(target);
+                }
                 return nextFrame();
 
             case EGather(label, depth, nextExpr):
@@ -146,6 +151,8 @@ class Story {
                 if (choice.depth > weaveDepth) {
                     weaveDepth = choice.depth;
                 } else if (choice.depth < weaveDepth) {
+                    trace(choice);
+                    trace(weaveDepth);
                     gotoNextGather();
                     return nextFrame();
                 }
@@ -155,7 +162,18 @@ class Story {
                     return HasChoices(optionsText);
                 } else {
                     var fallback = fallbackChoice();
-                    return HasText(evaluateChoice(fallback));
+                    switch (fallback.choice.divertTarget) {
+                        case Some(t) if (t.length > 0):
+                            var fallbackText = evaluateChoice(fallback.choice);
+                            if (fallbackText.length > 0) {
+                                throw 'For some reason a fallback choice evaluated to text!';
+                            }
+                            return nextFrame();
+                        default:
+                            exprIndex = fallback.index + 1;
+                            weaveDepth = fallback.choice.depth+1;
+                            return nextFrame();
+                    }
                 }
             default:
                 trace('$expr is not implemented');
@@ -166,16 +184,18 @@ class Story {
 
     private function availableChoices(): Array<Choice> {
         var choices = [];
-        var allChoices = ast.collectChoices(exprIndex, weaveDepth);
+        var allChoices = ast.collectChoices(exprIndex, weaveDepth).choices;
         for (choice in allChoices) {
             if (choicesTaken.indexOf(choice.id) == -1 || !choice.onceOnly) {
                 switch (choice.condition) {
                     case Some(expr):
-                        if (hInterface.expr(expr, nodeScopes)) {
-                            choices.push(choice);
+                        if (!hInterface.expr(expr, nodeScopes)) {
+                            continue;
                         }
                     case None:
-                        choices.push(choice);
+                }
+                if (!choice.output.isEmpty()) {
+                    choices.push(choice);
                 }
             }
         }
@@ -183,18 +203,18 @@ class Story {
         return choices;
     }
 
-    private function fallbackChoice(): Choice {
-        var choices = ast.collectChoices(exprIndex, weaveDepth);
-        var lastChoice = choices[choices.length-1];
+    private function fallbackChoice(): FallbackChoice {
+        var choiceInfo = ast.collectChoices(exprIndex, weaveDepth);
+        var lastChoice = choiceInfo.choices[choiceInfo.choices.length-1];
         if (lastChoice.output.isEmpty()) {
-            return lastChoice;
+            return { choice: lastChoice, index: choiceInfo.fallbackIndex };
         } else {
             throw 'there is no fallback choice!';
         }
     }
 
     private function gotoNextGather() {
-        // TODO implement this to fix the stack overflow
+        trace('current line: ${ast[exprIndex]}');
         var gatherIndex = ast.findNextGather(currentFile(), exprIndex+1,weaveDepth);
 
         if (gatherIndex == -1) {
@@ -236,6 +256,11 @@ class Story {
     }
 
     public function divertTo(target: String) {
+        // Don't try to divert to a fallback target
+        if (target.length == 0) {
+            trace('current line when diverting: ${ast[exprIndex]}');
+            return;
+        }
         switch (parent) {
             case Some(p):
                 // A divert from inside embedded hank, must leave the embedded context
@@ -245,10 +270,11 @@ class Story {
                 return;
             default:
         }
-        var newScopes = resolveNodeInScope(target);
-        var targetIdx = newScopes[0].astIndex;
 
         trace('diverting to $target');
+
+        var newScopes = resolveNodeInScope(target);
+        var targetIdx = newScopes[0].astIndex;
 
         if (targetIdx == -1) {
             throw 'Divert target not found: $target';
@@ -273,6 +299,7 @@ class Story {
                         exprIndex += 1;
                     default:
                 }
+                weaveDepth = 0;
 
             case EStitch(_):
                 // if it's a stitch, increase its view count
@@ -284,6 +311,7 @@ class Story {
                     viewCounts[enclosingKnot] += 1;
                 }
                 exprIndex += 1;
+                weaveDepth = 0;
 
             case EChoice(c):
                 storedFrame = Some(HasText(evaluateChoice(c)));
@@ -294,6 +322,8 @@ class Story {
         }
         // Update nodeScopes to point to the new scope
         nodeScopes = newScopes;
+
+        trace('weaveDepth=$weaveDepth');
     }
 
     public function choose(choiceIndex: Int): String {
@@ -315,6 +345,7 @@ class Story {
             case None:
         }
         weaveDepth = choice.depth + 1;
+        trace('weaveDepth=$weaveDepth');
         // if the choice is onceOnly, add its id to the shit list
         if (choice.onceOnly) {
             choicesTaken.push(choice.id);

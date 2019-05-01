@@ -34,7 +34,7 @@ class StoryTestCase extends utest.Test {
                         try {
                             validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                         } catch (e: Dynamic) {
-                            trace('Error testing $folder/$file: $e');
+                            trace('Error testing $folder/$file at transcript line $lastTranscriptLine: $e');
                             trace(CallStack.exceptionStack());
                             Assert.fail();
                         }
@@ -44,6 +44,8 @@ class StoryTestCase extends utest.Test {
         }
 
     }
+
+    var lastTranscriptLine = 0;
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
 
@@ -62,6 +64,7 @@ class StoryTestCase extends utest.Test {
         var i = 0;
         while (i < transcriptLines.length) {
             var line = transcriptLines[i];
+            lastTranscriptLine = i;
             var frame = story.nextFrame();
 
             // TODO Allow white-box story testing through variable checks prefixed with #
