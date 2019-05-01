@@ -169,7 +169,11 @@ class Output {
                     if (!altInstances.exists(a)) {
                         altInstances[a] = new AltInstance(a.behavior, a.outputs, random);
                     }
-                    fullOutput += altInstances[a].next().format(story, hInterface, random, altInstances, scope, displayToggles);
+                    var nextBranchOutput = altInstances[a].next();
+                    fullOutput += nextBranchOutput.format(story, hInterface, random, altInstances, scope, displayToggles);
+                    if (nextBranchOutput.diverted) {
+                        break;
+                    }
                 case HExpression(h):
                     trace(h);
                     var value = hInterface.evaluateExpr(h, scope);
