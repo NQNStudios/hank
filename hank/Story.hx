@@ -151,8 +151,6 @@ class Story {
                 if (choice.depth > weaveDepth) {
                     weaveDepth = choice.depth;
                 } else if (choice.depth < weaveDepth) {
-                    trace(choice);
-                    trace(weaveDepth);
                     gotoNextGather();
                     return nextFrame();
                 }
@@ -214,7 +212,6 @@ class Story {
     }
 
     private function gotoNextGather() {
-        trace('current line: ${ast[exprIndex]}');
         var gatherIndex = ast.findNextGather(currentFile(), exprIndex+1,weaveDepth);
 
         if (gatherIndex == -1) {
@@ -258,7 +255,6 @@ class Story {
     public function divertTo(target: String) {
         // Don't try to divert to a fallback target
         if (target.length == 0) {
-            trace('current line when diverting: ${ast[exprIndex]}');
             return;
         }
         switch (parent) {
@@ -271,7 +267,7 @@ class Story {
             default:
         }
 
-        trace('diverting to $target');
+        // trace('diverting to $target');
 
         var newScopes = resolveNodeInScope(target);
         var targetIdx = newScopes[0].astIndex;
@@ -322,8 +318,6 @@ class Story {
         }
         // Update nodeScopes to point to the new scope
         nodeScopes = newScopes;
-
-        trace('weaveDepth=$weaveDepth');
     }
 
     public function choose(choiceIndex: Int): String {
@@ -345,7 +339,6 @@ class Story {
             case None:
         }
         weaveDepth = choice.depth + 1;
-        trace('weaveDepth=$weaveDepth');
         // if the choice is onceOnly, add its id to the shit list
         if (choice.onceOnly) {
             choicesTaken.push(choice.id);
