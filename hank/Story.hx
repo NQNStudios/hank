@@ -84,8 +84,26 @@ class Story {
         var story = new Story(random, parser, ast, storyTree, nodeScopes, viewCounts, hInterface);
         hInterface.addVariable('story', story);
 
+        story.runRootIncludedHaxe(script);
         story.exprIndex = ast.findFile(script);
         return story;
+    }
+
+
+    /* Go through each included file executing all Haxe embedded at root level */
+    private function runRootIncludedHaxe(rootFile: String) {
+        var i = 0;
+        while (i < ast.findFile(rootFile)) {
+            var file = ast[i].position.file;
+            switch (ast[i].expr) {
+                case EHaxeLine(h) | EHaxeBlock(h):
+                    hInterface.runEmbeddedHaxe(h, nodeScopes);
+                    i += 1;
+                default:
+                    i = ast.findEOF(file) + 1;
+            }
+        }
+        // TODO when parsing an included file, make sure the first line that isn't embedded haxe (block or line form) is a Knot
     }
 
     public function nextFrame(): StoryFrame {
@@ -114,11 +132,7 @@ class Story {
             case EOutput(output):
                 exprIndex += 1;
                 var text = output.format(this, hInterface, random, altInstances, nodeScopes, false).trim();
-                if (text.length == 0) {
-                    return nextFrame();
-                } else {
-                    return HasText(text);
-                }
+                return finalTextProcessing(text);
             case EHaxeLine(h):
                 exprIndex += 1;
 
@@ -157,7 +171,7 @@ class Story {
 
                 var optionsText = [for(c in availableChoices()) c.output.format(this, hInterface, random, altInstances, nodeScopes, false)];
                 if (optionsText.length > 0) {
-                    return HasChoices(optionsText);
+                    return finalChoiceProcessing(optionsText);
                 } else {
                     var fallback = fallbackChoice();
                     switch (fallback.choice.divertTarget) {
@@ -310,7 +324,7 @@ class Story {
                 weaveDepth = 0;
 
             case EChoice(c):
-                storedFrame = Some(HasText(evaluateChoice(c)));
+                storedFrame = Some(finalTextProcessing(evaluateChoice(c)));
                 return;
 
             // Choices and gathers update their own view counts
@@ -352,11 +366,34 @@ class Story {
         }
 
         var output = choice.output.format(this, hInterface, random, altInstances, nodeScopes, true);
-        return output;
+        return finalChoiceOutputProcessing(output);
     }
 
     /** Parse and run embedded Hank script on the fly. **/
     public function runEmbeddedHank(h: String) {
         embeddedBlocks.push(embeddedStory(h));
+    }
+
+    private function removeDoubleSpaces(t: String) {
+        var intermediate = t;
+        while (intermediate.indexOf('  ') != -1) {
+            intermediate = intermediate.replace('  ', ' ');
+        }
+        return intermediate;
+    }
+
+    private function finalTextProcessing(t: String) {
+        if (t.length > 0)
+            return HasText(removeDoubleSpaces(t).trim());
+        else
+            return nextFrame();
+    }
+
+    private function finalChoiceOutputProcessing(t: String) {
+        return removeDoubleSpaces(t).trim();
+    }
+
+    private function finalChoiceProcessing(choices: Array<String>) {
+        return HasChoices([for(c in choices) removeDoubleSpaces(c).trim()]);
     }
 }

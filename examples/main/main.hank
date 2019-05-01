@@ -8,10 +8,11 @@ Line breaks define the chunks of this section that will eventually get sent to y
 Your Hank scripts will contain the static content of your game, but they can also insert {demo_var}, even the result of complex {part1 + " " + part2}!
 
 ~ var multiline_logic = "Logic can happen on any line before a multiline comment.";
+// TODO is the next line even true anymore?
 /* Multiline block have to start at the
 beginning of their own line. And can't contain
 any other logic on the same line as the start or end. Sorry! */
-~ multiline_logic_example = "Logic can happen on any line after a multiline comment.";
+~ multiline_logic = "Logic can happen on any line after a multiline comment.";
 
 -> choice_example
     

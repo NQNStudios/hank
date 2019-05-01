@@ -6,6 +6,9 @@ import hank.Output;
 import hank.Alt;
 import hank.HankAssert;
 
+/**
+ These tests are hard to maintain, and may not be relevant now that parsing largely works
+**/
 class ParserTest extends utest.Test {
     var ast: HankAST;
 
@@ -25,7 +28,7 @@ class ParserTest extends utest.Test {
         assertNextExpr(EOutput(new Output([Text("This file contains test cases for output expression parsing.")])));
         assertNextExpr(EOutput(new Output([Text("A line won't be interrupted  or anything.")])));
         assertNextExpr(EOutput(new Output([Text("Multiline comments  an output expression. This should parse as one line of output.")])));
-        assertNextExpr(EOutput(new Output([Text("Comments at the end of lines won't parse as part of the Output.")])));
+        assertNextExpr(EOutput(new Output([Text("Comments at the end of lines won't parse as part of the Output. ")])));
         assertNextExpr(EOutput(new Output([Text("You can "), HExpression("insert"), Text(" the values of expressions.")])));
         assertNextExpr(EOutput(new Output([HExpression("you"), Text(" can start an output line with an insert expression. "), HExpression("and_end_one")])));
         
@@ -117,7 +120,7 @@ class ParserTest extends utest.Test {
         assertNextExpr(EGather(Some('labeled'), 2, EOutput(new Output([Text("deep gather")]))));
 
         assertNextExpr(EChoice({id: 0, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([Text("Simplest possible choice")]),divertTarget: None}));
-        assertNextExpr(EChoice({id: 1, onceOnly: false, label: None, condition: Some("condition"), depth: 2, output: new Output([Text("Choice that ends with a divert")]),divertTarget: Some("target")}));
+        assertNextExpr(EChoice({id: 1, onceOnly: false, label: None, condition: Some("condition"), depth: 2, output: new Output([Text("Choice that ends with a divert ")]),divertTarget: Some("target")}));
         assertNextExpr(EChoice({id: 2, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("fallback_choice")}));
         assertNextExpr(EChoice({id: 3, onceOnly: true, label: None, condition: None, depth: 1, output: new Output([]), divertTarget: Some("")}));
         

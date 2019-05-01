@@ -120,11 +120,12 @@ class Parser {
     }
 
     /** Split the given line into n tokens, throwing an error if there are any number of tokens other than n **/
-    static function lineTokens(buffer: HankBuffer, n: Int, position: HankBuffer.Position): Array<String> {
+    static function lineTokens(buffer: HankBuffer, n: Int, position: HankBuffer.Position, rtrim: Bool = true): Array<String> {
         var line = buffer.takeLine().unwrap();
+        if (rtrim) line = line.rtrim();
         var tokens = line.split(' ');
         if (tokens.length != n) {
-            throw 'Include file error at ${position}: ${tokens.length} tokens provided--should be ${n}.\nLine: `${line}`';
+            throw 'Wrong number of tokens at ${position}: ${tokens.length} tokens provided--should be ${n}.\nLine: `${line}`\nTokens: ${tokens}';
         }
         return tokens;
     }
@@ -137,7 +138,7 @@ class Parser {
     static function divert(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
         buffer.drop('->');
         buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position);
+        var tokens = lineTokens(buffer, 1, position, true);
         return EDivert(tokens[0]);
     }
 

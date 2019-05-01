@@ -170,7 +170,10 @@ class HInterface {
             case EBinop(op, e1, e2):
                 if (BOOLEAN_OPS.indexOf(op) != -1) {
                     EBinop(op, boolify(e1), boolify(e2));
-                } else {
+                } else if (op == '=') {
+                    EBinop(op, e1, e2);
+                }
+                else {
                     EBinop(op, valify(e1), valify(e2));
                 }
             case EUnop(op, prefix, e):

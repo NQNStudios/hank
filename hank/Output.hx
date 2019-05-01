@@ -93,7 +93,7 @@ class Output {
             switch(lastPart) {
                 case Text(t):
                     parts.remove(lastPart);
-                    parts = parts.concat(parseLastText(t, isPartOfAlt));
+                    parts = parts.concat(parseLastText(t));
                 default:
             }
         }
@@ -102,7 +102,7 @@ class Output {
 
 
     /** The last part of an output expression outside of braces can include an inline divert -> like_so **/
-    public static function parseLastText(text: String, isPartOfAlt: Bool): Array<OutputType> {
+    public static function parseLastText(text: String): Array<OutputType> {
         var parts = [];
 
         var divertIndex = text.lastIndexOf('->');
@@ -113,9 +113,6 @@ class Output {
             var target = text.substr(divertIndex+2).trim();
             parts.push(InlineDivert(target));
         } else {
-            if (!isPartOfAlt) {
-                text = text.rtrim();
-            }
             parts.push(Text(text));
         }
         
@@ -175,7 +172,6 @@ class Output {
                         break;
                     }
                 case HExpression(h):
-                    trace(h);
                     var value = hInterface.evaluateExpr(h, scope);
                     // HExpressions that start with ',' will be parsed and formatted as their own outputs
                     if (value.startsWith(',')) {
@@ -204,11 +200,6 @@ class Output {
                         fullOutput += o.format(story, hInterface, random, altInstances, scope, displayToggles);
                     }
             }
-        }
-
-        // Remove double spaces from the output
-        while (fullOutput.indexOf("  ") != -1) {
-            fullOutput = fullOutput.replace("  ", " ");
         }
 
         return fullOutput;
