@@ -36,11 +36,19 @@ class Output {
     public static function parse(buffer: HankBuffer, isPartOfAlt: Bool = false): Output {
         var parts = [];
 
+	// We can run into performance issues if we keep biting off from the entire buffer
+	var eol = buffer.rootIndexOf('\n');
+	if (eol == -1) {
+	  eol = buffer.length();
+	}
+	// trace('found eol @ $eol');
+	buffer = HankBuffer.Dummy(buffer.take(eol));
+
         // If brackets appear on this line, the first step is to break it up into ToggleOutput segments because ToggleOutputs need to be outermost in the hierarchy. 
         var findBracketExpression = buffer.findNestedExpression('[', ']');
         switch (findBracketExpression) {
             case Some(slice):
-                if (slice.start < buffer.rootIndexOf('\n')) {
+                if (slice.start < eol) {
                     var part1 = buffer.take(slice.start);
                     buffer.take(1);
                     var part2 = buffer.take(slice.length-2);

@@ -2,6 +2,7 @@ package hank;
 
 using StringTools;
 import hank.Story.StoryFrame;
+import hank.LogUtil;
 
 import haxe.CallStack;
 import utest.Assert;
@@ -35,7 +36,7 @@ class StoryTestCase extends utest.Test {
                             validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                         } catch (e: Dynamic) {
                             trace('Error testing $folder/$file at transcript line $lastTranscriptLine: $e');
-                            trace(CallStack.exceptionStack());
+                            LogUtil.prettyPrintStack(CallStack.exceptionStack());
                             Assert.fail();
                         }
                     }
@@ -62,7 +63,7 @@ class StoryTestCase extends utest.Test {
             story = Story.FromFile(storyFile, randomSeed);
         } catch (e: Dynamic) {
             trace('Error parsing $storyFile: $e');
-            trace(CallStack.exceptionStack());
+            LogUtil.prettyPrintStack(CallStack.exceptionStack());
             Assert.fail();
             return;
         }

@@ -97,8 +97,8 @@ class HankBuffer {
         return s;
     }
 
-    public function indexOf(s: String): Int {
-        return cleanBuffer.indexOf(s);
+    public function indexOf(s: String, start:Int = 0): Int {
+							    return cleanBuffer.indexOf(s, start);
     }
 
     public function everyIndexOf(s: String): Array<Int> {
@@ -110,8 +110,18 @@ class HankBuffer {
     }
 
     public function rootIndexOf(s: String) {
-        // Not the most efficient implementation, but DRY.
-        return everyRootIndexOf(s)[0];
+        // The DRYest possible implementation causes the program to hang when files are big:
+        // return everyRootIndexOf(s)[0];
+					    
+	var start = 0;
+	while (true) {
+	  start = indexOf(s, start);
+	  if (start == -1) return -1;
+	  if (depthAtIndex('{', '}', start) == 0) {
+	    return start;
+	  }
+	  start += 1;
+	}
     }
 
     public function rootSplit(delimiter: String): Array<String> {
