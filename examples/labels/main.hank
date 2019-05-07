@@ -1,4 +1,6 @@
-- (start)
+-> start
+== start
+
 Loop #: {start}
 A: {choice_a}
 B: {choice_b}
@@ -7,7 +9,11 @@ C: {choice_c}
 * (choice_b) Choice B
 * (choice_c) {choice_b && choice_a} Choice C
     -> end
-- -> start
+- (gather) -> start
 
-- (end)
+
+== end
+
+{start.choice_a} // Make sure labeled choices and gathers are scoped
+{start.gather}
 It's over!
