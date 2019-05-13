@@ -4,6 +4,7 @@ using StringTools;
 using Extensions.Extensions;
 import hank.HankAST.ExprType;
 import hank.Choice.Choice;
+import hank.HankBuffer;
 
 /**
  Parses Hank scripts into ASTs for a Story object to interpret. Additional parsing happens in Alt.hx and Output.hx
@@ -55,7 +56,7 @@ class Parser {
         return parsedAST;
     }
 
-    public function parseFile(f: String, includedFile = false) : HankAST {
+    public function parseFile(f: String, ?files: PreloadedFiles, includedFile = false) : HankAST {
         var directory = '';
         var lastSlashIdx = f.lastIndexOf('/');
         if (lastSlashIdx != -1) {
@@ -63,7 +64,7 @@ class Parser {
             f = f.substr(lastSlashIdx+1);
         }
 
-        buffers.insert(0, HankBuffer.FromFile(directory + f));
+        buffers.insert(0, HankBuffer.FromFile(directory + f, files));
 
         while (buffers.length > 0) {
             var position = buffers[0].position();
@@ -74,7 +75,7 @@ class Parser {
                 var expr = parseExpr(buffers[0], position);
                 switch(expr) {
                     case EIncludeFile(file):
-                        parseFile(directory + file, true);
+                        parseFile(directory + file, files, true);
                     case ENoOp:
                         // Drop no-ops from the AST
                     default:

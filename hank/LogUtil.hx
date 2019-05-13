@@ -8,18 +8,24 @@ class LogUtil {
     var linesFromFile = '';
     for (item in stack) {
       switch (item) {
-      case FilePos(null, file, line):
-	if (file != lastFile) {
-	  lastFile = file;
-	  trace(linesFromFile);
-	  linesFromFile = '$file:$line';
-	} else {
-	  linesFromFile += ':$line';
-	}
+      case FilePos(method, file, line):
+        var relevantPart = Std.string(if (method != null) method else line);
+        if (file != lastFile) {
+          lastFile = file;
+          trace(linesFromFile);
+
+          linesFromFile = '$file:$relevantPart';
+        } else {
+          linesFromFile += ':$relevantPart';
+        }
       case other:
-	trace('Stack contains unsupported element: $other');
-	trace(stack);
+        trace('Stack contains unsupported element: $other');
+        trace(stack);
       }
     }
+    if (linesFromFile.length > 0) {
+      trace(linesFromFile);
+    }
   }
+
 }

@@ -2,4 +2,4 @@
 -lib utest
 -debug
 -main tests.ExamplesTestMain
--js js
+-js index.js

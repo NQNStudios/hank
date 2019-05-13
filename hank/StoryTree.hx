@@ -1,6 +1,7 @@
 package hank;
 
 import haxe.ds.Option;
+import hank.DebugMacros.watch;
 
 @:allow(tests.StoryTreeTest)
 class StoryNode {
@@ -70,10 +71,13 @@ class StoryNode {
                 case EGather(Some(name), _, _) | EChoice({id: _, onceOnly: _, label: Some(name), condition: _, depth: _, output: _, divertTarget: _}):
                     var node = new StoryNode(exprIndex);
                     if (lastKnot == null) {
+                        // watch(root);
                         root.addChild(name, node);
                     } else if (lastStitch == null) {
+                        // watch(lastKnot);
                         lastKnot.addChild(name, node);
                     } else {
+                        // watch(lastStitch);
                         lastStitch.addChild(name, node);
                     }
                 default:

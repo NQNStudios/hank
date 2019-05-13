@@ -4,6 +4,8 @@ using StringTools;
 
 import haxe.ds.Option;
 
+typedef PreloadedFiles = Map<String, String>;
+
 /**
  A position in a HankBuffer, used for debugging.
 **/
@@ -83,12 +85,23 @@ class HankBuffer {
         return new HankBuffer('_', text, 1, 1);
     }
 
-    // TODO document why this is private -- to prevent the user from using sys at runtime
-    @:allow(hank.Parser, hank.FileLoadingMacro)
-    private static function FromFile(path: String) {
+    public static function FromFile(path: String, ?files: PreloadedFiles) {
         // Keep a raw buffer of the file for tracking accurate file positions
+#if sys
         var rawBuffer = sys.io.File.getContent(path);
+#else
+        if (files == null || !files.exists(path)) {
+            throw 'Tried to open file $path that was not pre-loaded';
+        }
+        var rawBuffer = files[path];
+#end
         return new HankBuffer(path, rawBuffer);
+    }
+
+    public function lines(): Array<String> {
+        var lines = cleanBuffer.split('\n');
+        drop(cleanBuffer);
+        return lines;
     }
 
     function stripComments(s: String, o: String, c: String, dc: Bool): String {

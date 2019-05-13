@@ -3,6 +3,7 @@ package hank;
 using StringTools;
 import hank.Story.StoryFrame;
 import hank.LogUtil;
+import hank.HankBuffer;
 
 import haxe.CallStack;
 import utest.Assert;
@@ -10,47 +11,77 @@ import utest.Assert;
 class StoryTestCase extends utest.Test {
 
     var testsDirectory: String;
+    var files: PreloadedFiles = new Map();
 
-    public function new(testsDirectory: String) {
+    public function new(testsDirectory: String, ?preloadedFiles: PreloadedFiles) {
         super();
         this.testsDirectory = testsDirectory;
+        if (preloadedFiles != null)
+            this.files = preloadedFiles;
     }
 
     public function testAllExamples() {
+        var exampleTranscripts: Map<String, Array<String>> = new Map();
+#if sys
         var exampleFolders = sys.FileSystem.readDirectory(testsDirectory);
-
-        // Iterate through every example in the examples folder
         for (folder in exampleFolders) {
-            trace('Running tests for example "${folder}"');
             var files = sys.FileSystem.readDirectory('${testsDirectory}/${folder}');
+            exampleTranscripts.set(folder, [for(file in files) if (file.endsWith('.hlog')) file]);
+        }
+#else
+        for (file in files.keys()) {
+            var parts = file.split('/');
 
-            for (file in files) {
-                if (file.endsWith('.hlog')) {
+            if (parts[0] != testsDirectory) {
+                continue;
+            }
 
-                    var disabled = file.indexOf("disabled") != -1;
-                    var debug = file.indexOf("debug") != -1;
-                    var partial = file.indexOf("partial") != -1;
-                    if (!disabled) {
-                        trace('    Running ${file}');
-                        try {
-                            validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
-                        } catch (e: Dynamic) {
-                            trace('Error testing $folder/$file at transcript line $lastTranscriptLine: $e');
-                            LogUtil.prettyPrintStack(CallStack.exceptionStack());
-                            Assert.fail();
-                        }
+            var folder = parts[1];
+            if (!exampleTranscripts.exists(folder)) {
+                exampleTranscripts.set(folder, new Array());
+            }
+            
+            if (parts[2].endsWith('.hlog')) {
+                exampleTranscripts[folder].push(parts[2]);
+            }
+        }
+#end
+
+        for (folder in exampleTranscripts.keys()) {
+            if (folder.startsWith('_')) {
+                trace('Skipping tests for example "${folder}"');
+                continue;
+            }
+            trace('Running tests for example "${folder}"');
+
+            for (file in exampleTranscripts[folder]) {
+                var disabled = file.indexOf("disabled") != -1;
+                var debug = file.indexOf("debug") != -1;
+                var partial = file.indexOf("partial") != -1;
+                if (!disabled) {
+                    trace('    Running ${file}');
+#if !sys
+                    validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
+#else
+                    try {
+                        validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
+                    } catch (e: Dynamic) {
+                        trace('Error testing $folder/$file at transcript line $lastTranscriptLine: $e');
+                        LogUtil.prettyPrintStack(CallStack.exceptionStack());
+                        Assert.fail();
                     }
+#end
                 }
             }
         }
-
     }
 
     var lastTranscriptLine = 0;
 
     private function validateAgainstTranscript(storyFile: String, transcriptFile: String, fullTranscript: Bool = true, debug: Bool = false) {
+        var buffer = HankBuffer.FromFile(transcriptFile, files);
+        var transcriptLines = buffer.lines();
 
-        var transcriptLines = sys.io.File.getContent(transcriptFile).split('\n');
         // If the transcript starts with a random seed, make sure the story uses that seed
         var randomSeed = null;
         if (transcriptLines[0].startsWith('@')) {
@@ -59,14 +90,20 @@ class StoryTestCase extends utest.Test {
         }
 
         var story: Story = null;
+
+// It's easier to debug exceptions on web if they travel up the stack
+#if !sys
+        story = Story.FromFile(storyFile, files, randomSeed);
+#else
         try {
-            story = Story.FromFile(storyFile, randomSeed);
+            story = Story.FromFile(storyFile, files, randomSeed);
         } catch (e: Dynamic) {
             trace('Error parsing $storyFile: $e');
             LogUtil.prettyPrintStack(CallStack.exceptionStack());
             Assert.fail();
             return;
         }
+#end
 
         story.hInterface.addVariable("DEBUG", debug);
 

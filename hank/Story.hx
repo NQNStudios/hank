@@ -1,5 +1,6 @@
 package hank;
 
+import hank.HankBuffer;
 using StringTools;
 import haxe.ds.Option;
 
@@ -69,19 +70,15 @@ class Story {
         return story;
     }
 
-    public static function FromFile(script: String, ?randomSeed: Int): Story {
+    public static function FromAST(script: String, ast: HankAST, ?randomSeed: Int): Story {
         var random = new Random(randomSeed);
-
-        var parser = new Parser();
-        var ast = parser.parseFile(script);
-
         var storyTree = StoryNode.FromAST(ast);
         var nodeScopes = [storyTree];
         var viewCounts = storyTree.createViewCounts();
 
         var hInterface = new HInterface(storyTree, viewCounts);
 
-        var story = new Story(random, parser, ast, storyTree, nodeScopes, viewCounts, hInterface);
+        var story = new Story(random, new Parser(), ast, storyTree, nodeScopes, viewCounts, hInterface);
         hInterface.addVariable('story', story);
 
         story.runRootIncludedHaxe(script);
@@ -89,6 +86,11 @@ class Story {
         return story;
     }
 
+    public static function FromFile(script: String, ?files: PreloadedFiles, ?randomSeed: Int): Story {
+        var parser = new Parser();
+        var ast = parser.parseFile(script, files);
+        return Story.FromAST(script, ast, randomSeed);
+    }
 
     /* Go through each included file executing all Haxe embedded at root level */
     private function runRootIncludedHaxe(rootFile: String) {

@@ -16,7 +16,7 @@ class FileLoadingMacro {
             if (file.endsWith("/")) {
                 files.remove(file);
 
-                files = files.concat(recursiveLoop(file, []));
+                files = files.concat(recursiveLoop(file));
             } else {
                 ++i;
             }
@@ -48,7 +48,8 @@ class FileLoadingMacro {
     }
 
     // this function is nabbed from https://code.haxe.org/category/beginner/using-filesystem.html
-    static function recursiveLoop(directory:String, files: Array<String>): Array<String> {
+    static function recursiveLoop(directory:String, ?files: Array<String>): Array<String> {
+        if (files == null) files = [];
         if (sys.FileSystem.exists(directory)) {
             trace("directory found: " + directory);
             for (file in sys.FileSystem.readDirectory(directory)) {
