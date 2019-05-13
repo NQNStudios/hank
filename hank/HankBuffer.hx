@@ -56,6 +56,7 @@ typedef BufferOutput = {
 /**
  Helper class for reading/parsing information from a string buffer. Completely drops comments
 **/
+@:allow(tests.HankBufferTest)
 class HankBuffer {
     var path: String;
     var cleanBuffer: String;
@@ -63,7 +64,11 @@ class HankBuffer {
     var line: Int;
     var column: Int;
 
-    private function new(path: String, rawBuffer: String, line: Int = 1, column: Int = 1) {
+    public function new(path: String, rawBuffer: String, line: Int = 1, column: Int = 1) {
+        if (rawBuffer == null) {
+            throw 'Tried to create buffer of path $path with null contents: $rawBuffer';
+        }
+
         this.path = path;
         this.rawBuffer = rawBuffer;
         // Keep a clean buffer for returning data without comments getting in the way
@@ -73,11 +78,14 @@ class HankBuffer {
         this.column = column;
     }
 
+    // TODO because this obfuscates the position of parsing, maybe it should be deprecated
     public static function Dummy(text: String) {
         return new HankBuffer('_', text, 1, 1);
     }
 
-    public static function FromFile(path: String) {
+    // TODO document why this is private -- to prevent the user from using sys at runtime
+    @:allow(hank.Parser, hank.FileLoadingMacro)
+    private static function FromFile(path: String) {
         // Keep a raw buffer of the file for tracking accurate file positions
         var rawBuffer = sys.io.File.getContent(path);
         return new HankBuffer(path, rawBuffer);
