@@ -1,0 +1,4 @@
+-lib hscript
+-lib utest
+-main tests.ExamplesTestMain
+--interp
