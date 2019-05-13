@@ -7,6 +7,7 @@ import hank.LogUtil;
 import haxe.CallStack;
 import utest.Assert;
 
+@:build(hank.FileLoadingMacro.build(["README.md"]))
 class StoryTestCase extends utest.Test {
 
     var testsDirectory: String;
@@ -17,6 +18,8 @@ class StoryTestCase extends utest.Test {
     }
 
     public function testAllExamples() {
+        trace(_serializedFiles);//['README.md']);
+        return;
         var exampleFolders = sys.FileSystem.readDirectory(testsDirectory);
 
         // Iterate through every example in the examples folder
