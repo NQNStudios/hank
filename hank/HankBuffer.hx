@@ -268,6 +268,12 @@ class HankBuffer {
         }
     }
 
+    public function takeToken() {
+        var value = takeUntil([" ", "\n", "\t"]);
+        skipWhitespace();
+        return value;
+    }
+
     /** Take data from the file until encountering one of the given terminator sequences. **/
     public function takeUntil(terminators: Array<String>, eofTerminates: Bool = false, dropTerminator = true): Option<BufferOutput> {
         return switch (peekUntil(terminators, eofTerminates)) {

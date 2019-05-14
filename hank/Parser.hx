@@ -13,6 +13,7 @@ import hank.HankBuffer;
 class Parser {
     static var symbols: Array<Map<String, HankBuffer -> HankBuffer.Position -> ExprType>> = [
         ['INCLUDE ' => include],
+        ['->->' => function(_, _) { return ETunnelDivert; }],
         ['->' => divert],
         ['===' => knot],
         ['==' => knot],
@@ -141,10 +142,23 @@ class Parser {
     }
 
     static function divert(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        buffer.drop('->');
-        buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position, true, true);
-        return EDivert(tokens[0]);
+        var line = HankBuffer.Dummy(buffer.takeLine());
+
+        var targets = [];
+
+        do {
+            line.drop("->");
+            line.skipWhitespace();
+
+            switch (line.takeToken()) {
+                case Some(target):
+                    targets.push(target);
+                case None:
+                    targets.push('');
+            }
+        } while (!line.isEmpty());
+
+        return EDivert(targets);
     }
 
     static function output(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {

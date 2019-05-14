@@ -29,6 +29,10 @@ class Story {
     var hInterface: HInterface;
     var random: Random;
 
+    var tunnelBreadcrumbs: Array<Int> = [];
+    var tunnelTargets: Array<StoryNode> = [];
+    var tunnelReturns: Bool = false;
+
     var ast: HankAST;
     var exprIndex: Int;
 
@@ -126,7 +130,21 @@ class Story {
         if (exprIndex >= ast.length) {
             return Finished;
         }
+
+        // Diverts need to be handled here to support chaining tunnels
         return processExpr(ast[exprIndex].expr);
+    }
+
+    private function makeNextDivert() {
+        if (tunnelTargets.length == 0) {
+            throw 'supposed to divert to the next in tunnel but there are none!';
+        }
+        var next = tunnelTargets.shift();
+        if (next.length > 0) {
+            divertTo(next);
+        } else {
+            exprIndex = tunnelBreadcrumbs.pop();
+        }
     }
 
     private function processExpr(expr: ExprType): StoryFrame {
@@ -144,11 +162,16 @@ class Story {
                 exprIndex += 1;
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
-            case EDivert(target):
+            case ETunnelDivert:
+                makeNextDivert();
+            case EDivert(targets):
                 if (target.length == 0) {
                     exprIndex += 1;
                 } else {
-                    divertTo(target);
+                    tunnelBreadcrumbs.push(exprIndex);
+                    tunnelTargets = tunnelTargets.concat([for(target in targets) if (target.length > 0) resolveNodeInScope(targets)]);
+                    tunnelReturn = (targets[targets.length-1].length == 0);
+                    makeNextDivert();
                 }
                 return nextFrame();
 
@@ -265,14 +288,13 @@ class Story {
                 case None:
             }
         }
+        if (newScopes[0].astIndex == -1) {
+            throw 'Divert target not found: $label';
+        }
         return newScopes;
     }
 
-    public function divertTo(target: String) {
-        // Don't try to divert to a fallback target
-        if (target.length == 0) {
-            return;
-        }
+    public function divertTo(target: StoryNode) {
         switch (parent) {
             case Some(p):
                 // A divert from inside embedded hank, must leave the embedded context
@@ -285,15 +307,10 @@ class Story {
 
         // trace('diverting to $target');
 
-        var newScopes = resolveNodeInScope(target);
-        var targetIdx = newScopes[0].astIndex;
+        var targetIdx = target.astIndex;
 
-        if (targetIdx == -1) {
-            throw 'Divert target not found: $target';
-        }
         // update the expression index
         exprIndex = targetIdx; 
-        var target = newScopes[0];
         weaveDepth = 0;
 
         // Update the view count
@@ -306,7 +323,7 @@ class Story {
                 // If a knot directly starts with a stitch, run it
                 switch (ast[exprIndex].expr) {
                     case EStitch(label):
-                        var firstStitch = resolveNodeInScope(label, newScopes)[0];
+                        var firstStitch = resolveNodeInScope(label, target)[0];
                         viewCounts[firstStitch] += 1;
                         exprIndex += 1;
                     default:
@@ -317,7 +334,7 @@ class Story {
                 // if it's a stitch, increase its view count
                 viewCounts[target] += 1;
 
-                var enclosingKnot = newScopes[1];
+                var enclosingKnot = target[1];
                 // If we weren't in the stitch's containing section before, increase its viewcount
                 if (nodeScopes.indexOf(enclosingKnot) == -1) {
                     viewCounts[enclosingKnot] += 1;
@@ -333,7 +350,7 @@ class Story {
             default:
         }
         // Update nodeScopes to point to the new scope
-        nodeScopes = newScopes;
+        nodeScopes = target;
     }
 
     public function choose(choiceIndex: Int): String {

@@ -10,7 +10,12 @@ enum ExprType {
 
     EOutput(o: Output);
 
-    EDivert(target: String);
+    ETunnelDivert;
+    /**
+     A divert statement that may contain multiple targets strung together (tunneling). An empty
+     string means to return to the original position
+    **/
+    EDivert(targets: Array<String>);
     EKnot(name: String);
     EStitch(name: String);
     ENoOp;
