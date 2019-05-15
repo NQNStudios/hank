@@ -1,12 +1,30 @@
--js out.js
--cmd node out.js
-hxml/all.hxml
+-cp hank
+-lib hscript
+-lib utest
+--each
+
+-cpp cpp
+hxml/internals.hxml
+--next
+
+-cpp cpp
+hxml/examples.hxml
+--next
+
+-js js/hank.js
+-cmd node js/hank.js
+hxml/internals.hxml
+--next
+
+-js js/hank.js
+-cmd node js/hank.js
+hxml/examples.hxml
 --next
 
 --interp
-hxml/all.hxml
+hxml/internals.hxml
 --next
 
--cpp
-hxml/all.hxml
+--interp
+hxml/examples.hxml
 --next

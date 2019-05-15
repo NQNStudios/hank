@@ -6,6 +6,7 @@ import hank.StoryTree;
 import hank.Parser;
 using hank.Extensions;
 
+@:build(hank.FileLoadingMacro.build(["examples/diverts/"]))
 class StoryTreeTest extends utest.Test {
     var tree: StoryNode;
 
@@ -38,7 +39,7 @@ class StoryTreeTest extends utest.Test {
     }
 
     function testParse() {
-        var tree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank"));
+        var tree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank", files));
 
         HankAssert.isSome(tree.resolve("start"));
         HankAssert.isSome(tree.resolve("three"));

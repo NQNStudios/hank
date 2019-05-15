@@ -11,6 +11,7 @@ import hank.HankAssert;
 
  Maybe a better way to test parsing would be to execute individual lines?? idk
 **/
+@:build(hank.FileLoadingMacro.build(["examples/parsing/"]))
 class ParserTest extends utest.Test {
     var ast: HankAST;
 
@@ -26,7 +27,7 @@ class ParserTest extends utest.Test {
 
     function testParseOutput() {
         var parser = new Parser();
-        ast = parser.parseFile('examples/parsing/output.hank');
+        ast = parser.parseFile('examples/parsing/output.hank', files);
         assertNextExpr(EOutput(new Output([Text("This file contains test cases for output expression parsing.")])));
         assertNextExpr(EOutput(new Output([Text("A line won't be interrupted  or anything.")])));
         assertNextExpr(EOutput(new Output([Text("Multiline comments  an output expression. This should parse as one line of output.")])));
@@ -102,7 +103,7 @@ class ParserTest extends utest.Test {
 
     function testParseMisc() {
         var parser = new Parser();
-        ast = parser.parseFile('examples/parsing/misc.hank');
+        ast = parser.parseFile('examples/parsing/misc.hank', files);
         assertNextExpr(EHaxeLine('var demo_var = "dynamic content";'));
         assertNextExpr(EKnot("knot_example"));
         assertNextExpr(EKnot("knot_example"));

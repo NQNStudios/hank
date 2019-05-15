@@ -1,7 +1,7 @@
 package hank;
 
 import haxe.ds.Option;
-import hank.DebugMacros.watch;
+import hank.LogUtil.watch;
 
 @:allow(tests.StoryTreeTest)
 class StoryNode {

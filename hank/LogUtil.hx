@@ -27,5 +27,27 @@ class LogUtil {
       trace(linesFromFile);
     }
   }
+  public static macro function watch(e: Expr): Expr {
+    switch (e.expr) {
+        case EConst(CIdent(i)):
+            return macro trace('$i:' + $e);
+        default:
+            throw 'Can only watch variables (for now)';
+    }
+  }
 
+  public static function currentTarget(): String {
+#if js
+    return "js";
+#end
+#if cpp
+    return "cpp";
+#end
+#if interp
+    return "interp";
+#end
+
+    return "unknown";
+
+  }
 }
