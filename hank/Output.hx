@@ -36,13 +36,13 @@ class Output {
     public static function parse(buffer: HankBuffer, isPartOfAlt: Bool = false): Output {
         var parts = [];
 
-	// We can run into performance issues if we keep biting off from the entire buffer
-	var eol = buffer.rootIndexOf('\n');
-	if (eol == -1) {
-	  eol = buffer.length();
-	}
-	// trace('found eol @ $eol');
-	buffer = HankBuffer.Dummy(buffer.take(eol));
+        // We can run into performance issues if we keep biting off from the entire buffer
+        var eol = buffer.rootIndexOf('\n');
+        if (eol == -1) {
+        eol = buffer.length();
+        }
+        // trace('found eol @ $eol');
+        buffer = HankBuffer.Dummy(buffer.take(eol));
 
         // If brackets appear on this line, the first step is to break it up into ToggleOutput segments because ToggleOutputs need to be outermost in the hierarchy. 
         var findBracketExpression = buffer.findNestedExpression('[', ']');
@@ -91,6 +91,7 @@ class Output {
         }
 
         parts = updateLastPart(parts, isPartOfAlt);
+        // trace('parts in whole: $parts');
         return new Output(parts);
     }
 
@@ -100,7 +101,7 @@ class Output {
             var lastPart = parts[parts.length - 1];
             switch(lastPart) {
                 case Text(t):
-                    parts.remove(lastPart);
+                    parts.pop(); // .remove() removes the FIRST occurance. Ha, that bug took forever to find!
                     parts = parts.concat(parseLastText(t));
                 default:
             }
@@ -141,7 +142,9 @@ class Output {
         // Strip out the enclosing braces
         var hExpression = rawExpression.substr(1, rawExpression.length - 2);
 
-        buffer.take(rawExpression.length);
+        // Evil bug starts here.
+        var checkNext = buffer.take(rawExpression.length);
+
         return HExpression(hExpression);
     }
 
@@ -182,6 +185,7 @@ class Output {
                 case HExpression(h):
                     var value = hInterface.evaluateExpr(h, scope);
                     // HExpressions that start with ',' will be parsed and formatted as their own outputs
+                    // (If that sounds confusing, see examples/divert-line to clarify).
                     if (value.startsWith(',')) {
                         var nestedOutput = Output.parse(HankBuffer.Dummy(value.substr(1)));
                         value = nestedOutput.format(story, hInterface, random, altInstances, scope, displayToggles);
@@ -191,6 +195,7 @@ class Output {
                     else {
                         fullOutput += value;
                     }
+
                 case InlineDivert(t):
                     // follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                     story.divertTo(t);
