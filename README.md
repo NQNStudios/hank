@@ -6,6 +6,11 @@ Portable narrative scripting language based on Ink.
 Hank is a more portable answer to Inkle's open-source [Ink](http://github.com/inkle/ink)
 engine. It is currently just a proof of concept, but you may use it at your own risk.
 
+Supported targets:
+
+* JavaScript
+* C++
+
 ## Comparison with Ink and Inkjs
 
 |Feature|Ink|Inkjs|Hank|

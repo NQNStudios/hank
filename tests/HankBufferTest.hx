@@ -7,6 +7,7 @@ import hank.HankBuffer;
 import hank.HankBuffer.Position;
 import hank.HankAssert;
 
+@:build(hank.FileLoadingMacro.build(["examples/parsing/"]))
 class HankBufferTest extends utest.Test {
     var file: HankBuffer;
     var path: String;
@@ -14,7 +15,7 @@ class HankBufferTest extends utest.Test {
 
     function setup() {
         path = 'examples/parsing/file.txt';
-        file = HankBuffer.FromFile(path);
+        file = HankBuffer.FromFile(path, files);
         expectedPosition = new Position(path, 1, 1);
     }
 
@@ -103,7 +104,7 @@ class HankBufferTest extends utest.Test {
     }
 
     function testGetLineTrimming() {
-        file = HankBuffer.FromFile('examples/parsing/whitespace.txt');
+        file = HankBuffer.FromFile('examples/parsing/whitespace.txt', files);
 
         HankAssert.equals(Some("Just give me this output."), file.peekLine("lr"));
         HankAssert.equals(Some("        Just give me this output."), file.peekLine("r"));
@@ -116,14 +117,14 @@ class HankBufferTest extends utest.Test {
     }
 
     function testSkipWhitespace() {
-        file = HankBuffer.FromFile('examples/parsing/whitespace.txt');
+        file = HankBuffer.FromFile('examples/parsing/whitespace.txt', files);
 
         file.skipWhitespace();
         HankAssert.equals("Just", file.take(4));
     }
 
     function testFindNestedExpression() {
-        file = HankBuffer.FromFile('examples/parsing/nesting.txt');
+        file = HankBuffer.FromFile('examples/parsing/nesting.txt', files);
         var slice1 = file.findNestedExpression('{', '}', 0);
         HankAssert.contains("doesn't contain what comes first", slice1.unwrap().checkValue());
         HankAssert.contains("Ends before here", slice1.unwrap().checkValue());

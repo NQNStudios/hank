@@ -1,5 +1,0 @@
--lib hscript
--lib utest
--debug
--main tests.ExamplesTestMain
--js index.js

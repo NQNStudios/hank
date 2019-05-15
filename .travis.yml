@@ -1,5 +1,5 @@
 language: haxe
 haxe:
-  - "4.0.0-preview.5"
+  - "3.4.7"
 hxml:
-  - test.hxml
+  - hxml/all-platforms.hxml

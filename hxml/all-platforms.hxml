@@ -1,0 +1,12 @@
+-js out.js
+-cmd node out.js
+hxml/all.hxml
+--next
+
+--interp
+hxml/all.hxml
+--next
+
+-cpp
+hxml/all.hxml
+--next

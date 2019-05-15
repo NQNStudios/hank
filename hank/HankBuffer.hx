@@ -90,7 +90,9 @@ class HankBuffer {
 #if sys
         var rawBuffer = sys.io.File.getContent(path);
 #else
-        if (files == null || !files.exists(path)) {
+        if (files == null) {
+            throw 'Tried to open file $path on a non-sys platform without passing in preloaded files';
+        } else if (!files.exists(path)) {
             throw 'Tried to open file $path that was not pre-loaded';
         }
         var rawBuffer = files[path];

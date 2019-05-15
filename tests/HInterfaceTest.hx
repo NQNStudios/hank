@@ -19,6 +19,7 @@ class TestObject {
 
 }
 
+@:build(hank.FileLoadingMacro.build(["examples/diverts/"]))
 class HInterfaceTest extends utest.Test {
 
     var hInterface: HInterface;
@@ -26,7 +27,7 @@ class HInterfaceTest extends utest.Test {
     var root: Array<StoryNode>;
 
     public function setup() {
-        storyTree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank"));
+        storyTree = StoryNode.FromAST(new Parser().parseFile("examples/diverts/main.hank", files));
         var viewCounts = storyTree.createViewCounts();
         root = [storyTree];
 

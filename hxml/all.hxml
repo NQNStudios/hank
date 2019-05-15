@@ -1,0 +1,7 @@
+-cp hank
+-lib hscript
+-lib utest
+--each
+hxml/examples.hxml
+--next
+hxml/internals.hxml

@@ -16,7 +16,12 @@ class FileLoadingMacro {
             if (file.endsWith("/")) {
                 files.remove(file);
 
-                files = files.concat(recursiveLoop(file));
+                var dirFiles = recursiveLoop(file);
+                if (dirFiles.length == 0) {
+                    throw 'No files found in directory "$file"';
+                }
+
+                files = files.concat(dirFiles);
             } else {
                 ++i;
             }
@@ -51,21 +56,21 @@ class FileLoadingMacro {
     static function recursiveLoop(directory:String, ?files: Array<String>): Array<String> {
         if (files == null) files = [];
         if (sys.FileSystem.exists(directory)) {
-            trace("directory found: " + directory);
+            //trace("directory found: " + directory);
             for (file in sys.FileSystem.readDirectory(directory)) {
                 var path = haxe.io.Path.join([directory, file]);
                 if (!sys.FileSystem.isDirectory(path)) {
-                    trace("file found: " + path);
+                    //trace("file found: " + path);
                     // do something with file
                     files.push(path.toString());
                 } else {
                     var directory = haxe.io.Path.addTrailingSlash(path);
-                    trace("directory found: " + directory);
+                    //trace("directory found: " + directory);
                     files = recursiveLoop(directory, files);
                 }
             }
         } else {
-            trace('"$directory" does not exists');
+            //trace('"$directory" does not exists');
         }
 
         return files;
