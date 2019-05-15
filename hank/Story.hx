@@ -203,7 +203,7 @@ class Story {
             if (choicesTaken.indexOf(choice.id) == -1 || !choice.onceOnly) {
                 switch (choice.condition) {
                     case Some(expr):
-                        if (!hInterface.expr(expr, nodeScopes)) {
+                        if (!hInterface.cond(expr, nodeScopes)) {
                             continue;
                         }
                     case None:
