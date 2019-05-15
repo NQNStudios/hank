@@ -4,10 +4,12 @@
 --each
 
 -cpp cpp
+-cmd cpp/Internals
 hxml/internals.hxml
 --next
 
 -cpp cpp
+-cmd cpp/Examples
 hxml/examples.hxml
 --next
 
