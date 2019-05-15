@@ -3,7 +3,8 @@ package hank;
 import haxe.CallStack;
 
 class LogUtil {
-  public static function prettyPrintStack(stack: Array<StackItem>) {
+  public static function prettifyStack(stack: Array<StackItem>) {
+    var output = '';
     var lastFile: String = '';
     var linesFromFile = '';
     for (item in stack) {
@@ -12,7 +13,7 @@ class LogUtil {
         var relevantPart = Std.string(if (method != null) method else line);
         if (file != lastFile) {
           lastFile = file;
-          trace(linesFromFile);
+          output += linesFromFile + '\n';
 
           linesFromFile = '$file:$relevantPart';
         } else {
@@ -24,9 +25,16 @@ class LogUtil {
       }
     }
     if (linesFromFile.length > 0) {
-      trace(linesFromFile);
+      output += linesFromFile + '\n';
     }
+    return output;
   }
+
+
+  public static function prettyPrintStack(stack: Array<StackItem>) {
+    trace(prettifyStack(stack));    
+  }
+
   public static macro function watch(e: Expr): Expr {
     switch (e.expr) {
         case EConst(CIdent(i)):
