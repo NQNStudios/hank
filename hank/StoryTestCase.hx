@@ -60,15 +60,14 @@ class StoryTestCase extends utest.Test {
                 var partial = file.indexOf("partial") != -1;
                 if (!disabled) {
                     trace('    Running ${file}');
-#if !sys
+
+#if stop_on_error
                     validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
 #else
                     try {
                         validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                     } catch (e: Dynamic) {
-                        trace('Error testing $folder/$file at transcript line $lastTranscriptLine: $e');
-                        LogUtil.prettyPrintStack(CallStack.exceptionStack());
-                        Assert.fail();
+                        Assert.fail('Error testing $folder/$file at transcript line $lastTranscriptLine: $e, ${LogUtil.prettifyStack(CallStack.exceptionStack()) }');
                     }
 #end
                 }
