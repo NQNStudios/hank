@@ -39,6 +39,7 @@ class HInterface {
                 }
             default:
         }
+        trace('$o is $type');
         return false;
     }
 
@@ -107,19 +108,26 @@ class HInterface {
         interp.execute(expr);
     }
 
-    public function expr(h: String, scope: Array<Dynamic>) {
+    public function expr(h: String, scope: Array<Dynamic>):Dynamic {
         interp.variables['scope'] = scope;
 
         var expr = parser.parseString(h);
         expr = transmute(expr);
-        var val = interp.expr(expr);
+        var val: Dynamic = interp.expr(expr);
 
         if (val == null) {
             throw 'Expression ${h} evaluated to null';
         }
         
-        return valueOf(viewCounts, val);
+        var val2 = valueOf(viewCounts, val);
+        trace('$val: ${val.typeof()} became $val2: ${val2.typeof()}');
+        return val2;
     }
+
+    public function cond(h: String, scope: Array<Dynamic>): Bool {
+        return isTruthy(viewCounts, expr(h, scope));
+    }
+
     public function evaluateExpr(h: String, scope: Array<Dynamic>): String {
         return Std.string(expr(h, scope));
     }
@@ -143,8 +151,6 @@ class HInterface {
     function valify(expr: Expr): Expr {
         return ECall(EIdent('_valueOf'), [transmute(expr)]);
     }
-
-
 
     /**
      Adapt an expression for the embedded context
