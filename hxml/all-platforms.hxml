@@ -3,6 +3,16 @@
 -lib utest
 --each
 
+-js js/hank.js
+-cmd node js/hank.js
+hxml/internals.hxml
+--next
+
+-js js/hank.js
+-cmd node js/hank.js
+hxml/examples.hxml
+--next
+
 -cpp cpp
 -cmd cpp/Internals
 hxml/internals.hxml
@@ -10,23 +20,5 @@ hxml/internals.hxml
 
 -cpp cpp
 -cmd cpp/Examples
-hxml/examples.hxml
---next
-
--js js/hank.js
--cmd node js/hank.js
-hxml/internals.hxml
---next
-
--js js/hank.js
--cmd node js/hank.js
-hxml/examples.hxml
---next
-
---interp
-hxml/internals.hxml
---next
-
---interp
 hxml/examples.hxml
 --next

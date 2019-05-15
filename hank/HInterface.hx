@@ -30,19 +30,6 @@ class HInterface {
         this.viewCounts = viewCounts;
     }
 
-    static function isStoryNode(o: Dynamic) {
-        var type = o.typeof();
-        switch (type) {
-            case TClass(c):
-                if (c.getClassName() == 'hank.StoryNode') {
-                    return true;
-                }
-            default:
-        }
-        trace('$o is $type');
-        return false;
-    }
-
     static function resolveInScope(variables: Map<String, Dynamic>, name: String): Dynamic {
         var scope: Array<Dynamic> = cast(variables['scope'], Array<Dynamic>);
         for (container in scope) {
@@ -63,7 +50,7 @@ class HInterface {
     static function resolve(variables: Map<String, Dynamic>, container: Dynamic, name: String): Option<Dynamic> {
         if (variables.exists(name)) {
             return Some(variables[name]);
-        } else if (isStoryNode(container)) {
+        } else if (Std.is(container, StoryNode)) {
             var node: StoryNode = cast(container, StoryNode);
             return node.resolve(name);
         }
@@ -78,7 +65,7 @@ class HInterface {
     }
 
     static function isTruthy(viewCounts: Map<StoryNode, Int>, v: Dynamic) {
-        if (isStoryNode(v)) {
+        if (Std.is(v, StoryNode)) {
             var node: StoryNode = cast(v, StoryNode);
             return viewCounts[node] > 0;
         }
@@ -87,8 +74,21 @@ class HInterface {
                 return v;
             case TInt | TFloat:
                 return v > 0;
+            // TODO I would love to do away with this hack, but C++ type coercion turns random things into strings. This workaround fixes a specific bug
             default:
-                throw '$v cannot be coerced to a boolean';
+                if (Std.is(v, String)) {
+                    var val = cast(v, String);
+                    switch (val) {
+                        case "true":
+                            return true;
+                        case "false":
+                            return false;
+                        default:
+                            throw '$v: ${Type.typeof(v)} cannot be coerced to a boolean';
+                    }
+                }
+                else throw '$v: ${Type.typeof(v)} cannot be coerced to a boolean';
+
         }
     }
 
@@ -120,12 +120,16 @@ class HInterface {
         }
         
         var val2 = valueOf(viewCounts, val);
-        trace('$val: ${val.typeof()} became $val2: ${val2.typeof()}');
+        var type1 = Std.string(Type.typeof(val));
+        var type2 = Std.string(Type.typeof(val2));
+        //if (type1 != type2)
+            trace('$val: $type1 became $val2: $type2');
         return val2;
     }
 
     public function cond(h: String, scope: Array<Dynamic>): Bool {
-        return isTruthy(viewCounts, expr(h, scope));
+        var val: Dynamic = expr(h, scope);
+        return isTruthy(viewCounts, val);
     }
 
     public function evaluateExpr(h: String, scope: Array<Dynamic>): String {
@@ -133,7 +137,7 @@ class HInterface {
     }
 
     static function valueOf(viewCounts: Map<StoryNode, Int>, val: Dynamic): Dynamic {
-        return if (isStoryNode(val)) {
+        return if (Std.is(val, StoryNode)) {
             var node: StoryNode = cast(val, StoryNode);
             viewCounts[node];
         } else {
@@ -141,11 +145,22 @@ class HInterface {
         };
     }
 
+    static function viewCountOf(viewCounts: Map<StoryNode, Int>, val: Dynamic): Option<Int> {
+        return if (Std.is(val, StoryNode)) {
+            var node: StoryNode = cast(val, StoryNode);
+            Some(viewCounts[node]);
+        } else {
+            None;
+        };
+    }
+
     /**
      Convert numerical value expressions to booleans for binary operations
     **/
     function boolify(expr: Expr): Expr {
-        return ECall(EIdent('_isTruthy'), [transmute(expr)]);
+        var newExpr = transmute(expr);
+        trace(newExpr);
+        return ECall(EIdent('_isTruthy'), [newExpr]);
     }
 
     function valify(expr: Expr): Expr {
