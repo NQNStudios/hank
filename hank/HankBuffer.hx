@@ -359,8 +359,11 @@ class HankBuffer {
         return getLine(trimmed, takeUntil, true);
     }
 
-    public function skipWhitespace() {
-        var whitespace = cleanBuffer.substr(0, cleanBuffer.length - cleanBuffer.ltrim().length);
+    public function skipWhitespace(terminator: String = '') {
+        var nextTerm = cleanBuffer.indexOf(terminator);
+        var withoutTerm = cleanBuffer.length - cleanBuffer.ltrim().length;
+        var end = if (nextTerm <= 0) withoutTerm else Math.floor(Math.min(nextTerm, withoutTerm));
+        var whitespace = cleanBuffer.substr(0, end);
         drop(whitespace);
     }
 

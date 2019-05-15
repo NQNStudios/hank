@@ -179,8 +179,15 @@ class Parser {
         var depth = buffer.countConsecutive('-');
         buffer.skipWhitespace();
         var label = buffer.expressionIfNext('(', ')');
-        buffer.skipWhitespace();
-        return EGather(label, depth, parseExpr(buffer, buffer.position()));
+        buffer.skipWhitespace('\n');
+
+        var gatherOp = switch (buffer.peekLine()) {
+            case Some("") | None:
+                ENoOp;
+            default:
+                parseExpr(buffer, buffer.position());
+        }
+        return EGather(label, depth, gatherOp);
     }
 
     static var choices: Int = 0;
