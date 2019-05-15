@@ -1,9 +1,16 @@
 t() {
-    haxe hxml/$1.hxml --interp
+    haxe -cp hank -lib utest -lib hscript hxml/$1.hxml --interp > test-output.txt
+    vim test-output.txt
 }
 
 ta() {
-    haxe hxml/all-platforms.hxml
+    haxe -cp hank -lib utest -lib hscript hxml/all-platforms.hxml > test-output.txt
+    vim test-output.txt
+}
+
+tas() {
+    haxe -D stop_on_error -cp hank -lib utest -lib hscript hxml/all-platforms.hxml > test-output.txt
+    vim test-output.txt
 }
 
 debug() {
