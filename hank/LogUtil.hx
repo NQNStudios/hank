@@ -55,6 +55,10 @@ class LogUtil {
     return "interp";
 #end
 
+#if neko
+    return "neko";
+#end
+
     return "unknown";
 
   }

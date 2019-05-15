@@ -22,3 +22,12 @@ hxml/internals.hxml
 -cmd cpp/Examples
 hxml/examples.hxml
 --next
+
+-neko out.n
+-cmd neko out.n
+hxml/internals.hxml
+--next
+
+-neko out.n
+-cmd neko out.n
+hxml/examples.hxml

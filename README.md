@@ -10,6 +10,7 @@ Supported targets:
 
 * JavaScript
 * C++
+* Neko
 
 ## Comparison with Ink and Inkjs
 

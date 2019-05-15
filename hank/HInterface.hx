@@ -123,7 +123,7 @@ class HInterface {
         var type1 = Std.string(Type.typeof(val));
         var type2 = Std.string(Type.typeof(val2));
         //if (type1 != type2)
-            trace('$val: $type1 became $val2: $type2');
+            //trace('$val: $type1 became $val2: $type2');
         return val2;
     }
 
