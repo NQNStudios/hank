@@ -36,6 +36,7 @@ class Alt {
 
     public static function parse(buffer: HankBuffer): Option<Alt> {
         var rawExpr = buffer.findNestedExpression('{', '}').unwrap().checkValue();
+	// trace(rawExpr);
         var expr = rawExpr.substr(1, rawExpr.length-2);
 
         // Sequences are the default behavior

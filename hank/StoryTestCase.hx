@@ -67,7 +67,9 @@ class StoryTestCase extends utest.Test {
                     try {
                         validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                     } catch (e: Dynamic) {
-                        Assert.fail('Error testing $folder/$file at transcript line $lastTranscriptLine: $e, ${LogUtil.prettifyStack(CallStack.exceptionStack()) }');
+		      var failMessage = 'Error testing $folder/$file at transcript line $lastTranscriptLine: $e, ${LogUtil.prettifyStack(CallStack.exceptionStack()) }';
+		      trace(failMessage);
+                        Assert.fail(failMessage);
                     }
 #end
                 }

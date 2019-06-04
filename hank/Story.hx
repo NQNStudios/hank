@@ -1,5 +1,7 @@
 package hank;
 
+using Type;
+
 import hank.HankBuffer;
 using StringTools;
 import haxe.ds.Option;
@@ -21,12 +23,16 @@ enum StoryFrame {
     Finished;
 }
 
+typedef InsertionHook = Dynamic -> String;
+
 /**
  Runtime interpreter for Hank stories.
 **/
 @:allow(hank.StoryTestCase)
 class Story {
     var hInterface: HInterface;
+  public var insertionHooks: Map<String, InsertionHook>;
+
     var random: Random;
 
     var ast: HankAST;
@@ -48,6 +54,8 @@ class Story {
     var storedFrame: Option<StoryFrame> = None;
 
     function new(r: Random, p: Parser, ast: HankAST, st: StoryNode, sc: Array<StoryNode>, vc: Map<StoryNode, Int>, hi: HInterface) {
+      this.insertionHooks = new Map();
+      
         this.random = r;
         this.parser = p;
         this.ast = ast;
@@ -398,4 +406,32 @@ class Story {
     private function finalChoiceProcessing(choices: Array<String>) {
         return HasChoices([for(c in choices) removeDoubleSpaces(c).trim()]);
     }
+
+  /**
+     Classes and Enums can have dynamically specified behaviors for when they are embedded in Hank output.
+   */
+  public function formatForInsertion(value: Dynamic): String {
+    if (value == null) {
+      throw 'Trying to format null for insertion!';
+      
+    }
+//Static extension syntax wasn't working here, probably because of type parameters
+    var c = Type.getClass(value);
+    var e = Type.getEnum(value);
+    var typeName = if (c != null) {
+						      Type.getClassName(c);
+    } else if (e != null) {
+					     Type.getEnumName(e);
+    } else {
+	    null;
+    }
+
+    trace(typeName);
+    if (typeName != null && insertionHooks.exists(typeName)) {
+      return insertionHooks[typeName](value);
+    }
+
+    // If no special hook is defined for the value to insert, 
+    return Std.string(value);
+  }
 }

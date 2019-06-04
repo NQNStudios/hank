@@ -120,8 +120,8 @@ class HInterface {
         }
         
         var val2 = valueOf(viewCounts, val);
-        var type1 = Std.string(Type.typeof(val));
-        var type2 = Std.string(Type.typeof(val2));
+        //var type1 = Std.string(Type.typeof(val));
+        //var type2 = Std.string(Type.typeof(val2));
         //if (type1 != type2)
             //trace('$val: $type1 became $val2: $type2');
         return val2;
@@ -159,7 +159,7 @@ class HInterface {
     **/
     function boolify(expr: Expr): Expr {
         var newExpr = transmute(expr);
-        trace(newExpr);
+        //trace(newExpr);
         return ECall(EIdent('_isTruthy'), [newExpr]);
     }
 
@@ -213,7 +213,7 @@ class HInterface {
                         }
                     default:
                 }
-                trace(ECall(transmute(e), [for (ex in params) transmute(ex)]));
+                //trace(ECall(transmute(e), [for (ex in params) transmute(ex)]));
                 ECall(transmute(e), [for (ex in params) transmute(ex)]);
             case EIf(cond, e1, e2):
                 // To provide for the {if(cond) 'something'} idiom, give every if statement an else clause returning an empty string.

@@ -183,7 +183,8 @@ class Output {
                         break;
                     }
                 case HExpression(h):
-                    var value = hInterface.evaluateExpr(h, scope);
+		  
+		  var value = story.formatForInsertion(hInterface.expr(h, scope));
                     // HExpressions that start with ',' will be parsed and formatted as their own outputs
                     // (If that sounds confusing, see examples/divert-line to clarify).
                     if (value.startsWith(',')) {
