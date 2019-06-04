@@ -1,0 +1,41 @@
+~ var target = ->knot1;
+-> start
+
+== start
+
+-> @target
+
+= stitch1
+Text 3
+~ target = ->stitch2;
+-> start
+= stitch2
+Text 4
+~ target = ->gather1
+-> start
+- (gather1)
+Woooow!
+~target = ->finish.real_finish.real_tricky;
+->start
+
+== knot1
+
+Text 1
+~ target = ->knot2
+-> start
+
+== knot2
+
+Text 2
+~ target = ->finish;
+-> start
+
+== finish
+
+Seems to have worked! Time to get more complicated.
+~target = ->start.stitch1
+->start
+
+= real_finish
+
+- (real_tricky) That's incredible.

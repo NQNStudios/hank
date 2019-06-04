@@ -10,9 +10,14 @@ import hscript.Expr;
 
 using hank.Extensions;
 import hank.StoryTree;
+import hank.Story;
 
 class HankInterp extends Interp {
   var hInterface: HInterface;
+  var story: Story;
+  public function setStory(story: Story) {
+    this.story = story;
+  }
   public function new(hInterface: HInterface) {
     this.hInterface = hInterface;
     super();
@@ -20,7 +25,7 @@ class HankInterp extends Interp {
   public override function expr(e: Expr): Dynamic {
     switch (e) {
       // pointers are actually just string keys to the Interp's variables.
-      // TODO Divert target variables are just fully qualified strings that can be passed to divertTo()
+
     case EUnop("&", true, e):
       switch (e) {
       case EIdent(id):
@@ -35,6 +40,28 @@ class HankInterp extends Interp {
       default:
 	throw 'Dereferencing complex expressions is not implemented';
       }
+      // TODO Divert target variables are just StoryNode values
+    case EUnop("->", true, e):
+      trace(e);
+      var targetWithDots = '';
+      var trailingDot = false;
+      while (true) {
+      switch (e) {
+      case EIdent(lastTarget):
+	targetWithDots = lastTarget + '.' + targetWithDots;
+	if (trailingDot) targetWithDots = targetWithDots.substr(0,targetWithDots.length-1);
+	var node = story.resolveNodeInScope(targetWithDots);
+					    trace (node);
+					    return node;
+      case EField(eNested, lastTarget):
+	targetWithDots = lastTarget + '.' + targetWithDots;
+
+	trailingDot = true;
+	e = eNested;
+      default: throw 'Divert target variable cannot be specified in form $e';
+      }
+      }
+      
     default: return super.expr(e);
     }
     
@@ -68,11 +95,15 @@ class HInterface {
   var interp: HankInterp;
     var viewCounts: Map<StoryNode, Int>;
 
-    public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
+  public function setStory(story: Story) {
+    interp.setStory(story);
+  }
+  public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
 
 	this.parser = new Parser();
 	parser.unops["*"] = false;
 	parser.unops["&"] = false;
+	parser.unops["->"] = false;
 	this.interp  = new HankInterp(this);
 
         this.interp.variables['_isTruthy'] = isTruthy.bind(viewCounts);
@@ -148,6 +179,10 @@ class HInterface {
     public function addVariable(identifier: String, value: Dynamic) {
         this.interp.variables[identifier] = value;
     }
+
+  public function getVariable(identifier: String) {
+    return this.interp.variables[identifier];
+  }
 
     /**
      Run a pre-processed block of Haxe embedded in a Hank story.

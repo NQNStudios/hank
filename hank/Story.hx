@@ -87,6 +87,7 @@ class Story {
         var hInterface = new HInterface(storyTree, viewCounts);
 
         var story = new Story(random, new Parser(), ast, storyTree, nodeScopes, viewCounts, hInterface);
+	hInterface.setStory(story);
         hInterface.addVariable('story', story);
 
         story.runRootIncludedHaxe(script);
@@ -245,6 +246,7 @@ class Story {
         exprIndex = gatherIndex;
     }
 
+  @:allow(hank.HankInterp)
     private function resolveNodeInScope(label: String, ?whichScope: Array<StoryNode>): Array<StoryNode> {
         if (whichScope == null) whichScope = nodeScopes;
 
@@ -292,8 +294,9 @@ class Story {
         }
 
         // trace('diverting to $target');
+	
 
-        var newScopes = resolveNodeInScope(target);
+        var newScopes = if (target.startsWith("@")) hInterface.getVariable(target.substr(1)) else resolveNodeInScope(target);
         var targetIdx = newScopes[0].astIndex;
 
         if (targetIdx == -1) {
