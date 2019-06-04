@@ -140,7 +140,7 @@ class StoryTestCase extends utest.Test {
                 var firstColonIdx = line.indexOf(':');
                 var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
                 var expectedOutput = line.substr(firstColonIdx+1).trim();
-                // trace('expecting: ${expectedOutput}');
+		//                trace('expecting: ${expectedOutput}');
                 var output = story.choose(index);
                 // trace('got: ${output}');
                 HankAssert.equals(expectedOutput, output);
@@ -148,6 +148,9 @@ class StoryTestCase extends utest.Test {
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
                 // trace('${line} from ${frame}');
+	      //trace('expecting: ${HasText(line)}');
+	      //trace('got:       $frame');
+	      //trace('');
                 HankAssert.equals(HasText(line), frame);
             }
 

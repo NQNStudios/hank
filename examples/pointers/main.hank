@@ -1,0 +1,14 @@
+```
+var v1 = 'Variable 1';
+var v2 = 'Variable 2';
+var v3 = 'Variable 3';
+```
+
+{v1}
+{&v1}
+{v2}
+~ v2 = &v1;
+{v2}
+{*v2}
+~ *v2 = 'Value changed.';
+{v1}

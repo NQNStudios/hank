@@ -11,6 +11,52 @@ import hscript.Expr;
 using hank.Extensions;
 import hank.StoryTree;
 
+class HankInterp extends Interp {
+  var hInterface: HInterface;
+  public function new(hInterface: HInterface) {
+    this.hInterface = hInterface;
+    super();
+  }
+  public override function expr(e: Expr): Dynamic {
+    switch (e) {
+      // pointers are actually just string keys to the Interp's variables.
+      // TODO Divert target variables are just fully qualified strings that can be passed to divertTo()
+    case EUnop("&", true, e):
+      switch (e) {
+      case EIdent(id):
+	return id;
+      default:
+	throw 'Addressing complex expressions is not implemented';
+      }
+    case EUnop("*", true, e):
+      switch (e) {
+      case EIdent(id):
+	return variables[variables[id]];
+      default:
+	throw 'Dereferencing complex expressions is not implemented';
+      }
+    default: return super.expr(e);
+    }
+    
+  }
+
+  override function assign(e1: Expr, e2: Expr): Dynamic {
+    var v = expr(e2);
+    switch (e1) {
+    case EUnop("*", true, e):
+      switch (e) {
+      case EIdent(id):
+	variables[variables[id]] = v;
+      default:
+	throw 'Dereferenced assignment of complex expressions is not implemented.';
+      }
+      return v;
+    default:
+      return super.assign(e1, e2);
+    }
+  }
+}
+
 /**
  Interface between a Hank story, and its embedded hscript interpreter
 **/
@@ -18,16 +64,23 @@ import hank.StoryTree;
 class HInterface {
     var BOOLEAN_OPS = ['&&', '||', '!'];
 
-    var parser: Parser = new Parser();
-    var interp: Interp = new Interp();
+  var parser: Parser;
+  var interp: HankInterp;
     var viewCounts: Map<StoryNode, Int>;
 
     public function new(storyTree: StoryNode, viewCounts: Map<StoryNode, Int>) {
+
+	this.parser = new Parser();
+	parser.unops["*"] = false;
+	parser.unops["&"] = false;
+	this.interp  = new HankInterp(this);
+
         this.interp.variables['_isTruthy'] = isTruthy.bind(viewCounts);
         this.interp.variables['_valueOf'] = valueOf.bind(viewCounts);
         this.interp.variables['_resolve'] = resolveInScope.bind(this.interp.variables);
         this.interp.variables['_resolveField'] = resolveField.bind(this.interp.variables);
         this.viewCounts = viewCounts;
+
     }
 
     static function resolveInScope(variables: Map<String, Dynamic>, name: String): Dynamic {

@@ -426,7 +426,7 @@ class Story {
 	    null;
     }
 
-    trace(typeName);
+    //trace(typeName);
     if (typeName != null && insertionHooks.exists(typeName)) {
       return insertionHooks[typeName](value);
     }
