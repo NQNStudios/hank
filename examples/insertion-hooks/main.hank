@@ -1,0 +1,16 @@
+```
+story.insertionHooks["hank.Story"] = function(value) {
+  return "Whoa there! You can't insert a whole story into itself!";
+};
+story.insertionHooks["String"] = function(value) {
+  if (value.substr(0, 7) == "prefix:") {
+    return "PREFIXED VALUE: " + value.substr(7);
+  } else {
+    return value;
+  }
+};
+```
+
+{"prefix:Testing insertion hooks"}
+{story}
+{"Did it work?"}
