@@ -7,7 +7,14 @@ import hank.LogUtil.watch;
 class StoryNode {
     public var astIndex(default, null): Int;
     var children: Map<String, StoryNode> = new Map();
-
+  /**
+     The root StoryNode maps all choice IDs to the choices' nodes, so that when diverting to choices, we can easily resolve out-of-scope targets to increment their view counts
+   */
+  var choiceNodes: Map<Int, StoryNode> = new Map();
+  public function nodeForChoice(id: Int) {
+    return choiceNodes[id];
+  }
+  
     public function toString() {
         return '{Node@${astIndex}: ${[for(key in children.keys()) key]}}';
     }
@@ -68,7 +75,27 @@ class StoryNode {
                     var node = new StoryNode(exprIndex);
                     lastKnot.addChild(name, node);
                     lastStitch = node;
-                case EGather(Some(name), _, _) | EChoice({id: _, onceOnly: _, label: Some(name), condition: _, depth: _, output: _, divertTarget: _}):
+	    case EGather(Some(name), _, _):
+
+	      leafNode(exprIndex, root, lastKnot, lastStitch, name);
+	      
+	    case EChoice({id: choiceId, onceOnly: _, label: Some(name), condition: _, depth: _, output: _, divertTarget: _}):
+
+	      var choiceNode = leafNode(exprIndex, root, lastKnot, lastStitch, name);
+	      
+	      // keep a map of choiceId to node
+	      root.choiceNodes[choiceId] = choiceNode;
+
+                default:
+
+            }
+            exprIndex++;
+        }
+
+        return root;
+    }
+
+  static function leafNode(exprIndex, root, lastKnot, lastStitch, name) {
                     var node = new StoryNode(exprIndex);
                     if (lastKnot == null) {
                         // watch(root);
@@ -80,12 +107,6 @@ class StoryNode {
                         // watch(lastStitch);
                         lastStitch.addChild(name, node);
                     }
-                default:
-
-            }
-            exprIndex++;
-        }
-
-        return root;
-    }
+		    return node;
+  }
 }

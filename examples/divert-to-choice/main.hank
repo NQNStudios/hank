@@ -1,0 +1,30 @@
+~ var target=null;
+-> start
+== start
+Mind: {if (unreachable_knot.choice2) "blown" else "not blown"}
+{sequence:
+	~target = ->unreachable_knot.choice1;|
+	~target = ->unreachable_knot.choice2;|
+	~target = ->unreachable_knot.choice3;
+}
+
+-> @target
+
+
+== unreachable_knot
+
+This text should be like a ninja. Completely silent.
+
+* (choice1) Choice 1 [Ninja!] has been made.
+The content following choice 1 will be played out.
+** Including deeper choices!
+** Beep Boop
+* (choice2) Choice 2 has been made.
+* (choice3) [Ninja!]
+  -> finish
+
+- ->start
+
+== finish
+
+Is your mind blown yet?

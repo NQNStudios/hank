@@ -138,6 +138,9 @@ class StoryTestCase extends utest.Test {
                 // Make the choice given, and check for expected output.
                 line = line.substr(1).ltrim();
                 var firstColonIdx = line.indexOf(':');
+		if (firstColonIdx == -1) {
+		  throw 'Choice line in transcript does not specify expected output: > $line';
+		}
                 var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
                 var expectedOutput = line.substr(firstColonIdx+1).trim();
 		//                trace('expecting: ${expectedOutput}');

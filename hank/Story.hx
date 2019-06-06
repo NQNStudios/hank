@@ -297,6 +297,8 @@ class Story {
 	
 
         var newScopes = if (target.startsWith("@")) hInterface.getVariable(target.substr(1)) else resolveNodeInScope(target);
+	// trace('$target is $newScopes');
+
         var targetIdx = newScopes[0].astIndex;
 
         if (targetIdx == -1) {
@@ -361,8 +363,16 @@ class Story {
         // if the choice has a label, increment its view count 
         switch (choice.label) {
             case Some(l):
-                var node = resolveNodeInScope(l)[0];
-                viewCounts[node] += 1;
+	      var node = switch (resolveNodeInScope(l)) {
+	      case []:
+		//  the choice is being diverted to, which means it's out of scope. Find it from the StoryTree's choice map another way
+	      storyTree.nodeForChoice(choice.id);
+	        
+	      case nodePath:
+	        nodePath[0];
+	      };
+		
+              viewCounts[node] += 1;
             case None:
         }
         weaveDepth = choice.depth + 1;

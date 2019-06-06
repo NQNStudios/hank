@@ -36,8 +36,9 @@ class Alt {
 
     public static function parse(buffer: HankBuffer): Option<Alt> {
         var rawExpr = buffer.findNestedExpression('{', '}').unwrap().checkValue();
-	// trace(rawExpr);
-        var expr = rawExpr.substr(1, rawExpr.length-2);
+	
+        var expr = rawExpr.substr(1, rawExpr.length-2).ltrim();
+	// trace (expr);
 
         // Sequences are the default behavior
         var behavior = Sequence;
@@ -45,14 +46,22 @@ class Alt {
             if (expr.startsWith(prefix)) {
                 expr = expr.substr(prefix.length).trim();
                 behavior = behaviorMap[prefix];
+		break; // <-- Finally figured that one out.
             }
         }
+	// trace (behavior);
         var outputsBuffer = HankBuffer.Dummy(expr);
         var eachOutputExpr = outputsBuffer.rootSplit('|');
+
+
+	
         if (eachOutputExpr.length == 1) {
             return None; // If no pipe is present, it's not an alt
         }
-        var outputs = [for(outputExpr in eachOutputExpr) Output.parse(HankBuffer.Dummy(outputExpr), true)];
+	// There can't be newlines preceding the arms of alt expressions, or everything following the newline will disappear -- hence ltrim() below.
+        var outputs = [for(outputExpr in eachOutputExpr) Output.parse(HankBuffer.Dummy(outputExpr.ltrim()), true)];
+
+	// trace(outputs);
 
         buffer.take(rawExpr.length);
         return Some(new Alt(behavior, outputs));

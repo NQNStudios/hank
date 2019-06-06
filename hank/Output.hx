@@ -11,7 +11,8 @@ import hank.Alt.AltInstance;
 enum OutputType {
     Text(t: String); // Pure text that is always displayed
     AltExpression(a: Alt);
-    HExpression(h: String); // An embedded Haxe expression whose value will be inserted
+    HExpression(h: String); // A Haxe expression inside braces whose value will be inserted
+  HCall(h: String); // An embedded Haxe expression preceded by ~. Will not be inserted
     InlineDivert(t: String); // A divert statement on the same line as an output sequence.
     ToggleOutput(o: Output, invert: Bool); // Output that will sometimes be displayed (i.e. [bracketed] section in a choice text or the section following the bracketed section)
 }
@@ -78,11 +79,20 @@ class Output {
                 if (peekLine.length < endSegment) {
                     var text = buffer.takeLine().unwrap();
                     if (text.length > 0) {
+if (text.ltrim().startsWith('~'))
+		      parts.push(HCall(text.ltrim().substr(1)));
+else
                         parts.push(Text(text));
                     }
                     break;
                 } else {
                     var text = buffer.take(endSegment);
+	// If text starts with ~, it's actually a silent HCall.
+		    if (text.ltrim().startsWith('~'))
+		      parts.push(HCall(text.ltrim().substr(1)));
+	
+		else  
+
                     parts.push(Text(text));
                 }
             } else {
@@ -168,6 +178,8 @@ class Output {
 
         diverted = false; // Clear the diverted flag
 
+	// trace(parts);
+
         for (part in parts) {
             switch (part) {
                 case Text(t):
@@ -196,7 +208,9 @@ class Output {
                     else {
                         fullOutput += value;
                     }
-
+	    case HCall(h):
+	      hInterface.runEmbeddedHaxe(h,scope);
+	      // Don't append anything
                 case InlineDivert(t):
                     // follow the divert. If the next expression is an output, concatenate the pieces together. Otherwise, terminate formatting
                     story.divertTo(t);

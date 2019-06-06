@@ -42,7 +42,7 @@ class HankInterp extends Interp {
       }
       // TODO Divert target variables are just StoryNode values
     case EUnop("->", true, e):
-      trace(e);
+      // trace(e);
       var targetWithDots = '';
       var trailingDot = false;
       while (true) {
@@ -50,6 +50,7 @@ class HankInterp extends Interp {
       case EIdent(lastTarget):
 	targetWithDots = lastTarget + '.' + targetWithDots;
 	if (trailingDot) targetWithDots = targetWithDots.substr(0,targetWithDots.length-1);
+	// trace('final target is $targetWithDots');
 	var node = story.resolveNodeInScope(targetWithDots);
 					    trace (node);
 					    return node;
