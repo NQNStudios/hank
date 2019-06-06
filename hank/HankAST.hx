@@ -11,6 +11,7 @@ enum ExprType {
     EOutput(o: Output);
 
     EDivert(target: String);
+EThread(target: String);
     EKnot(name: String);
     EStitch(name: String);
     ENoOp;
@@ -61,6 +62,9 @@ class ASTExtension {
     public static function collectChoices(ast: HankAST, startingIndex: Int, depth: Int): ChoicePointInfo {
         var choices = [];
         var lastChoiceIndex = 0;
+	if (startingIndex > ast.length || startingIndex < 0) {
+	  throw 'Trying to collect choices starting from expr ${startingIndex+1}/${ast.length}';
+	}
         var currentFile = ast[startingIndex].position.file;
 
         for (i in startingIndex... findEOF(ast, currentFile)) {

@@ -1,0 +1,32 @@
+// Based on https://github.com/inkle/ink/blob/01898140be43d29baac70c1cb6544bdb10164209/Documentation/WritingWithInk.md#threads-join-multiple-sections-together
+
+-> thread_example
+
+== thread_example ==
+I had a headache; threading is hard to get your head around.
+<- conversation
+<- walking
+
+I added this line.
+* And this choice. -> house
+
+
+== conversation ==
+It was a tense moment for Monty and me.
+ * "What did you have for lunch today?"[] I asked.
+    "Spam and eggs," he replied.
+ * "Nice weather, we're having,"[] I said.
+    "I've seen better," he replied.
+ - -> house
+
+== walking ==
+We continued to walk down the dusty road.
+ * [Continue walking]
+    -> house
+
+== house ==
+Before long, we arrived at his house.
+
+
+// TODO test nested threading
+// TODO test threading with divert target variables

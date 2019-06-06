@@ -9,6 +9,7 @@ import haxe.ds.Option;
 using hank.Extensions;
 using HankAST.ASTExtension;
 import hank.Choice;
+using Choice.ChoiceExtension;
 import hank.Choice.FallbackChoice;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
@@ -24,6 +25,17 @@ enum StoryFrame {
 }
 
 typedef InsertionHook = Dynamic -> String;
+
+enum EmbedMode {
+  /**
+     The current embedded Stories are to be executed sequentially until they return Finished
+   */
+  Tunnel;
+  /**
+     The current embedded Stories are to be executed sequentially until they return HasChoices. Choices will be aggregated into a single frame
+   */
+  Thread;
+}
 
 /**
  Runtime interpreter for Hank stories.
@@ -44,7 +56,7 @@ class Story {
     var altInstances: Map<Alt, AltInstance> = new Map();
 
     var parser: Parser;
-
+  var embedMode: EmbedMode = Tunnel;
     var embeddedBlocks: Array<Story> = [];
     var parent: Option<Story> = None;
 
@@ -72,11 +84,29 @@ class Story {
     function embeddedStory(h: String): Story {
         var ast = parser.parseString(h);
 
-        var story = new Story(random, parser, ast, storyTree, nodeScopes, viewCounts, hInterface);
+        var story = new Story(
+
+			      random, // embedded stories must continue giving deterministic random numbers without resetting -- to avoid exploitable behavior
+	  parser,
+			      
+			      ast,// embedded stories have their OWN AST of Hank statements
+ // but they keep the parent's view count tree and current scope
+			      storyTree,
+			      nodeScopes, viewCounts, hInterface);
         story.exprIndex = 0;
         story.parent = Some(this);
         return story;
     }
+
+  function storyFork(t: String): Story {
+    // Everything is the same as when embedding blocks, but a fork uses the same AST as its parent -- simply starting after a hypothetical divert
+    var story = new Story(random, parser, this.ast, storyTree, nodeScopes, viewCounts, hInterface);
+    story.parent = Some(this);
+    // trace('story parent: ${story.parent.match(Some(_))}');
+    story.divertTo(t);
+    return story;
+    
+  }
 
     public static function FromAST(script: String, ast: HankAST, ?randomSeed: Int): Story {
         var random = new Random(randomSeed);
@@ -124,18 +154,59 @@ class Story {
                 return f;
             default:
         }
+
+	// trace (embeddedBlocks.length);
+	// trace (embedMode);
         while (embeddedBlocks.length > 0) {
+	  switch (embedMode) {
+	  case Tunnel:
             var nf = embeddedBlocks[0].nextFrame();
             if(nf == Finished) {
                 embeddedBlocks.remove(embeddedBlocks[0]);
             } else {
                 return nf;
             }
-        }
+	  case Thread:
+	    var idx = 0;
+	    while (idx < embeddedBlocks.length) {
+	      var nf = embeddedBlocks[idx].nextFrame();
+	      switch (nf) {
+	      case HasChoices(_) | Finished:
+		// trace('Hit end of flow for thread $idx');
+		idx++;
+		//exprIndex++;
+		continue;
+	      default:
+		return nf;
+	      }
+	    }
+
+
+	      // All of the threaded blocks are out of content, so follow the original fork until it also runs out of flow.
+	    break;
+          }
+	}
         if (exprIndex >= ast.length) {
+	  if (embedMode == Thread) {
+	    //trace('Warning: Hit EOF while threading (are you sure you meant to do that?)');
+	    return nextChoiceFrame();
+	  }
             return Finished;
         }
-        return processExpr(ast[exprIndex].expr);
+
+	// trace('It fell to the roots next expr: ${ast[exprIndex].expr}');
+	var rootNf = processExpr(ast[exprIndex].expr);
+
+
+	// if (parent == None)	trace('root frame: $rootNf');
+	
+	if (embedMode == Thread) {
+	  if (rootNf == Finished) {
+	    return nextChoiceFrame();
+	  }
+	}
+	
+        return rootNf;
     }
 
     private function processExpr(expr: ExprType): StoryFrame {
@@ -154,12 +225,27 @@ class Story {
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
             case EDivert(target):
-                if (target.length == 0) {
+	      // Fallback choices simply advance flow using divert syntax
+	      if (target.length == 0) {
                     exprIndex += 1;
-                } else {
+                }
+	      // All other diverts:
+	      else {
                     divertTo(target);
                 }
                 return nextFrame();
+	case EThread(target):
+	  // The thread only needs to be added once
+	  exprIndex++;
+	  embedMode = Thread;
+	  // trace('before: ${embeddedBlocks.length}');
+	  embeddedBlocks.push(storyFork(target));
+	  // trace('after: ${embeddedBlocks.length}');
+	  // ^ These before/after comments help diagnose whether divert() is erasing the embedded blocks before they can start
+	  //trace ('starting thread $target');
+	  var nf = nextFrame();
+	  // trace('frame immediately after: $nf');
+	  return nf;
 
             case EGather(label, depth, nextExpr):
                 // gathers need to update their view counts
@@ -180,6 +266,16 @@ class Story {
                     return nextFrame();
                 }
 
+		return nextChoiceFrame();
+
+            default:
+                trace('$expr is not implemented');
+                return Finished;
+        }
+        return Finished;
+    }
+
+    private function nextChoiceFrame() {
                 var optionsText = [for(c in availableChoices()) c.output.format(this, hInterface, random, altInstances, nodeScopes, false)];
                 if (optionsText.length > 0) {
                     return finalChoiceProcessing(optionsText);
@@ -198,15 +294,28 @@ class Story {
                             return nextFrame();
                     }
                 }
-            default:
-                trace('$expr is not implemented');
-                return Finished;
-        }
-        return Finished;
     }
 
+  private function traceChoiceArray(choices: Array<Choice>) {
+    for (choice in choices) { trace (choice.toString());}
+    trace('---');
+  }
     private function availableChoices(): Array<Choice> {
         var choices = [];
+
+	// If we're threading, collect all the childrens' choices, too.
+	if (embedMode == Thread) {
+	  var idx = 0;
+	  for (thread in embeddedBlocks) {
+
+	    choices = choices.concat(thread.availableChoices());
+	    // trace('after fork $idx:');
+	    // traceChoiceArray(choices);	    
+	    idx++;
+	   }
+	}
+
+	if (exprIndex < ast.length && ast[exprIndex].expr.match(EChoice(_))) {
         var allChoices = ast.collectChoices(exprIndex, weaveDepth).choices;
         for (choice in allChoices) {
             if (choicesTaken.indexOf(choice.id) == -1 || !choice.onceOnly) {
@@ -221,8 +330,13 @@ class Story {
                     choices.push(choice);
                 }
             }
-        }
+          }
+	}
 
+	// trace('final:');
+	// traceChoiceArray(choices);
+
+	//traceChoiceArray(choices);
         return choices;
     }
 
@@ -284,7 +398,7 @@ class Story {
             return;
         }
         switch (parent) {
-            case Some(p):
+	case Some(p) if(p.embedMode == Tunnel):
                 // A divert from inside embedded hank, must leave the embedded context
                 p.embeddedBlocks = [];
                 p.divertTo(target);
@@ -350,12 +464,25 @@ class Story {
     }
 
     public function choose(choiceIndex: Int): String {
-        // If embedded, let the embedded section evaluate the choice
-        if (embeddedBlocks.length > 0) {
-            return embeddedBlocks[0].choose(choiceIndex);
+      var nf =nextFrame() ;
+      if (!nf.match(HasChoices(_))) {
+	throw 'Trying to make a choice when next frame is $nf';
+      }
+      // trace('choosing $choiceIndex');
+        // If tunnel-embedded, let the proper embedded section evaluate the choice
+        if (embeddedBlocks.length > 0 && embedMode == Tunnel) {
+	              return embeddedBlocks[0].choose(choiceIndex);
+	  	  
         } else {
-            // if not embedded, actually make the choice
-            return evaluateChoice(availableChoices()[choiceIndex]);
+
+            // if not embedded, actually make the choice. avalaibleChoices() accounts for aggregating threaded choices
+	  var output = evaluateChoice(availableChoices()[choiceIndex]);
+      if (embedMode == Thread) {
+	embedMode = Tunnel;
+	embeddedBlocks = [];
+      }
+
+      return output;
         }
     }
 
@@ -394,6 +521,7 @@ class Story {
 
     /** Parse and run embedded Hank script on the fly. **/
     public function runEmbeddedHank(h: String) {
+      embedMode = Tunnel;
         embeddedBlocks.push(embeddedStory(h));
     }
 
