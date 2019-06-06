@@ -22,7 +22,7 @@ class Alt {
         '>' => Sequence,
         '!' => OnceOnly,
         '&' => Cycle,
-        '~' => Shuffle,
+        '%' => Shuffle,
         'sequence:' => Sequence,
         'once:' => OnceOnly,
         'cycle:' => Cycle,

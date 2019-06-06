@@ -1,5 +1,5 @@
 - (start)
-Shuffle sequences are {~deterministic|always the same|reliable|reproducible|->finish} if you specify a seed to your Story object.
+Shuffle sequences are {%deterministic|always the same|reliable|reproducible|->finish} if you specify a seed to your Story object.
 -> start
 - (finish)
 compatible with fully automated save states!
