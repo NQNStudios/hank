@@ -49,17 +49,17 @@ class StoryTestCase extends utest.Test {
 
         for (folder in exampleTranscripts.keys()) {
             if (folder.startsWith('_')) {
-                trace('Skipping tests for example "${folder}"');
+	      LogUtil.cleanTrace('  Skipping tests for example "${folder}"');
                 continue;
             }
-            trace('Running tests for example "${folder}"');
+            LogUtil.cleanTrace('  Running tests for example "${folder}"');
 
             for (file in exampleTranscripts[folder]) {
                 var disabled = file.indexOf("disabled") != -1;
                 var debug = file.indexOf("debug") != -1;
                 var partial = file.indexOf("partial") != -1;
                 if (!disabled) {
-                    trace('    Running ${file}');
+		  LogUtil.cleanTrace('    Running ${file}');
 
 #if stop_on_error
                     validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
@@ -67,8 +67,8 @@ class StoryTestCase extends utest.Test {
                     try {
                         validateAgainstTranscript('${testsDirectory}/${folder}/main.hank', '${testsDirectory}/${folder}/${file}', !partial, debug);
                     } catch (e: Dynamic) {
-		      var failMessage = 'Error testing $folder/$file at transcript line $lastTranscriptLine: $e, ${LogUtil.prettifyStack(CallStack.exceptionStack()) }';
-		      trace(failMessage);
+		      var failMessage = '      Error testing $folder/$file at transcript line $lastTranscriptLine: $e, ${LogUtil.prettifyStack(CallStack.exceptionStack()) }';
+		      LogUtil.cleanTrace(failMessage);
                         Assert.fail(failMessage);
                     }
 #end
@@ -99,7 +99,7 @@ class StoryTestCase extends utest.Test {
         try {
             story = Story.FromFile(storyFile, files, randomSeed);
         } catch (e: Dynamic) {
-            trace('Error parsing $storyFile: $e');
+	  LogUtil.cleanTrace('  Error parsing $storyFile: $e');
             LogUtil.prettyPrintStack(CallStack.exceptionStack());
             Assert.fail();
             return;
@@ -143,17 +143,17 @@ class StoryTestCase extends utest.Test {
 		}
                 var index = Std.parseInt(line.substr(0, firstColonIdx))-1;
                 var expectedOutput = line.substr(firstColonIdx+1).trim();
-		//                trace('expecting: ${expectedOutput}');
+
                 var output = story.choose(index);
-                // trace('got: ${output}');
+
                 HankAssert.equals(expectedOutput, output);
             }
             else if (line.length > 0) {
                 // Assert that the story's next frame is HasText(line)
-                // trace('${line} from ${frame}');
-	      //trace('expecting: ${HasText(line)}');
-	      //trace('got:       $frame');
-	      //trace('');
+
+
+
+
                 HankAssert.equals(HasText(line), frame);
             }
 

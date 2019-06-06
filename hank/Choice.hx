@@ -7,3 +7,9 @@ typedef Choice = {id: Int, onceOnly: Bool, label: Option<String>, condition: Opt
 typedef ChoicePointInfo = {choices: Array<Choice>, fallbackIndex: Int};
 
 typedef FallbackChoice = {choice: Choice, index: Int};
+
+class ChoiceExtension {
+  public static function toString(choice: Choice): String {
+    return '*' + Std.string(choice.output.parts[0]) + '...';
+  }
+}

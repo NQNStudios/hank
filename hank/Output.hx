@@ -17,7 +17,7 @@ enum OutputType {
     ToggleOutput(o: Output, invert: Bool); // Output that will sometimes be displayed (i.e. [bracketed] section in a choice text or the section following the bracketed section)
 }
 
-@:allow(tests.ParserTest)
+@:allow(tests.ParserTest, hank.ChoiceExtension)
 class Output {
     var parts: Array<OutputType> = [];
     var diverted: Bool = false;

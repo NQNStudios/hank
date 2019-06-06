@@ -62,4 +62,11 @@ class LogUtil {
     return "unknown";
 
   }
+
+  public static function cleanTrace(msg: Dynamic) {
+    // TODO in Haxe 3.4.7, something is wrong with trace, so this is a workaround to remove position info from clean traces. For now, only on Sys targets
+#if sys
+    Sys.println(Std.string(msg));
+ #end
+  }
 }

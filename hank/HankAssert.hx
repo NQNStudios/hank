@@ -2,13 +2,21 @@ package hank;
 
 import utest.Assert;
 import haxe.ds.Option;
+import hank.LogUtil;
 
 class HankAssert {
     /**
     Assert that two complex values (i.e. algebraic enums) are the same.
     **/
     public static function equals(expected: Dynamic, actual: Dynamic, ?pos: String) {
-        var failureMessage = 'Assertion that ${actual} is ${expected} failed ${if (pos!= null) 'at ${pos}' else ''}';
+      var verboseMessage = ' Asserting that ${actual} is expected value ${expected}';
+      if (Std.string(expected) == Std.string(actual)) {
+	verboseMessage = '      ✓' + verboseMessage;
+      } else {
+	verboseMessage = '      ✗' + verboseMessage;
+      }
+      LogUtil.cleanTrace(verboseMessage);
+        var failureMessage = 'Assertion that ${actual} is expected value ${expected} failed ${if (pos!= null) 'at ${pos}' else ''}';
         Assert.equals(Std.string(Type.typeof(expected)), Std.string(Type.typeof(actual)), failureMessage);
         Assert.equals(Std.string(expected), Std.string(actual), failureMessage);
     }
