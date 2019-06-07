@@ -142,10 +142,10 @@ class Parser {
     }
 
     static function divert(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {
-        buffer.drop('->');
-        buffer.skipWhitespace();
-        var tokens = lineTokens(buffer, 1, position, true, true);
-        return EDivert(tokens[0]);
+      var line = buffer.takeLine().unwrap();
+      var targets = [for(t in line.split('->')) t.trim()].slice(1);
+
+      return EDivert(targets);
     }
 
   static function thread(buffer: HankBuffer, position: HankBuffer.Position) : ExprType {

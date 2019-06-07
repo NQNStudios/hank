@@ -1,0 +1,40 @@
+// Based on https://github.com/inkle/ink/blob/01898140be43d29baac70c1cb6544bdb10164209/Documentation/WritingWithInk.md#tunnels-run-sub-stories
+
+// TODO this hack is because we don't have divert arguments yet.
+~ var location = ->plains;
+
+-> @location
+=== plains
+
+= night_time 
+  	
+	The dark grass is soft under your feet.
+	+	[Sleep]
+		-> sleep_here -> wake_here -> day_time
+= day_time 
+	It is time to move on.
+	
+=== wake_here
+	You wake as the sun rises.
+	+	[Eat something]
+		-> eat_something -> @location.day_time
+	+	[Make a move] -> @location.day_time
+
+
+=== sleep_here
+	You lie down and try to close your eyes.
+	-> monster_attacks -> 
+	Then it is time to sleep.
+	-> dream ->
+
+// I added these:
+
+= monster_attacks
+	You get attacked by a monster!
+
+= dream
+	You dream about even scarier monsters.
+
+=== eat_something
+
+You're out of food! Soon you will starve to death.

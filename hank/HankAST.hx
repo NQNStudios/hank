@@ -10,7 +10,7 @@ enum ExprType {
 
     EOutput(o: Output);
 
-    EDivert(target: String);
+    EDivert(targets: Array<String>);
 EThread(target: String);
     EKnot(name: String);
     EStitch(name: String);

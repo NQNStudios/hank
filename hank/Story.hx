@@ -101,7 +101,8 @@ class Story {
   function storyFork(t: String): Story {
     // Everything is the same as when embedding blocks, but a fork uses the same AST as its parent -- simply starting after a hypothetical divert
     var story = new Story(random, parser, this.ast, storyTree, nodeScopes, viewCounts, hInterface);
-    story.parent = Some(this);
+    // Just trust me that in Tunneling mode, the embedded stories don't need a parent. This is because I was too lazy to disambiguate tunnel mode from embedded mode.
+    if (embedMode == Thread) story.parent = Some(this);
     // trace('story parent: ${story.parent.match(Some(_))}');
     story.divertTo(t);
     return story;
@@ -224,16 +225,43 @@ class Story {
                 exprIndex += 1;
                 hInterface.runEmbeddedHaxe(h, nodeScopes);
                 return nextFrame();
-            case EDivert(target):
-	      // Fallback choices simply advance flow using divert syntax
-	      if (target.length == 0) {
+	 // Fallback choices simply advance flow using divert syntax by not specifying a target
+            case EDivert([""]):
+
                     exprIndex += 1;
-                }
-	      // All other diverts:
-	      else {
-                    divertTo(target);
-                }
+	      
+		    // The most common form of divert is to one other location.
+	case EDivert([oneTarget]):
+                    divertTo(oneTarget);
+
                 return nextFrame();
+
+		// Tunneling statements!
+	case EDivert(targets):
+	  switch (targets.pop()) {
+	  case target if (target != ''):
+	    // If the last target isn't empty, we want to fork the main story to start at that point once the tunnels are done.
+	    // trace('this divert');
+	    divertTo(target);
+	  case '':
+	    exprIndex++;
+	  case null:
+	    throw 'No divert targets!';
+	  }
+
+	  // Spawn the rest of the forks in tunneling mode
+	  for (target in targets) {
+	    // trace('embedded $target');
+	    var fork = storyFork(target);
+	    // trace(fork != null);
+	    embeddedBlocks.push(fork);
+	    // trace(embeddedBlocks.length);
+	  }
+
+	  // trace(embeddedBlocks.length);
+
+	  return nextFrame();
+		
 	case EThread(target):
 	  // The thread only needs to be added once
 	  exprIndex++;
@@ -410,14 +438,34 @@ class Story {
         // trace('diverting to $target');
 	
 
-        var newScopes = if (target.startsWith("@")) hInterface.getVariable(target.substr(1)) else resolveNodeInScope(target);
+        var newScopes = if (target.startsWith("@")) {
+						  
+		   var parts = target.split('.');
+
+		   var root: Array<StoryNode> = hInterface.getVariable(parts[0].substr(1));
+	 if (parts.length > 1) {
+	   var subTarget = parts.slice(1).join('.');
+	   //trace(subTarget);
+	   resolveNodeInScope(subTarget, root);
+	} else {
+	  root;
+	};
+    }
+	else resolveNodeInScope(target);
 	// trace('$target is $newScopes');
 
+	if (newScopes == null // happens when a divert target variable doesn't exist
+	    || newScopes.length == 0) // happens when target can't be resolved
+	    throw 'Divert target not found: $target';
+	
         var targetIdx = newScopes[0].astIndex;
 
-        if (targetIdx == -1) {
-            throw 'Divert target not found: $target';
-        }
+	if (targetIdx == null) {
+   throw 'Divert target not found: $target';
+	
+}
+	//trace(targetIdx);
+
         // update the expression index
         exprIndex = targetIdx; 
         var target = newScopes[0];
