@@ -2,8 +2,6 @@ package hank;
 
 using Reflect;
 using Type;
-using Lambda;
-using StringTools;
 
 import haxe.ds.Option;
 import hscript.Parser;
@@ -46,7 +44,7 @@ class HankInterp extends Interp {
 					default:
 						throw 'Dereferencing complex expressions is not implemented';
 				}
-			// Divert target variables are just StoryNode values
+			// TODO Divert target variables are just StoryNode values
 			case EUnop("->", true, e):
 				// trace(e);
 				var targetWithDots = '';
@@ -74,7 +72,6 @@ class HankInterp extends Interp {
 		}
 	}
 
-  // TODO need to allow local variables
 	override function assign(e1:Expr, e2:Expr):Dynamic {
 		var v = expr(e2);
 		switch (e1) {
@@ -90,35 +87,6 @@ class HankInterp extends Interp {
 				return super.assign(e1, e2);
 		}
 	}
-
-  override function forLoop(n,it,e) {
-		var old = declared.length;
-		declared.push({ n : n, old : variables.get(n) });
-		var it = makeIterator(expr(it));
-		while( it.hasNext() ) {
-			locals.set(n,{ r : it.next() });
-			try {
-				expr(e);
-			} catch( err : Stop ) {
-				switch( err ) {
-				case SContinue:
-				case SBreak: break;
-				case SReturn: throw err;
-				}
-			}
-		}
-		restore(old);
-  }
-
-
-override function restore( old : Int ) {
-		while( declared.length > old ) {
-			var d = declared.pop();
-			variables.set(d.n,d.old);
-		}
-}
-}
-
 }
 
 /**
@@ -136,7 +104,7 @@ class HInterface {
 		interp.setStory(story);
 	}
 
-	public function new(viewCounts:Map<StoryNode, Int>) {
+	public function new(storyTree:StoryNode, viewCounts:Map<StoryNode, Int>) {
 		this.parser = new Parser();
 		parser.unops["*"] = false;
 		parser.unops["&"] = false;
@@ -145,30 +113,15 @@ class HInterface {
 
 		this.interp.variables['_isTruthy'] = isTruthy.bind(viewCounts);
 		this.interp.variables['_valueOf'] = valueOf.bind(viewCounts);
-		this.interp.variables['_resolve'] = resolveInScope.bind(interp.variables);
-		this.interp.variables['_resolveField'] = resolveField.bind(interp.locals, interp.variables);
+		this.interp.variables['_resolve'] = resolveInScope.bind(this.interp.variables);
+		this.interp.variables['_resolveField'] = resolveField.bind(this.interp.variables);
 		this.viewCounts = viewCounts;
 	}
 
-  public function clone(): HInterface {
-		var c = new HInterface(viewCounts);
-		for (name in interp.variables.keys.toIterable().filter(function(name) { return !name.startsWith("_"); })) {
-			c.interp.variables[name] = interp.variables[name];
-		}
-		// Local variables of embedded Haxe become globals of that embedded Hank
-		var locals = interp.locals;
-								trace(locals);
-		for (name in locals.keys()) {
-			trace('$name: ${locals[name]}');
-			c.addVariable(name, locals[name]);
-		}
-		return c;
-	}
-
-	static function resolveInScope(locals: Map<String, Dynamic>, variables:Map<String, Dynamic>, name:String):Dynamic {
-		var scope:Array<Dynamic> = cast(variables['_scope'], Array<Dynamic>);
+	static function resolveInScope(variables:Map<String, Dynamic>, name:String):Dynamic {
+		var scope:Array<Dynamic> = cast(variables['scope'], Array<Dynamic>);
 		for (container in scope) {
-			switch (resolve(locals, variables, container, name)) {
+			switch (resolve(variables, container, name)) {
 				case Some(v):
 					return v;
 				case None:
@@ -178,15 +131,12 @@ class HInterface {
 		throw 'Could not resolve $name in scope $scope.';
 	}
 
-	static function resolveField(locals:Map<String, Dynamic>, variables:Map<String, Dynamic>, container:Dynamic, name:String):Dynamic {
-		return resolve(locals, variables, container, name).unwrap();
+	static function resolveField(variables:Map<String, Dynamic>, container:Dynamic, name:String):Dynamic {
+		return resolve(variables, container, name).unwrap();
 	}
 
-	static function resolve(locals:Map<String, Dynamic>, variables:Map<String, Dynamic>, container:Dynamic, name:String):Option<Dynamic> {
-		if (locals.exists(name) && locals[name] != null) {
-			return Some(locals[name]);
-		}
-		else if (variables.exists(name)) {
+	static function resolve(variables:Map<String, Dynamic>, container:Dynamic, name:String):Option<Dynamic> {
+		if (variables.exists(name)) {
 			return Some(variables[name]);
 		} else if (Std.is(container, StoryNode)) {
 			var node:StoryNode = cast(container, StoryNode);
@@ -240,16 +190,16 @@ class HInterface {
 		Run a pre-processed block of Haxe embedded in a Hank story.
 	**/
 	public function runEmbeddedHaxe(h:String, scope:Array<Dynamic>) {
-		interp.variables['_scope'] = scope;
+		interp.variables['scope'] = scope;
 
-		// trace(h); // TODO toggle in verbose mode
+		// trace(h);
 		var expr = parser.parseString(h);
 		expr = transmute(expr);
 		interp.execute(expr);
 	}
 
 	public function expr(h:String, scope:Array<Dynamic>):Dynamic {
-		interp.variables['_scope'] = scope;
+		interp.variables['scope'] = scope;
 
 		var expr = parser.parseString(h);
 		expr = transmute(expr);
