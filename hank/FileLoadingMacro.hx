@@ -1,6 +1,7 @@
 package hank;
 
 using StringTools;
+using Lambda;
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
@@ -61,6 +62,7 @@ class FileLoadingMacro {
 		if (sys.FileSystem.exists(directory)) {
 			// trace("directory found: " + directory);
 			for (file in sys.FileSystem.readDirectory(directory)) {
+				if (file.startsWith(".")) continue; // Avoid stat errors on Emacs and vim swap files ¯\_(ツ)_/¯
 				var path = haxe.io.Path.join([directory, file]);
 				if (!sys.FileSystem.isDirectory(path)) {
 					// trace("file found: " + path);
