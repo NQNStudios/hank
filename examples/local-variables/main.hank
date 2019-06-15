@@ -1,0 +1,21 @@
+```
+var local = "1";
+, {local}
+
+local = "2";
+var local2 = "3";
+
+,,,
+{local}
+{local2}
+,,,
+
+local = ->the_end;
+
+, ->the_end
+
+```
+
+== the_end
+
+The end.

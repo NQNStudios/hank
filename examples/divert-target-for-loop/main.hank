@@ -1,0 +1,21 @@
+```
+var targets = [->knot1, ->knot2, ->knot3];
+for (target in targets) {
+	trace(target);
+  , -> @target ->
+}
+```
+
+The end.
+
+== knot0
+Non-loop example.
+
+== knot1
+1
+
+== knot2
+2
+
+== knot3
+3
