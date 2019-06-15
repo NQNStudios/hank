@@ -17,7 +17,7 @@ Supported targets:
 |Feature|Ink|Inkjs|Hank|
 |-------|---|-----|----|
 |Well-maintained/Production-ready|Yes|Mostly yes|Maybe someday--probably never|
-|Recommended external engines|Unity| |HaxeFlixel|
+|Recommended external engines|Unity| |HaxeFlixel (2D only)|
 |Ease of use|Comes with the Inky editor, gives syntax hints. Thriving, helpful community.|Easily embeds in web-pages. Partly supported by Inkle.|Stricter syntax, no official editor. Only understood by one other person (for now)|
 |Flexible scripting|Powerful but bulky embedded scripting system|I'm not sure|Uses [hscript](https://github.com/HaxeFoundation/hscript) module to allow full Haxe expressions inline without scope bloat|
 |Open-source purism|Tightly coupled with Unity|Compatible with the Javascript webdev ecosystem|Death/bankruptcy before closed-source dependencies|
