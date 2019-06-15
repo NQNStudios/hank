@@ -91,13 +91,14 @@ class Story {
 	function embeddedStory(h:String):Story {
 		var ast = parser.parseString(h);
 
+		var embeddedHInterface = hInterface.clone();
 		var story = new Story(random, // embedded stories must continue giving deterministic random numbers without resetting -- to avoid exploitable behavior
 
 			parser, ast, // embedded stories have their OWN AST of Hank statements
 
 			// but they keep the parent's view count tree and current scope
 			storyTree,
-			nodeScopes, viewCounts, hInterface);
+			nodeScopes, viewCounts, embeddedHInterface);
 		story.exprIndex = 0;
 		story.parent = Some(this);
 		return story;
@@ -120,7 +121,7 @@ class Story {
 		var nodeScopes = [storyTree];
 		var viewCounts = storyTree.createViewCounts();
 
-		var hInterface = new HInterface(storyTree, viewCounts);
+		var hInterface = new HInterface(viewCounts);
 
 		var story = new Story(random, new Parser(), ast, storyTree, nodeScopes, viewCounts, hInterface);
 		hInterface.setStory(story);
@@ -448,7 +449,7 @@ class Story {
 		var newScopes = if (target.startsWith("@")) {
 			var parts = target.split('.');
 
-			var root:Array<StoryNode> = hInterface.getVariable(parts[0].substr(1));
+			var root:Array<StoryNode> = cast hInterface.getVariable(parts[0].substr(1));
 			if (parts.length > 1) {
 				var subTarget = parts.slice(1).join('.');
 				// trace(subTarget);
@@ -570,7 +571,7 @@ class Story {
 	}
 
 	/** Parse and run embedded Hank script on the fly. **/
-	public function runEmbeddedHank(h:String) {
+	public function runEmbeddedHank(h:String, locals) {
 		embedMode = Tunnel;
 		embeddedBlocks.push(embeddedStory(h));
 	}
