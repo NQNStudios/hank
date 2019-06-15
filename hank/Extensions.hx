@@ -11,4 +11,9 @@ class Extensions {
 				throw 'Tried to unwrap a None value.';
 		}
 	}
+
+	// This is borrowed from https://stackoverflow.com/a/32856707
+	public static function toIterable<T>(i:Void->Iterator<T>): Iterable<T> {
+		return { iterator: i };
+	}
 }
