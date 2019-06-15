@@ -56,7 +56,7 @@ class HankInterp extends Interp {
 							if (trailingDot) targetWithDots = targetWithDots.substr(0, targetWithDots.length - 1);
 							// trace('final target is $targetWithDots');
 							var node = story.resolveNodeInScope(targetWithDots);
-							trace(node);
+							// trace(node);
 							return node;
 						case EField(eNested, lastTarget):
 							targetWithDots = lastTarget + '.' + targetWithDots;
