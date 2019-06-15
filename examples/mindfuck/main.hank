@@ -9,8 +9,8 @@ if (start <= 2) {
     Loop #: {start}
     * A series of choices
     * In Hank script embedded in Haxe script embedded in Hank script!
-    * {start == 1} What could be more fun?
-    * {start == 2} Gosh this sucks
+    * {start == 1}? What could be more fun?
+    * {start == 2}? Gosh this sucks
     - -> sanity
     ,,,
 } else {

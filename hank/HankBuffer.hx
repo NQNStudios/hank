@@ -321,7 +321,7 @@ class HankBuffer {
 
 	/** If the given expression comes next in the buffer, take its contents. Otherwise, return None **/
 	public function expressionIfNext(o:String, c:String):Option<String> {
-		if (cleanBuffer.startsWith(o)) {
+		if (cleanBuffer.startsWith(o) && cleanBuffer.indexOf(c) != -1) {
 			drop(o);
 			var end = cleanBuffer.indexOf(c);
 			var content = take(end);

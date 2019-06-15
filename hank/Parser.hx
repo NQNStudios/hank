@@ -13,8 +13,17 @@ import hank.HankBuffer;
 @:allow(tests.ParserTest)
 class Parser {
 	static var symbols:Array<Map<String, HankBuffer->HankBuffer.Position->ExprType>> = [
-		['INCLUDE ' => include], ['<-' => thread], ['->' => divert], ['===' => knot], ['==' => knot], ['=' => stitch], ['~' => haxeLine],
-		['```' => haxeBlock], ['-' => gather], ['*' => choice], ['+' => choice]];
+		['INCLUDE ' => include],
+		['<-' => thread],
+		['->' => divert],
+		['===' => knot],
+		['==' => knot],
+		['=' => stitch],
+		['~' => haxeLine],
+		['```' => haxeBlock],
+		['-' => gather],
+		['*' => choice],
+		['+' => choice]];
 
 	var buffers:Array<HankBuffer> = [];
 	var ast:HankAST = [];
@@ -198,7 +207,7 @@ class Parser {
 		buffer.skipWhitespace();
 		var label = buffer.expressionIfNext('(', ')');
 		buffer.skipWhitespace();
-		var condition = buffer.expressionIfNext('{', '}');
+		var condition = buffer.expressionIfNext('{', '}?');
 		buffer.skipWhitespace();
 		var output = Output.parse(buffer);
 		var divertTarget = output.takeInlineDivert();

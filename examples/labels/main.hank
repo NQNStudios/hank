@@ -7,7 +7,7 @@ B: {choice_b}
 C: {choice_c}
 * (choice_a) Choice A
 * (choice_b) Choice B
-* (choice_c) {choice_b && choice_a} Choice C
+* (choice_c) {choice_b && choice_a}? Choice C
     -> end
 - (gather) -> start
 
