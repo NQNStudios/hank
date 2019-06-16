@@ -12,10 +12,10 @@ using hank.Extensions;
 using HankAST.ASTExtension;
 
 import hank.Choice;
-
+import hank.Choice.ChoiceInfo;
+import hank.Choice.FallbackChoiceInfo;
 using Choice.ChoiceExtension;
 
-import hank.Choice.FallbackChoice;
 import hank.HankAST.ExprType;
 import hank.StoryTree;
 import hank.Alt.AltInstance;
@@ -307,37 +307,37 @@ class Story {
 
 	private function nextChoiceFrame() {
 		var optionsText = [
-			for (c in availableChoices())
-				c.output.format(this, hInterface, random, altInstances, nodeScopes, false)
+			for (choiceInfo in availableChoices())
+				choiceInfo.choice.output.format(this, hInterface, random, altInstances, nodeScopes, false)
 		];
 		if (optionsText.length > 0) {
 			return finalChoiceProcessing(optionsText);
 		} else {
 			var fallback = fallbackChoice();
-			switch (fallback.choice.divertTarget) {
+			switch (fallback.choiceInfo.choice.divertTarget) {
 				case Some(t) if (t.length > 0):
-					var fallbackText = evaluateChoice(fallback.choice);
+					var fallbackText = evaluateChoice(fallback.choiceInfo.choice);
 					if (fallbackText.length > 0) {
 						throw 'For some reason a fallback choice evaluated to text!';
 					}
 					return nextFrame();
 				default:
 					exprIndex = fallback.index + 1;
-					weaveDepth = fallback.choice.depth + 1;
+					weaveDepth = fallback.choiceInfo.choice.depth + 1;
 					return nextFrame();
 			}
 		}
 	}
 
-	private function traceChoiceArray(choices:Array<Choice>) {
-		for (choice in choices) {
-			trace(choice.toString());
+	private function traceChoiceArray(choices:Array<ChoiceInfo>) {
+		for (choiceInfo in choices) {
+			trace('${choiceInfo.choice.toString()}: #${choiceInfo.tags.join(" #")}');
 		}
 		trace('---');
 	}
 
-	private function availableChoices():Array<Choice> {
-		var choices = [];
+	private function availableChoices():Array<ChoiceInfo> {
+		var choices = new Array<ChoiceInfo>();
 
 		// If we're threading, collect all the childrens' choices, too.
 		if (embedMode == Thread) {
@@ -351,18 +351,18 @@ class Story {
 		}
 
 		if (exprIndex < ast.length && ast[exprIndex].expr.match(EChoice(_))) {
-			var allChoices = ast.collectChoices(exprIndex, weaveDepth).choices;
-			for (choice in allChoices) {
-				if (choicesTaken.indexOf(choice.id) == -1 || !choice.onceOnly) {
-					switch (choice.condition) {
+			var allChoiceInfo = ast.collectChoices(exprIndex, weaveDepth).choices;
+			for (choiceInfo in allChoiceInfo) {
+				if (choicesTaken.indexOf(choiceInfo.choice.id) == -1 || !choiceInfo.choice.onceOnly) {
+					switch (choiceInfo.choice.condition) {
 						case Some(expr):
 							if (!hInterface.cond(expr, nodeScopes)) {
 								continue;
 							}
 						case None:
 					}
-					if (!choice.output.isEmpty()) {
-						choices.push(choice);
+					if (!choiceInfo.choice.output.isEmpty()) {
+						choices.push(choiceInfo);
 					}
 				}
 			}
@@ -375,11 +375,11 @@ class Story {
 		return choices;
 	}
 
-	private function fallbackChoice():FallbackChoice {
+	private function fallbackChoice():FallbackChoiceInfo {
 		var choiceInfo = ast.collectChoices(exprIndex, weaveDepth);
 		var lastChoice = choiceInfo.choices[choiceInfo.choices.length - 1];
-		if (lastChoice.output.isEmpty()) {
-			return {choice: lastChoice, index: choiceInfo.fallbackIndex};
+		if (lastChoice.choice.output.isEmpty()) {
+			return {choiceInfo: lastChoice, index: choiceInfo.fallbackIndex};
 		} else {
 			throw 'there is no fallback choice!';
 		}
@@ -526,7 +526,7 @@ class Story {
 			return embeddedBlocks[0].choose(choiceIndex);
 		} else {
 			// if not embedded, actually make the choice. avalaibleChoices() accounts for aggregating threaded choices
-			var output = evaluateChoice(availableChoices()[choiceIndex]);
+			var output = evaluateChoice(availableChoices()[choiceIndex].choice);
 			if (embedMode == Thread) {
 				embedMode = Tunnel;
 				embeddedBlocks = [];

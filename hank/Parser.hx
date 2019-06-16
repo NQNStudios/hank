@@ -23,7 +23,8 @@ class Parser {
 		['```' => haxeBlock],
 		['-' => gather],
 		['*' => choice],
-		['+' => choice]];
+		['+' => choice],
+		['#' => tag]];
 
 	var buffers:Array<HankBuffer> = [];
 	var ast:HankAST = [];
@@ -221,6 +222,13 @@ class Parser {
 			output: output,
 			divertTarget: divertTarget
 		});
+	}
+
+	static function tag(buffer:HankBuffer, position: HankBuffer.Position):ExprType {
+		buffer.drop('#');
+		var tagLine = buffer.takeLine('lr').unwrap();
+		var tags = tagLine.tokenize();
+		return ETagged(parseExpr(buffer, position), tags);
 	}
 
 	static function haxeBlock(buffer:HankBuffer, position:HankBuffer.Position):ExprType {

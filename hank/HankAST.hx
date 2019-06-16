@@ -2,6 +2,7 @@ package hank;
 
 import haxe.ds.Option;
 import hank.Alt.AltInstance;
+import hank.Choice.ChoiceInfo;
 import hank.Choice.ChoicePointInfo;
 
 enum ExprType {
@@ -16,8 +17,10 @@ enum ExprType {
 	EHaxeLine(haxe:String);
 	EHaxeBlock(haxe:String);
 	EGather(label:Option<String>, depth:Int, expr:ExprType);
-	// Choices are the most complicated expressions
+	// Hank pre-tag-implementation: Choices are the most complicated expressions
 	EChoice(c:Choice);
+	// Tags: Hold my beer
+	ETagged(e: ExprType, tags:Array<String>);
 }
 
 typedef HankExpr = {
@@ -53,12 +56,19 @@ class ASTExtension {
 		return -1;
 	}
 
+	static function tryAddFunc(choices: Array<ChoiceInfo>, expectedDepth: Int, c: Choice, tags: Array<String>) {
+		var valid = (c.depth == expectedDepth);
+		if (valid) choices.push({choice:c,tags:tags});
+		return valid;
+	}
+
 	/**
 		Collect every choice in the choice point starting at the given index.
 	**/
 	public static function collectChoices(ast:HankAST, startingIndex:Int, depth:Int):ChoicePointInfo {
-		var choices = [];
+		var choices = new Array<ChoiceInfo>();
 		var lastChoiceIndex = 0;
+		var tryAdd = tryAddFunc.bind(choices, depth);
 		if (startingIndex > ast.length || startingIndex < 0) {
 			throw 'Trying to collect choices starting from expr ${startingIndex + 1}/${ast.length}';
 		}
@@ -68,12 +78,9 @@ class ASTExtension {
 			switch (ast[i].expr) {
 				// Gather choices of the current depth
 				case EChoice(choice):
-					if (choice.depth != depth)
-						continue;
-					else {
-						lastChoiceIndex = i;
-						choices.push(choice);
-					};
+					if (tryAdd(choice, [])) lastChoiceIndex = i;
+				case ETagged(EChoice(choice), tags):
+					if (tryAdd(choice, tags)) lastChoiceIndex = 1;
 				// Stop at the next gather of this depth
 				case EGather(_, d, _) if (d == depth):
 					break;
@@ -103,8 +110,9 @@ class ASTExtension {
 		for (i in 0...ast.length) {
 			var expr = ast[i].expr;
 			switch (expr) {
-				case EChoice(c) if (c.id == id):
-					return i;
+				case EChoice(c) | ETagged(EChoice(c), _):
+					if (c.id == id)
+						return i;
 				default:
 			}
 		}
