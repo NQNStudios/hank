@@ -103,9 +103,10 @@ class Story {
 		return story;
 	}
 
-	function storyFork(t:String):Story {
+	function storyFork(t:String,readonly:Bool=false):Story {
 		// Everything is the same as when embedding blocks, but a fork uses the same AST as its parent -- simply starting after a hypothetical divert
-		var story = new Story(random, parser, this.ast, storyTree, nodeScopes, viewCounts, hInterface);
+	var story = new Story(random, parser, this.ast, storyTree, nodeScopes,
+		if (readonly) storyTree.createViewCounts() else viewCounts, hInterface);
 		// Just trust me that in Tunneling mode, the embedded stories don't need a parent. This is because I was too lazy to disambiguate tunnel mode from embedded mode.
 		if (embedMode == Thread)
 			story.parent = Some(this);
@@ -222,16 +223,19 @@ class Story {
 				
 				if (exprIndex < ast.length) {
 					var nextExpr = ast[exprIndex].expr;
+					var nextIdx = exprIndex;
 					switch (nextExpr) {
 						case EDivert(targets):
-							nextExpr = ast[indexOf(targets[0])].expr;
+							nextIdx = indexOf(targets[0]);
 						case EThread(target):
-							nextExpr = ast[indexOf(target)].expr;
+							nextIdx = indexOf(target);
 						default:
 					}
-						trace(nextExpr);
+					if (nextIdx < ast.length)
+						nextExpr = ast[nextIdx].expr;
+					trace(nextExpr);
 					switch (nextExpr) {
-						case EGather(_, _, exp):
+						case EGather(_, _, exp) | ETagged(EGather(_,_,exp), _):
 							nextExpr = exp;
 						default:
 					}
@@ -478,9 +482,9 @@ class Story {
 
 	/** Get the AST index of the given divert target, without diverting **/
 	private function indexOf(target:String) {
-		var disposableFork = storyFork(target);
+		var disposableFork = storyFork(target,true);
 		// TODO this probably causes substantial wasting of memory (could lead to garbage collector problems?)
-		trace('index of $target is ${disposableFork.exprIndex}');
+		trace('index of $target is ${disposableFork.exprIndex}/${ast.length}');
 		return disposableFork.exprIndex;
 	}
 
@@ -558,7 +562,7 @@ class Story {
 		if (embeddedBlocks.length > 0 && embedMode == Tunnel) {
 			return embeddedBlocks[0].choose(choiceIndex);
 		} else {
-			// if not embedded, actually make the choice. avalaibleChoices() accounts for aggregating threaded choices
+			// if not embedded, actually make the choice. availableChoices() accounts for aggregating threaded choices
 			var output = evaluateChoice(availableChoices()[choiceIndex].choice);
 			if (embedMode == Thread) {
 				embedMode = Tunnel;
