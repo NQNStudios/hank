@@ -12,6 +12,7 @@ import hank.HankBuffer;
 **/
 @:allow(tests.ParserTest)
 class Parser {
+	// @formatter: off
 	static var symbols:Array<Map<String, HankBuffer->HankBuffer.Position->ExprType>> = [
 		['INCLUDE ' => include],
 		['<-' => thread],
@@ -25,6 +26,7 @@ class Parser {
 		['*' => choice],
 		['+' => choice],
 		['#' => tag]];
+	// @formatter: on
 
 	var buffers:Array<HankBuffer> = [];
 	var ast:HankAST = [];
