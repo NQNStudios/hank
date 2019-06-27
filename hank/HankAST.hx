@@ -97,6 +97,7 @@ class ASTExtension {
 	public static function findNextGather(ast:HankAST, path:String, startingIndex:Int, maxDepth:Int):Int {
 		for (i in startingIndex...findEOF(ast, path)) {
 			switch (ast[i].expr) {
+				// TODO what about tagged gathers?
 				case EGather(_, depth, _) if (depth <= maxDepth):
 					return i;
 				default:

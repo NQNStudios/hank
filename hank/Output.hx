@@ -17,12 +17,14 @@ enum OutputType {
 	InlineDivert(t:String); // A divert statement on the same line as an output sequence.
 	ToggleOutput(o:Output,
 		invert:Bool); // Output that will sometimes be displayed (i.e. [bracketed] section in a choice text or the section following the bracketed section)
+	Glue;
 }
 
 @:allow(tests.ParserTest, hank.ChoiceExtension)
 class Output {
 	var parts:Array<OutputType> = [];
 	var diverted:Bool = false;
+	public static var GLUE_ERROR = 'Error! You cannot glue anything other than more text output to the end of an output line.';
 
 	public function new(?parts:Array<OutputType>) {
 		this.parts = if (parts != null) {
@@ -67,6 +69,7 @@ class Output {
 				// This is an individual Output to parse
 		}
 
+		// After toggle outputs are handled, we can begin parsing pieces from start to finish
 		while (!buffer.isEmpty()) {
 			var endSegment = buffer.length();
 			var findBraceExpression = buffer.findNestedExpression('{', '}');
@@ -75,24 +78,18 @@ class Output {
 					endSegment = slice.start;
 				default:
 			}
+			// If the next piece is not a brace expression 
 			if (endSegment == buffer.length() || endSegment != 0) {
 				var peekLine = buffer.peekLine().unwrap();
 				if (peekLine.length < endSegment) {
 					var text = buffer.takeLine().unwrap();
 					if (text.length > 0) {
-						if (text.ltrim().startsWith('~'))
-							parts.push(HCall(text.ltrim().substr(1)));
-						else
-							parts.push(Text(text));
+						parseText(parts, text);
 					}
 					break;
 				} else {
 					var text = buffer.take(endSegment);
-					// If text starts with ~, it's actually a silent HCall.
-					if (text.ltrim().startsWith('~'))
-						parts.push(HCall(text.ltrim().substr(1)));
-					else
-						parts.push(Text(text));
+					parseText(parts, text);
 				}
 			} else {
 				parts.push(parseBraceExpression(buffer));
@@ -102,6 +99,29 @@ class Output {
 		parts = updateLastPart(parts, isPartOfAlt);
 		// trace('parts in whole: $parts');
 		return new Output(parts);
+	}
+
+	private static function parseText(parts:Array<OutputType>, text:String) {
+		var trimmed = text.trim();
+		// If text starts with ~, it's actually a silent HCall.
+		if (trimmed.startsWith('~')) {
+			parts.push(HCall(trimmed.substr(1)));
+		}
+		else {
+			var endsWithGlue = false;
+			if (trimmed.endsWith("<>")) {
+				endsWithGlue = true;
+				text = text.rtrim().substr(0, text.rtrim().length - 2);
+			}
+			if (trimmed.startsWith("<>")) {
+				parts.push(Glue);
+				text = text.ltrim().substr(2);
+			}
+			parts.push(Text(text));
+			if (endsWithGlue) {
+				parts.push(Glue);
+			}
+		}
 	}
 
 	private static function updateLastPart(parts:Array<OutputType>, isPartOfAlt:Bool) {
@@ -178,9 +198,13 @@ class Output {
 		diverted = false; // Clear the diverted flag
 
 		// trace(parts);
-
+		var i = 0;
 		for (part in parts) {
+			i++;
 			switch (part) {
+				case Glue:
+					if (i > 1)  // Glue at the end of a line forces another frame to be concatenated
+						fullOutput = appendNextText(story, fullOutput, GLUE_ERROR); 
 				case Text(t):
 					fullOutput += t;
 				case AltExpression(a):
@@ -214,11 +238,7 @@ class Output {
 					story.divertTo(t);
 					// Track whether the last call to format() resulted in a divert, so nested Outputs can interrupt the flow of their parents
 					diverted = true;
-					switch (story.nextFrame()) {
-						case HasText(text):
-							fullOutput += text;
-						default:
-					}
+					fullOutput = appendNextText(story, fullOutput);
 					break; // Don't format the rest of this Output's parts
 
 				case ToggleOutput(o, b):
@@ -227,7 +247,23 @@ class Output {
 					}
 			}
 		}
+		
+		return fullOutput;
+	}
 
+	public function startsWithGlue() {
+		return parts[0] == Glue;
+	}
+
+	public static function appendNextText(story: Story, fullOutput: String, throwOnFail: String = ''): String {
+		switch (story.nextFrame()) {
+			case HasText(text):
+				fullOutput += text;
+			default:
+				if (throwOnFail.length > 0) {
+					throw throwOnFail;
+				}
+		}
 		return fullOutput;
 	}
 }

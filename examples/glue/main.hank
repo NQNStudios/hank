@@ -1,0 +1,14 @@
+// This example is from https://github.com/inkle/ink/blob/91bbf0bcfd32e2cefa8561eb83d581444900dcf0/Documentation/WritingWithInk.md#glue
+
+-> hurry_home
+
+=== hurry_home ===
+We hurried home <> 
+-> to_savile_row 
+
+=== to_savile_row ===
+to Savile Row 
+-> as_fast_as_we_could
+
+=== as_fast_as_we_could ===
+<> as fast as we could.

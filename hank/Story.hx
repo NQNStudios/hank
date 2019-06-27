@@ -218,6 +218,31 @@ class Story {
 			case EOutput(output):
 				exprIndex += 1;
 				var text = output.format(this, hInterface, random, altInstances, nodeScopes, false).trim();
+				// We need to check if the next expr is a divert or thread because it might lead to a pre-glued output
+				
+				if (exprIndex < ast.length) {
+					var nextExpr = ast[exprIndex].expr;
+					switch (nextExpr) {
+						case EDivert(targets):
+							nextExpr = ast[indexOf(targets[0])].expr;
+						case EThread(target):
+							nextExpr = ast[indexOf(target)].expr;
+						default:
+					}
+						trace(nextExpr);
+					switch (nextExpr) {
+						case EGather(_, _, exp):
+							nextExpr = exp;
+						default:
+					}
+					switch (nextExpr) {
+						case EOutput(output) | ETagged(EOutput(output), _):
+							 if (output.startsWithGlue())
+								text = Output.appendNextText(this, text + " ", Output.GLUE_ERROR);
+						default:
+					}
+				}
+
 				return finalTextProcessing(text);
 			case EHaxeLine(h):
 				exprIndex += 1;
@@ -428,6 +453,37 @@ class Story {
 		return newScopes;
 	}
 
+
+	private function resolveScopes(target:String) {
+		var newScopes = if (target.startsWith("@")) {
+			var parts = target.split('.');
+
+			var root:Array<StoryNode> = hInterface.getVariable(parts[0].substr(1));
+			if (parts.length > 1) {
+				var subTarget = parts.slice(1).join('.');
+				// trace(subTarget);
+				resolveNodeInScope(subTarget, root);
+			} else {
+				root;
+			};
+		} else { resolveNodeInScope(target); };
+		// trace('$target is $newScopes');
+
+		if (newScopes == null // happens when a divert target variable doesn't exist
+			|| newScopes.length == 0) // happens when target can't be resolved
+			throw 'Divert target not found: $target';
+
+		return newScopes;
+	}
+
+	/** Get the AST index of the given divert target, without diverting **/
+	private function indexOf(target:String) {
+		var disposableFork = storyFork(target);
+		// TODO this probably causes substantial wasting of memory (could lead to garbage collector problems?)
+		trace('index of $target is ${disposableFork.exprIndex}');
+		return disposableFork.exprIndex;
+	}
+
 	public function divertTo(target:String) {
 		// Don't try to divert to a fallback target
 		if (target.length == 0) {
@@ -444,31 +500,8 @@ class Story {
 		}
 
 		// trace('diverting to $target');
-
-		var newScopes = if (target.startsWith("@")) {
-			var parts = target.split('.');
-
-			var root:Array<StoryNode> = hInterface.getVariable(parts[0].substr(1));
-			if (parts.length > 1) {
-				var subTarget = parts.slice(1).join('.');
-				// trace(subTarget);
-				resolveNodeInScope(subTarget, root);
-			} else {
-				root;
-			};
-		} else resolveNodeInScope(target);
-		// trace('$target is $newScopes');
-
-		if (newScopes == null // happens when a divert target variable doesn't exist
-			|| newScopes.length == 0) // happens when target can't be resolved
-			throw 'Divert target not found: $target';
-
+		var newScopes = resolveScopes(target);
 		var targetIdx = newScopes[0].astIndex;
-
-		if (targetIdx == null) {
-			throw 'Divert target not found: $target';
-		}
-		// trace(targetIdx);
 
 		// update the expression index
 		exprIndex = targetIdx;
