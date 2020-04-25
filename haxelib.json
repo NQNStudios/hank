@@ -7,8 +7,10 @@
     "version": "0.0.8",
     "releasenote": "It isn't safe to use this library yet.",
     "contributors": ["NQNStudios"],
+    "classPath": "src/",
+    "main": "hank.Test",
     "dependencies": {
-        "hscript": "",
+        "hiss": "",
         "utest": ""
     }
 }

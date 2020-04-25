@@ -1,0 +1,31 @@
+/*
+    ['INCLUDE ' => include],
+    ['<-' => thread],
+    ['->' => divert],
+    ['===' => knot],
+    ['==' => knot],
+    ['=' => stitch],
+    ['~' => haxeLine],
+    ['```' => haxeBlock],
+    ['-' => gather],
+    ['*' => choice],
+    ['+' => choice],
+    ['#' => tag]];
+
+    [] starts choice conditional text
+    { } starts a Hiss insertion (usually for variables)
+    ( ) starts a Hiss funcall insertion
+    < > starts an alt expression
+*/
+
+(setq *hank-inline-terminators* '(
+    "->"
+    "["
+    "{"
+    "("
+    "<"))
+
+(defun read-output (_ stream _)
+    (list 'print (get (call stream take-until (list "\n") t) output)))
+
+(set-default-read-function read-output)

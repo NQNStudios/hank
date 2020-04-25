@@ -1,0 +1,5 @@
+-lib hiss
+-cp src
+-main hank.Test
+--resource C:/cygwin64/home/u0920639/hiss/src/hiss/stdlib.hiss@src/hiss/stdlib.hiss
+--interp
