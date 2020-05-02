@@ -1,6 +1,6 @@
 {
     "name": "hank",
-    "url": "https://github.com/NQNStudios/hank",
+    "url": "https://github.com/hankvn/hank",
     "license": "MIT",
     "tags": ["cross", "game", "interactive-fiction", "ink"],
     "description": "Narrative scripting language for HaxeFlixel games based on Inkle's Ink engine",
