@@ -20,6 +20,9 @@
 
 // ( ) at the start of an output is a label
 
+(defmacro expect (stream function &rest args)
+    `(get (call ,stream ,function ,@args) output))
+
 (setq *hank-inline-terminators* '(
     "->"
     "["
@@ -28,12 +31,20 @@
     "<"))
 
 (defun read-output (_ stream _)
-    (list 'print (get (call stream take-until (list "\n") t) output)))
+    ;(print "reading output")
+    ;(print "RIGHT BELOW:")
+    ;(print (call stream peek-all))
+    (list 'output (expect stream take-until (list "\n") t)))
+
+(defun read-divert (_ stream _)
+    ;(print "reading divert")
+    (call stream drop-whitespace)
+    (list 'divert (expect stream take-until-whitespace)))
 
 (defun hank-read-mode ()
     (setq *hiss-readtable* (copy-readtable))
     ; TODO set other read macros
-
+    (set-macro-string "->" read-divert)
 
     (set-default-read-function read-output))
 

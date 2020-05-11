@@ -25,11 +25,19 @@ class Story {
         }, "*handle-output*")));
 
         hissRepl.load("hanklib.hiss");
-
-        hissRepl.load("reader-macros.hiss");
     }
 
     public function run() {
-        hissRepl.load(storyScript);
+        hissRepl.load("reader-macros.hiss");
+
+        hissRepl.interp.print(Atom(String("For debug purposes, it reads as:")));
+        hissRepl.interp.print(hissRepl.readAll(StaticFiles.getContent(storyScript)));
+        hissRepl.interp.print(Atom(String("")));
+
+        switch (hissRepl.load(storyScript)) {
+            case Signal(Error(s)):
+                throw s;
+            default:
+        }
     }
 }

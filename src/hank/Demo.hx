@@ -10,7 +10,7 @@ class Demo implements StoryTeller {
         StaticFiles.compileWithAll("examples");
 
         // TODO ask the user to choose an example
-        new Story("examples/hello.hank", new Demo()).run();
+        new Story("examples/rc-bank-heist.hank", new Demo()).run();
     }
 
     public function new() {

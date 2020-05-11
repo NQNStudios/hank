@@ -1,0 +1,8 @@
+(defun output (&rest parts)
+    (*handle-output* (funcall + (map parts eval-output-part))))
+
+(defun eval-output-part (part)
+    (cond
+        ((string? part) part)))
+
+(defun divert (target) (print (+ "Diverting to " target)))
