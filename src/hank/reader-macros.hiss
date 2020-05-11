@@ -13,10 +13,12 @@
     ['#' => tag]];
 
     [] starts choice conditional text
-    { } starts a Hiss insertion (usually for variables)
-    ( ) starts a Hiss funcall insertion
+    { } starts a Hiss insertion -- usually for variables
+    ( ) starts a Hiss funcall insertion -- equivalent to {()}
     < > starts an alt expression
 */
+
+// ( ) at the start of an output is a label
 
 (setq *hank-inline-terminators* '(
     "->"
@@ -28,4 +30,15 @@
 (defun read-output (_ stream _)
     (list 'print (get (call stream take-until (list "\n") t) output)))
 
-(set-default-read-function read-output)
+(defun hank-read-mode ()
+    (setq *hiss-readtable* (copy-readtable))
+    ; TODO set other read macros
+
+
+    (set-default-read-function read-output))
+
+(defun hiss-read-mode ()
+    (set-readtable *hiss-readtable*)
+    (set-default-read-function read-symbol))
+
+(hank-read-mode)

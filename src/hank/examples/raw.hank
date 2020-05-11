@@ -1,0 +1,5 @@
+// Example of what a Hank file looks like AFTER being read into Hiss form!
+
+(load "extra.hank")
+
+(divert )
