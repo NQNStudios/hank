@@ -1,55 +1,19 @@
-/*
-    ['INCLUDE ' => include],
-    ['<-' => thread],
-    ['->' => divert],
-    ['===' => knot],
-    ['==' => knot],
-    ['=' => stitch],
-    ['~' => haxeLine],
-    ['```' => haxeBlock],
-    ['-' => gather],
-    ['*' => choice],
-    ['+' => choice],
-    ['#' => tag]];
+(def-reader-macro "->" (start stream)
+    `(funcall ,(read-symbol "" stream)))
 
-    [] starts choice conditional text
-    { } starts a Hiss insertion -- usually for variables
-    ( ) starts a Hiss funcall insertion -- equivalent to {()}
-    < > starts an alt expression
-*/
+(def-reader-macro "==" (start stream)
+    (let (knot-name
+                (read-symbol "" stream)
+            _
+                (HStream:take-line stream)
+            knot-body
+                (read-all (first (HStream:take-until stream ["=="] nil nil t))))
+    
+        // Define the knot's function at READ-TIME
+        (eval `(defun ,knot-name () ,@knot-body))
+        nil))
 
-// ( ) at the start of an output is a label
+(defun read-output (start stream)
+    `(output ,(HStream:take-line stream "rl")))
 
-(defmacro expect (stream function &rest args)
-    `(get (call ,stream ,function ,@args) output))
-
-(setq *hank-inline-terminators* '(
-    "->"
-    "["
-    "{"
-    "("
-    "<"))
-
-(defun read-output (_ stream _)
-    ;(print "reading output")
-    ;(print "RIGHT BELOW:")
-    ;(print (call stream peek-all))
-    (list 'output (expect stream take-until (list "\n") t)))
-
-(defun read-divert (_ stream _)
-    ;(print "reading divert")
-    (call stream drop-whitespace)
-    (list 'divert (expect stream take-until-whitespace)))
-
-(defun hank-read-mode ()
-    (setq *hiss-readtable* (copy-readtable))
-    ; TODO set other read macros
-    (set-macro-string "->" read-divert)
-
-    (set-default-read-function read-output))
-
-(defun hiss-read-mode ()
-    (set-readtable *hiss-readtable*)
-    (set-default-read-function read-symbol))
-
-(hank-read-mode)
+(set-default-read-function read-output)

@@ -1,5 +1,5 @@
 (defun output (&rest parts)
-    (*handle-output* (funcall + (map parts eval-output-part))))
+    (*handle-output* (apply + (map parts eval-output-part))))
 
 (defun eval-output-part (part)
     (cond

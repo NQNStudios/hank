@@ -1,12 +1,13 @@
 package hank;
 
 import hiss.HTypes;
-import hiss.HissRepl;
+import hiss.CCInterp;
 import hiss.StaticFiles;
+using hiss.HissTools;
 
 class Story {
     var teller: StoryTeller;
-    var hissRepl: HissRepl;
+    var interp: CCInterp;
     var storyScript: String;
 
     public function new(storyScript: String, storyTeller: StoryTeller) {
@@ -17,27 +18,19 @@ class Story {
         teller = storyTeller;
 
 
-        hissRepl = new HissRepl();
+        interp = new CCInterp();
         
-        hissRepl.interp.set("*handle-output*", Function(Haxe(Fixed, function(text: HValue) {
-            storyTeller.handleOutput(text.toString());
-            return Nil;
-        }, "*handle-output*")));
+        interp.importFunction(storyTeller.handleOutput, "*handle-output*");
 
-        hissRepl.load("hanklib.hiss");
+        interp.load("hanklib.hiss");
     }
 
     public function run() {
-        hissRepl.load("reader-macros.hiss");
+        interp.load("reader-macros.hiss");
 
-        hissRepl.interp.print(Atom(String("For debug purposes, it reads as:")));
-        hissRepl.interp.print(hissRepl.readAll(StaticFiles.getContent(storyScript)));
-        hissRepl.interp.print(Atom(String("")));
+        String("For debug purposes, it reads as:").print();
+        interp.readAll(StaticFiles.getContent(storyScript)).print();
 
-        switch (hissRepl.load(storyScript)) {
-            case Signal(Error(s)):
-                throw s;
-            default:
-        }
+        interp.load(storyScript);
     }
 }

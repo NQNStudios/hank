@@ -1,6 +1,5 @@
 package hank;
 
-import hiss.HissRepl;
 import hiss.HissReader;
 import hiss.HissTools;
 import hiss.StaticFiles;
@@ -10,7 +9,7 @@ class Demo implements StoryTeller {
         StaticFiles.compileWithAll("examples");
 
         // TODO ask the user to choose an example
-        new Story("examples/rc-bank-heist.hank", new Demo()).run();
+        new Story("examples/knots.hank", new Demo()).run();
     }
 
     public function new() {
