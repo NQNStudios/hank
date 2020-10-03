@@ -16,11 +16,16 @@ class Demo implements StoryTeller {
         
     }
 
-    public function handleOutput(text: String) {
-        trace(text);
+    public function handleOutput(text: String, finished: (Int) -> Void) {
+        Sys.println(text);
+        finished(0);
     }
 
-    public function handleChoices(choices: Array<String>) {
-
+    public function handleChoices(choices: Array<String>, choose: (Dynamic) -> Void) {
+        var idx = 1;
+        for (choice in choices) {
+            Sys.println('${idx++}. ${choice}');
+        }
+        choose(Std.parseInt(Sys.stdin().readLine()) - 1);
     }
 }

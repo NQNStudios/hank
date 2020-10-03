@@ -1,8 +1,15 @@
 (defun output (&rest parts)
-    (*handle-output* (apply + (map parts eval-output-part))))
+    (call/cc 
+        (lambda (cc) 
+            (*handle-output*
+                (apply + 
+                    (map parts eval-output-part))
+                cc))))
 
 (defun eval-output-part (part)
     (cond
         ((string? part) part)))
 
 (defun divert (target) (print (+ "Diverting to " target)))
+
+(enable-continuations)

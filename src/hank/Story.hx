@@ -17,10 +17,10 @@ class Story {
         this.storyScript = storyScript;
         teller = storyTeller;
 
-
         interp = new CCInterp();
         
-        interp.importFunction(storyTeller.handleOutput, "*handle-output*");
+        interp.importFunction(storyTeller, storyTeller.handleOutput, "*handle-output*");
+        interp.importFunction(storyTeller, storyTeller.handleChoices, "*handle-choices*");
 
         interp.load("hanklib.hiss");
     }
@@ -28,9 +28,16 @@ class Story {
     public function run() {
         interp.load("reader-macros.hiss");
 
-        String("For debug purposes, it reads as:").print();
-        interp.readAll(StaticFiles.getContent(storyScript)).print();
+        var storyCode = interp.readAll(StaticFiles.getContent(storyScript));
+        
+        String("Main logic:").message();
+        storyCode.print();
 
-        interp.load(storyScript);
+        String("").message();
+        String("").message();
+        String("").message();
+
+
+        interp.eval(Symbol("begin").cons(storyCode));
     }
 }

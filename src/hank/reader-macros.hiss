@@ -10,7 +10,7 @@
                 (read-all (first (HStream:take-until stream ["=="] nil nil t))))
     
         // Define the knot's function at READ-TIME
-        (eval `(defun ,knot-name () ,@knot-body))
+        (eval (print `(defun ,knot-name () ,@knot-body (quit))))
         nil))
 
 (defun read-output (start stream)
