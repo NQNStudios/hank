@@ -3,12 +3,15 @@ package hank;
 import hiss.HTypes;
 import hiss.CCInterp;
 import hiss.StaticFiles;
+import hiss.HissReader;
 using hiss.HissTools;
 
 class Story {
     var teller: StoryTeller;
     var interp: CCInterp;
     var storyScript: String;
+    // Separate reader for Hiss expressions:
+    var reader: HissReader;
 
     public function new(storyScript: String, storyTeller: StoryTeller) {
         StaticFiles.compileWith("reader-macros.hiss");
@@ -18,9 +21,11 @@ class Story {
         teller = storyTeller;
 
         interp = new CCInterp();
-        
+        reader = new HissReader(interp); // It references the same CCInterp but has its own readtable
+
         interp.importFunction(storyTeller, storyTeller.handleOutput, "*handle-output*");
         interp.importFunction(storyTeller, storyTeller.handleChoices, "*handle-choices*");
+        interp.importFunction(reader, reader.read, "hiss-read");
 
         interp.load("hanklib.hiss");
     }

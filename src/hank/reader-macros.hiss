@@ -1,5 +1,7 @@
 (def-reader-macro "->" (start stream)
     `(funcall ,(read-symbol "" stream)))
+    // TODO don't just funcall, check the scope tree of divert targets (split by .)
+    // TODO diverts should quit when finished unless another -> starts a tunnel or tunnels back
 
 (def-reader-macro "==" (start stream)
     (let (knot-name
@@ -12,6 +14,47 @@
         // Define the knot's function at READ-TIME
         (eval (print `(defun ,knot-name () ,@knot-body (quit))))
         nil))
+
+(defun read-choice (start stream)
+    "will be called with start=nil for all choices following the first in a choice point"
+    (let (start-char
+                (or start (HStream:peek stream 1))
+            once-only
+                (case start-char
+                    ("*" t)
+                    ("+" nil))
+            depth
+                (+ (if start 1 0) (HStream:count-consecutive stream start-char))
+            label
+                (case 
+                    (begin 
+                        (HStream:drop-whitespace stream)
+                        (HStream:peek stream 1))
+                    ("("
+                        (trim (substring (first (HStream:take-until stream [")"])) 1))))
+            condition
+                (case
+                    (begin
+                        (HStream:drop-whitespace stream)
+                        (HStream:peek stream 1))
+                    ("{"
+                        (hiss-read "" (HStream:from-string (trim (substring (first (HStream:take-until stream ["}"])) 1)))))
+                    (default t))
+            output
+                (read-output "" stream)
+            on-chosen
+                `(begin 
+                    ,@(read-all (first (HStream:take-until stream [(* depth "*") (* depth "+") (+ (* depth "-") " ")] nil nil t)))))
+        (defchoice once-only depth label condition output 0 on-chosen)))
+
+
+(defun read-choice-point (start stream)
+    // TODO
+    (read-choice start stream))
+            
+
+(set-macro-string "*" read-choice-point)
+(set-macro-string "+" read-choice-point)
 
 (defun read-output (start stream)
     `(output ,(HStream:take-line stream "rl")))

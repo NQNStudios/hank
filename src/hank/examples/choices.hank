@@ -1,0 +1,16 @@
+-> start
+
+== end
+
+Good choice.
+
+== start
+
+You have to make a choice.
+
+* (label) A
+    -> start
++ {t} B
+    -> start
+* C
+    -> end

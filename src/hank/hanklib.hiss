@@ -10,6 +10,17 @@
     (cond
         ((string? part) part)))
 
-(defun divert (target) (print (+ "Diverting to " target)))
+(defstruct choice once-only depth label condition output chosen-count on-chosen)
+(defvar *choices* [])
+(defvar *labeled-choices* (dict))
+(defmacro defchoice (&rest args)
+    "Define a new choice and return its id"
+    `(let (c (make-choice ,@args)
+            label (choice-label c)
+            id (length *choices*))
+        (print c)
+        (push! *choices* c)
+        (when label (dict-set! *labeled-choices* label c))
+        id))
 
-(enable-continuations)
+(defvar *choice-points* [])
