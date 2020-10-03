@@ -8,8 +8,11 @@ class Demo implements StoryTeller {
     public static function main() {
         StaticFiles.compileWithAll("examples");
 
-        // TODO ask the user to choose an example
-        new Story("examples/knots.hank", new Demo()).run();
+        var examples = sys.FileSystem.readDirectory("src/hank/examples");
+        var demo = new Demo();
+        demo.handleChoices(examples, (index) -> {
+            new Story("examples/" + examples[index], demo).run();
+        });
     }
 
     public function new() {
