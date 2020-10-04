@@ -38,7 +38,7 @@
                         (HStream:drop-whitespace stream)
                         (HStream:peek stream 1))
                     ("{"
-                        (hiss-read "" (HStream:from-string (trim (substring (first (HStream:take-until stream ["}"])) 1)))))
+                        (hiss-read (trim (substring (first (HStream:take-until stream ["}"])) 1))))
                     (default t))
             output
                 (read-output "" stream t)
