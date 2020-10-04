@@ -1,0 +1,4 @@
+-lib hiss
+-cp src
+-main hank.TestStoryExamples
+--interp

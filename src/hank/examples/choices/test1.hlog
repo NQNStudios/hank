@@ -1,0 +1,17 @@
+You have to make a choice.
+* A
+* B
+* C
+> 1
+A
+* A
+* B
+* C
+> 2
+B
+* A
+* B
+* C
+> 3
+C
+Good choice.
