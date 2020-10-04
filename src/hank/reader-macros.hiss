@@ -3,7 +3,7 @@
                 (hiss-read-delimited-list "\n" ["->"] t nil start stream)
             divert-calls
                 (for target targets 'divert))
-        (debug-print (cons 
+        (print (cons 
             'begin 
             (case (last targets)
                 // tunnel statement:
@@ -30,7 +30,7 @@
                 (read-all (first (HStream:take-until stream ["=="] nil nil t))))
     
         // Define the knot's function at READ-TIME
-        (eval (debug-print `(defun ,knot-name () ,@knot-body (quit))))
+        (eval (print `(defun ,knot-name () ,@knot-body (quit))))
         nil))
 
 (defun read-choice (start stream)

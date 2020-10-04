@@ -39,7 +39,7 @@
     `(let (c (make-choice ,@args)
             label (choice-label c)
             id (length *choices*))
-        (debug-print c)
+        (print c)
         (push! *choices* c)
         (when label (dict-set! *labeled-choices* label c))
         id))
@@ -59,7 +59,7 @@
                 (for o choice-outputs (eval o)))
         (enable-continuations)
         (begin
-            (setlocal player-choice-index (debug-print (get-player-choice-index choice-texts)))
+            (setlocal player-choice-index (print (get-player-choice-index choice-texts)))
             (disable-continuations)
 
             (let (player-choice

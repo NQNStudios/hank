@@ -41,7 +41,7 @@ class Story {
         interp.importFunction(this, hissRead, "hiss-read");
         interp.importFunction(reader, reader.readDelimitedList, "hiss-read-delimited-list", List([Int(3)]) /* keep blankELements wrapped */, ["terminator", "delimiters", "start", "stream"]);
 
-        interp.importFunction(this, debugPrint, "debug-print", T);
+        interp.importFunction(this, debugPrint, "print", T);
 
         interp.load("hanklib.hiss");
     }

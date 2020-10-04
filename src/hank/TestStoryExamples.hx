@@ -14,6 +14,7 @@ class TestStoryExamples {
             transcripts = transcripts.filter((file) -> file.endsWith(".hlog"));
             
             for (transcript in transcripts) {
+                Sys.println(example + " " + transcript);
                 new Story("examples/" + example + "/main.hank", new StoryTester("examples/" + example + "/" + transcript)).run();
             }
         }
