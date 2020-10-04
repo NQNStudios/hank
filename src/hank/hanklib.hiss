@@ -1,16 +1,30 @@
-(defun output (&rest parts)
-    (call/cc 
-        (lambda (cc) 
-            (*handle-output*
+(defun output (direct &rest parts)
+    "Evaluate the text of this output, and either send it directly
+    to the StoryTeller's callback, or return the result"
+    (let (text 
                 (apply + 
-                    (map parts eval-output-part))
-                cc))))
+                    (map parts eval-output-part)))
+        (if direct
+                (call/cc 
+                    (lambda (cc) 
+                        (*handle-output*
+                            text
+                            cc)))
+            text)))
 
+// TODO eval-output-part needs to access direct, and if direct, choose what comes after the bracket part. Else choose the bracket part
 (defun eval-output-part (part)
     (cond
         ((string? part) part)))
 
-(defstruct choice once-only depth label condition output chosen-count on-chosen)
+(defstruct choice
+    once-only
+    depth
+    label
+    condition
+    output
+    chosen-count
+    on-chosen)
 (defvar *choices* [])
 (defvar *labeled-choices* (dict))
 (defmacro defchoice (&rest args)
@@ -23,4 +37,26 @@
         (when label (dict-set! *labeled-choices* label c))
         id))
 
-(defvar *choice-points* [])
+(defun get-player-choice-index (choice-texts)
+    (call/cc
+        (lambda (cc)
+                (*handle-choices* choice-texts cc))))
+
+(defun choice-point (choice-ids on-gather)
+    (let (choices // not to be confused with the global list
+                (map choice-ids (bind nth *choices*))
+            // TODO filter by conditions and chosen counts
+            choice-outputs 
+                (map choices choice-output)
+            choice-texts
+                (for o choice-outputs (eval o)))
+
+        (enable-continuations)
+        (begin
+            (setlocal player-choice-index (print (get-player-choice-index choice-texts)))
+            (disable-continuations)
+            (let (player-choice
+                        (nth choices player-choice-index))
+                (choice-set-chosen-count! player-choice (+ 1 (choice-chosen-count player-choice)))
+                (eval `(output t ,@(slice (choice-output player-choice) 2)))
+                (eval (choice-on-chosen player-choice))))))

@@ -4,6 +4,7 @@ import hiss.HTypes;
 import hiss.CCInterp;
 import hiss.StaticFiles;
 import hiss.HissReader;
+import hiss.HStream;
 using hiss.HissTools;
 
 class Story {

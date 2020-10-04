@@ -24,7 +24,7 @@ class Demo implements StoryTeller {
         finished(0);
     }
 
-    public function handleChoices(choices: Array<String>, choose: (Dynamic) -> Void) {
+    public function handleChoices(choices: Array<String>, choose: (Int) -> Void) {
         var idx = 1;
         for (choice in choices) {
             Sys.println('${idx++}. ${choice}');

@@ -41,22 +41,45 @@
                         (hiss-read "" (HStream:from-string (trim (substring (first (HStream:take-until stream ["}"])) 1)))))
                     (default t))
             output
-                (read-output "" stream)
+                (read-output "" stream t)
             on-chosen
                 `(begin 
-                    ,@(read-all (first (HStream:take-until stream [(* depth "*") (* depth "+") (+ (* depth "-") " ")] nil nil t)))))
+                    ,@(read-all 
+                        (first 
+                            (HStream:take-until 
+                                stream 
+                                (cons "=" // stop reading choice point at knot or stitch 
+                                    (for delim 
+                                        [
+                                            (* depth "*") 
+                                            (* depth "+")
+                                            (* depth "-")
+                                        ] 
+                                        (+ delim " ")))
+                                nil nil t))))) // don't drop the terminator
         (defchoice once-only depth label condition output 0 on-chosen)))
 
 
 (defun read-choice-point (start stream)
-    // TODO
-    (read-choice start stream))
-            
+    (let (first-choice
+                    (read-choice start stream)
+            choices
+                [first-choice])
+        (while (contains ["*" "+"] (HStream:peek stream 1))
+            (push! choices (read-choice nil stream)))
+        `(choice-point 
+            ',choices
+            ,(case (HStream:peek stream 1)
+                ("-" nil))))) // TODO decide how much to include in the on-gather */
 
 (set-macro-string "*" read-choice-point)
 (set-macro-string "+" read-choice-point)
 
-(defun read-output (start stream)
-    `(output ,(HStream:take-line stream "rl")))
+(defun read-output (start stream &optional choice)
+    `(output ,(not choice) ,(HStream:take-line stream "rl")))
+    // TODO read the conditional part of choices, 
+    // TODO expression insertions, 
+    // TODO inline diverts
+    // TODO sequences/shuffles
 
 (set-default-read-function read-output)
