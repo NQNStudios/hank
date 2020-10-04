@@ -10,8 +10,13 @@ class StoryTellerDemo implements StoryTeller {
 
         var examples = sys.FileSystem.readDirectory("src/hank/examples");
         var demo = new StoryTellerDemo();
+        var debug = false;
+        #if debug
+        debug = true;
+        #end
+
         demo.handleChoices(examples, (index) -> {
-            new Story("examples/" + examples[index] + "/main.hank", demo).run();
+            new Story("examples/" + examples[index] + "/main.hank", demo, debug).run();
         });
     }
 

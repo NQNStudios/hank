@@ -14,12 +14,19 @@ class Story {
     var storyScript: String;
     // Separate reader for Hiss expressions:
     var reader: HissReader;
+    var debug: Bool;
 
     function hissRead(str: String) {
         return reader.read("", HStream.FromString(str));
     }
 
-    public function new(storyScript: String, storyTeller: StoryTeller) {
+    function debugPrint(val: HValue) {
+        return if (debug) val.print() else val;
+    }
+
+    public function new(storyScript: String, storyTeller: StoryTeller, debug = false) {
+        this.debug = debug;
+
         StaticFiles.compileWith("reader-macros.hiss");
         StaticFiles.compileWith("hanklib.hiss");
 
@@ -34,6 +41,8 @@ class Story {
         interp.importFunction(this, hissRead, "hiss-read");
         interp.importFunction(reader, reader.readDelimitedList, "hiss-read-delimited-list", List([Int(3)]) /* keep blankELements wrapped */, ["terminator", "delimiters", "start", "stream"]);
 
+        interp.importFunction(this, debugPrint, "debug-print", T);
+
         interp.load("hanklib.hiss");
     }
 
@@ -42,12 +51,14 @@ class Story {
 
         var storyCode = interp.readAll(StaticFiles.getContent(storyScript));
         
-        String("Main logic:").message();
-        storyCode.print();
+        if (debug) {
+            String("Main logic:").message();
+            storyCode.print();
 
-        String("").message();
-        String("").message();
-        String("").message();
+            String("").message();
+            String("").message();
+            String("").message();
+        }
 
         stackSafeEval(Symbol("begin").cons(storyCode));
     }
