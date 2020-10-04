@@ -5,6 +5,7 @@ import hiss.CCInterp;
 import hiss.StaticFiles;
 import hiss.HissReader;
 import hiss.HStream;
+import hiss.HissTools;
 using hiss.HissTools;
 
 class Story {
@@ -48,7 +49,14 @@ class Story {
         String("").message();
         String("").message();
 
+        stackSafeEval(Symbol("begin").cons(storyCode));
+    }
 
-        interp.eval(Symbol("begin").cons(storyCode));
+    function stackSafeEval(exp: HValue) {
+        try {
+            interp.eval(exp);
+        } catch (nextExp: String) {
+            stackSafeEval(hissRead(nextExp));
+        }
     }
 }

@@ -1,3 +1,10 @@
+(defun divert (target)
+    (funcall (eval (symbol target)))) // TODO resolve the target in scope
+
+(defun final-divert (target)
+    (let (exp (+ "(divert \"" target "\")"))
+        (error! exp))) // Just trust me on this one
+
 (defun output (direct &rest parts)
     "Evaluate the text of this output, and either send it directly
     to the StoryTeller's callback, or return the result"
@@ -50,11 +57,11 @@
                 (map choices choice-output)
             choice-texts
                 (for o choice-outputs (eval o)))
-
         (enable-continuations)
         (begin
             (setlocal player-choice-index (print (get-player-choice-index choice-texts)))
             (disable-continuations)
+
             (let (player-choice
                         (nth choices player-choice-index))
                 (choice-set-chosen-count! player-choice (+ 1 (choice-chosen-count player-choice)))

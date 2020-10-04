@@ -1,5 +1,23 @@
 (def-reader-macro "->" (start stream)
-    `(funcall ,(read-symbol "" stream)))
+    (let (targets
+                (hiss-read-delimited-list "\n" ["->"] t nil start stream)
+            divert-calls
+                (for target targets 'divert))
+        (print (cons 
+            'begin 
+            (case (last targets)
+                // tunnel statement:
+                (nil
+                    (pop! targets)
+                    (pop! divert-calls)
+                    (zip divert-calls (map targets symbol-name)))
+                // chain of diverts, the last of which is final
+                (default
+                    (pop! divert-calls)
+                    (push! divert-calls 'final-divert)
+                    (zip divert-calls (map targets symbol-name))))))))
+        //(print targets)))
+    //`(funcall ,(read-symbol "" stream)))
     // TODO don't just funcall, check the scope tree of divert targets (split by .)
     // TODO diverts should quit when finished unless another -> starts a tunnel or tunnels back
 
