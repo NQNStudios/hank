@@ -4,14 +4,14 @@ import hiss.HissReader;
 import hiss.HissTools;
 import hiss.StaticFiles;
 
-class Demo implements StoryTeller {
+class StoryTellerDemo implements StoryTeller {
     public static function main() {
         StaticFiles.compileWithAll("examples");
 
         var examples = sys.FileSystem.readDirectory("src/hank/examples");
-        var demo = new Demo();
+        var demo = new StoryTellerDemo();
         demo.handleChoices(examples, (index) -> {
-            new Story("examples/" + examples[index], demo).run();
+            new Story("examples/" + examples[index] + "/main.hank", demo).run();
         });
     }
 
