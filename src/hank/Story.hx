@@ -33,25 +33,34 @@ class Story {
 
         this.storyScript = storyScript;
         teller = storyTeller;
+    }
 
+    public function run() {
+        // TODO make a way to do all this loading before calling run(), but still make sure all the loading happens if it hasn't:
         interp = new CCInterp();
         reader = new HissReader(interp); // It references the same CCInterp but has its own readtable
 
-        interp.importFunction(storyTeller, storyTeller.handleOutput, "*handle-output*");
-        interp.importFunction(storyTeller, storyTeller.handleChoices, "*handle-choices*");
+        interp.importFunction(teller, teller.handleOutput, "*handle-output*");
+        interp.importFunction(teller, teller.handleChoices, "*handle-choices*");
         interp.importFunction(this, hissRead, "hiss-read");
         interp.importFunction(reader, reader.readDelimitedList, "hiss-read-delimited-list", List([Int(3)]) /* keep blankELements wrapped */, ["terminator", "delimiters", "start", "stream"]);
 
         interp.importFunction(this, debugPrint, "print", T);
 
         interp.load("hanklib.hiss");
-    }
-
-    public function run() {
         interp.load("reader-macros.hiss");
 
         var storyCode = interp.readAll(StaticFiles.getContent(storyScript));
         
+        // This has to happen AFTER reading the story, for (while) reasons
+        interp.truthy = (value) -> switch (value) {
+            case Nil: false;
+            case List([]): false;
+            case Int(0): false;
+            case String(""): false;
+            default: true;
+        };
+
         if (debug) {
             String("Main logic:").message();
             storyCode.print();

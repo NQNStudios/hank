@@ -26,7 +26,9 @@
                 (read-all (first (HStream:take-until stream ["=="] nil nil t))))
     
         // Define the knot's function at READ-TIME
+        // TODO define the knot's read count
         (eval (print `(defun ,knot-name () ,@knot-body)))
+        // TODO increment the knot's read count in that function
         nil))
 
 (defun read-choice (start stream)
@@ -71,6 +73,7 @@
                                         ] 
                                         (+ delim " ")))
                                 nil nil t))))) // don't drop the terminator
+        (when label (eval (print `(defvar ,(symbol label) 0)))) // start the label's variable at 0
         (defchoice once-only depth label condition output 0 on-chosen)))
 
 

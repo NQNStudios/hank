@@ -71,5 +71,9 @@
             (let (player-choice
                         (nth choices player-choice-index))
                 (choice-set-chosen-count! player-choice (+ 1 (choice-chosen-count player-choice)))
+                // increment the choice's label var
+                (when-let (label (choice-label player-choice))
+                    (let (label-var (symbol label))
+                        (eval `(defvar ,label-var (+ ,label-var 1)))))
                 (eval `(output t ,@(slice (choice-output player-choice) 2)))
                 (eval (choice-on-chosen player-choice))))))

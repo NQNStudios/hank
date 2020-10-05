@@ -2,18 +2,10 @@ You have to make a choice.
 * A
 * B
 * C
-> 2
-B
+> 1
+A
 You have to make a choice.
-* A
-* B
 * C
-> 2
-B
-You have to make a choice.
-* A
-* B
-* C
-> 3
+> 1
 C
 Good choice.
