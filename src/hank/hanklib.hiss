@@ -2,7 +2,7 @@
     (funcall (eval (symbol target)))) // TODO resolve the target in scope
 
 (defun final-divert (target)
-    (let (exp (+ "(divert \"" target "\")"))
+    (let (exp (+ "STACK-UNWIND (divert \"" target "\")"))
         (error! exp))) // Just trust me on this one
 
 (defun output (direct &rest parts)

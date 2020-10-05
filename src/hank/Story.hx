@@ -7,6 +7,7 @@ import hiss.HissReader;
 import hiss.HStream;
 import hiss.HissTools;
 using hiss.HissTools;
+using StringTools;
 
 class Story {
     var teller: StoryTeller;
@@ -67,7 +68,11 @@ class Story {
         try {
             interp.eval(exp);
         } catch (nextExp: String) {
-            stackSafeEval(hissRead(nextExp));
+            if (nextExp.startsWith("STACK-UNWIND")) {
+                stackSafeEval(hissRead(nextExp.substr(13)));
+            } else {
+                throw nextExp;
+            }
         }
     }
 }
