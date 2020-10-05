@@ -16,10 +16,6 @@
                     (pop! divert-calls)
                     (push! divert-calls 'final-divert)
                     (zip divert-calls (map targets symbol-name))))))))
-        //(print targets)))
-    //`(funcall ,(read-symbol "" stream)))
-    // TODO don't just funcall, check the scope tree of divert targets (split by .)
-    // TODO diverts should quit when finished unless another -> starts a tunnel or tunnels back
 
 (def-reader-macro "==" (start stream)
     (let (knot-name

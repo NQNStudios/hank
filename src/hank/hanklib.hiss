@@ -49,10 +49,16 @@
         (lambda (cc)
                 (*handle-choices* choice-texts cc))))
 
+(defun choice-available (choice)
+    (and 
+        (or 
+            (not (choice-once-only choice))
+            (= 0 (choice-chosen-count choice)))
+        (eval (choice-condition choice))))
+
 (defun choice-point (choice-ids on-gather)
     (let (choices // not to be confused with the global list
-                (map choice-ids (bind nth *choices*))
-            // TODO filter by conditions and chosen counts
+                (filter (map choice-ids (bind nth *choices*)) choice-available)
             choice-outputs 
                 (map choices choice-output)
             choice-texts
