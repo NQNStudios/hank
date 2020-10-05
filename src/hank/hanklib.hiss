@@ -12,7 +12,7 @@
                 (apply + 
                     (map parts eval-output-part)))
         (if direct
-                (call/cc 
+                (call/cc "Continuation of output"
                     (lambda (cc) 
                         (*handle-output*
                             text
@@ -45,7 +45,7 @@
         id))
 
 (defun get-player-choice-index (choice-texts)
-    (call/cc
+    (call/cc "Continuation of get-player-choice-index"
         (lambda (cc)
                 (*handle-choices* choice-texts cc))))
 
