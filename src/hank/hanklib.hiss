@@ -63,7 +63,7 @@
                 (map choices choice-output)
             choice-texts
                 (for o choice-outputs (eval o)))
-        (enable-continuations)
+        (enable-continuations) // <-- I think this works here because everything after a choice point is part of the gather, which means nothing will be left in the begin() after it
         (begin
             (setlocal player-choice-index (print (get-player-choice-index choice-texts)))
             (disable-continuations)
